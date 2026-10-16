@@ -224,37 +224,16 @@ p { margin: 0; max-width: 34em; }
 .creds .en { display: block; font-family: var(--latin); color: var(--ink-soft); font-size: .95rem; }
 
 /* ---------- footer ---------- */
-footer { padding-block: 3rem 5.5rem; border-top: 1px solid var(--line); display: grid; gap: 1.6rem; }
+footer { padding-block: 3rem 4rem; border-top: 1px solid var(--line); display: grid; gap: 1.6rem; }
 .links { display: flex; flex-wrap: wrap; gap: .6rem 1.6rem; }
 .links a { color: var(--button); text-underline-offset: 5px; }
 .disclaimer { font-size: var(--step--1); color: var(--ink-soft); max-width: 46em; }
-
-/* ---------- prototype switch ---------- */
-.switch {
-  position: fixed; z-index: 5;
-  right: calc(16px + env(safe-area-inset-right, 0px));
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  left: auto;
-  display: grid; gap: .5rem; padding: .9rem 1rem; border-radius: 16px;
-  background: rgba(252, 248, 248, .82); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-  border: 1px solid var(--line); box-shadow: 0 12px 30px -16px rgba(54, 47, 82, .5);
-  font-size: var(--step--1); max-width: calc(100vw - 32px);
-}
-.switch .title { color: var(--ink-soft); }
-.seg { display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: rgba(54, 47, 82, .08); }
-.seg button {
-  flex: 1; border: 0; border-radius: 999px; padding: .4rem .9rem; cursor: pointer;
-  font: inherit; color: var(--ink); background: transparent; white-space: nowrap;
-}
-.seg button[aria-pressed="true"] { background: var(--button); color: var(--button-ink); }
-.seg button:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 760px) {
   .reasons, .oracle, .about, .workshop { grid-template-columns: minmax(0, 1fr); }
   .nav { display: none; }
   .hero h1 { letter-spacing: .06em; }
-  .switch { left: calc(16px + env(safe-area-inset-left, 0px)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -457,13 +436,6 @@ footer { padding-block: 3rem 5.5rem; border-top: 1px solid var(--line); display:
   </div>
 </div>
 
-<div class="switch" role="group" aria-label="光暈效果比較">
-  <div class="title">首頁原型：比較兩種光暈效果</div>
-  <div class="seg">
-    <button type="button" id="modeA" aria-pressed="true">A 流體幻彩</button>
-    <button type="button" id="modeB" aria-pressed="false">B 輕量光暈</button>
-  </div>
-</div>
 
 <script>
 (function () {
@@ -662,27 +634,13 @@ footer { padding-block: 3rem 5.5rem; border-top: 1px solid var(--line); display:
   window.addEventListener("resize", resize);
   resize();
 
-  // ---------- effect B: CSS ----------
+  // ---------- effect B: CSS fallback for devices without WebGL ----------
   var holoB = document.getElementById("holoB");
 
-  // ---------- mode switch ----------
-  var btnA = document.getElementById("modeA");
-  var btnB = document.getElementById("modeB");
-  var mode = "A";
-  try { mode = localStorage.getItem("nieia-holo") || "A"; } catch (err) {}
-  if (!gl) { mode = "B"; btnA.disabled = true; btnA.title = "這台裝置不支援流體效果"; }
-
-  function setMode(m) {
-    mode = m;
-    btnA.setAttribute("aria-pressed", String(m === "A"));
-    btnB.setAttribute("aria-pressed", String(m === "B"));
-    canvas.hidden = m !== "A";
-    holoB.hidden = m !== "B";
-    try { localStorage.setItem("nieia-holo", m); } catch (err) {}
-    if (reduce) frame(performance.now());
-  }
-  btnA.addEventListener("click", function () { if (gl) setMode("A"); });
-  btnB.addEventListener("click", function () { setMode("B"); });
+  // ---------- mode: A (WebGL) by default, B (CSS) as fallback ----------
+  var mode = gl ? "A" : "B";
+  canvas.hidden = mode !== "A";
+  holoB.hidden = mode !== "B";
 
   // ---------- loop ----------
   var start = performance.now();
@@ -714,7 +672,6 @@ footer { padding-block: 3rem 5.5rem; border-top: 1px solid var(--line); display:
     requestAnimationFrame(loop);
   }
 
-  setMode(mode);
   if (reduce) { frame(performance.now()); } else { requestAnimationFrame(loop); }
 })();
 </script>

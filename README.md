@@ -14,6 +14,25 @@
 2. 第二階段：療癒紀錄、回饋邀請、個案見證
 3. 第三階段：會員區、線上收款、站內商店、簡體中文切換
 
+## 專案結構
+
+- `public/`：網站頁面、樣式與前端程式（首頁、療癒服務、宇宙訊息、工作坊、關於阿綸、404）
+- `src/index.js`：Cloudflare Worker，負責 `/api/` 開頭的請求與 MongoDB 連線
+- `wrangler.jsonc`：Cloudflare 設定
+
+## 常用指令
+
+- `npm install`：安裝套件
+- `npm run dev`：在自己電腦上預覽網站（http://localhost:8787）
+- `npm run check`：檢查能否成功打包
+
+## 連線測試
+
+部署後打開 `/api/health`：
+- `"database": "connected"`：資料庫連線成功
+- `"database": "not_configured"`：尚未在 Cloudflare 設定 `MONGODB_URI`
+- `"database": "unreachable"`：連線字串、密碼或 MongoDB Network Access 有誤
+
 ## 注意
 
 資料庫帳號密碼等機密資訊一律設定在 Cloudflare 的環境變數中，不放進這個 repository。

@@ -1,0 +1,19 @@
+{
+  "name": "nieia",
+  "version": "0.1.0",
+  "private": true,
+  "description": "阿綸涅亞 NIEIA 療癒工作室官方網站",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "wrangler deploy --dry-run --outdir dist"
+  },
+  "dependencies": {
+    "hono": "4.13.12",
+    "mongodb": "6.21.0"
+  },
+  "devDependencies": {
+    "wrangler": "4.146.0"
+  }
+}

@@ -259,3 +259,6 @@ footer { padding-block: 3rem 4rem; border-top: 1px solid var(--line); display: g
 .page-head + section .deck { justify-items: start; }
 [hidden] { display: none !important; }
 img { max-width: 100%; }
+.page-head.centered { justify-items: center; text-align: center; }
+.page-head.centered .lede { margin-inline: auto; }
+.page-head.centered + section .deck { justify-items: center; text-align: center; }

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>宇宙訊息｜阿綸涅亞 NIEIA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<div class="aura" aria-hidden="true"></div>
+<canvas id="holoA" aria-hidden="true"></canvas>
+<div class="holoB" id="holoB" aria-hidden="true" hidden></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="page">
+  <div class="wrap">
+
+    <header class="topbar">
+      <a class="wordmark" href="index.html" aria-label="阿綸涅亞 NIEIA 首頁">
+        <span class="zh">阿綸涅亞</span><span class="en">NIEIA</span>
+      </a>
+      <nav class="nav" aria-label="主要選單">
+        <a href="services.html">療癒服務</a>
+        <a href="oracle.html" aria-current="page">宇宙訊息</a>
+        <a href="workshops.html">工作坊</a>
+        <a href="about.html">關於阿綸</a>
+      </nav>
+    </header>
+
+    <section class="page-head">
+      <h1>宇宙訊息</h1>
+      <p class="lede">靜下來，深呼吸一次，想著此刻心裡的問題，再輕觸卡片。68 張來自光的訊息，會有一張剛好屬於你。</p>
+    </section>
+
+    <section id="oracle">
+      <div class="oracle">
+        <div class="deck">
+          <div class="card" id="card" role="button" tabindex="0" aria-live="polite" aria-label="輕觸抽一張宇宙訊息">
+            <div class="card-inner">
+              <div class="face face-front">
+                <div class="sigil"><span class="label">宇宙訊息</span></div>
+              </div>
+              <div class="face face-back">
+                <h3 id="cardTitle">一切安好</h3>
+                <p id="cardMessage">別擔心，一切都在神聖的安排之中。</p>
+                <div class="count latin" id="cardCount"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-ghost" id="drawBtn" type="button">抽一張</button>
+          <div class="deck-hint" id="deckHint">抽到的卡片之後可以存成圖片，分享到 IG 限時動態。</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="links">
+        <a href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener">Instagram @nieia9319</a>
+        <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
+        <a href="https://myship.7-11.com.tw/general/detail/GM2512190455934" target="_blank" rel="noopener">聖照選物（7-11 賣貨便）</a>
+        <a href="https://vocus.cc/salon/67e4f401fd897800019395cf" target="_blank" rel="noopener">方格子文章</a>
+      </div>
+      <p class="disclaimer">療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
+    </footer>
+
+  </div>
+</div>
+<script src="assets/holo.js"></script>
+<script src="assets/oracle.js"></script>
+</body>
+</html>

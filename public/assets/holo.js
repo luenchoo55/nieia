@@ -114,7 +114,7 @@
       holoB.style.setProperty("--y", (cy * window.innerHeight).toFixed(1) + "px");
       holoB.style.setProperty("--a", (reduce ? 40 : (t * 18) % 360).toFixed(1) + "deg");
     }
-    if (card) card.style.setProperty("--spin", (reduce ? 30 : (t * 10) % 360).toFixed(1) + "deg");
+    document.documentElement.style.setProperty("--spin", (reduce ? 30 : (t * 10) % 360).toFixed(1) + "deg");
   }
   function loop(now) {
     if (!document.hidden) frame(now);

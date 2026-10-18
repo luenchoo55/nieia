@@ -7,7 +7,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/assets/site.css">
 </head>
 <body>
@@ -15,53 +15,110 @@
 <canvas id="holoA" aria-hidden="true"></canvas>
 <div class="holoB" id="holoB" aria-hidden="true" hidden></div>
 <div class="grain" aria-hidden="true"></div>
-<div class="page">
-  <div class="wrap">
 
-    <header class="topbar">
-      <a class="wordmark" href="/" aria-label="阿綸涅亞 NIEIA 首頁">
-        <span class="zh">阿綸涅亞</span><span class="en">NIEIA</span>
+<main class="app">
+  <header class="appbar"><a class="back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>首頁</a></header>
+
+  <section class="profile glass" aria-labelledby="about-title">
+    <div class="avatar" aria-hidden="true">綸</div>
+    <h1 id="about-title">阿綸涅亞</h1>
+    <p>一個在台灣當上班族的馬來西亞人，也是斜槓的身心靈工作者。帶著對生命的慈悲與熱愛，陪伴每一個靈魂找回內在的純淨與力量。</p>
+  </section>
+
+  <section class="block" aria-labelledby="creds-title">
+    <div class="block-head"><h2 id="creds-title">身心靈探索歷程</h2></div>
+    <div class="rows">
+      <div class="row glass">
+        <div class="art g5 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M50 14c8 14 24 24 24 44a24 24 0 0 1-48 0c0-12 7-19 12-25 1 9 5 13 10 14-3-12-2-22 2-33z" fill="rgba(255,255,255,.35)"/><path d="M50 52c4 6 9 9 9 16a9 9 0 0 1-18 0c0-6 5-10 9-16z" fill="#fff"/></svg></div>
+        <div class="text"><h3>擴大療癒法®一階工作坊教師</h3><span class="en">Teacher, Magnified Healing® 1st Phase</span></div>
+        
+      </div>
+      <div class="row glass">
+        <div class="art g5 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M50 14c8 14 24 24 24 44a24 24 0 0 1-48 0c0-12 7-19 12-25 1 9 5 13 10 14-3-12-2-22 2-33z" fill="rgba(255,255,255,.35)"/><path d="M50 52c4 6 9 9 9 16a9 9 0 0 1-18 0c0-6 5-10 9-16z" fill="#fff"/></svg></div>
+        <div class="text"><h3>擴大療癒法®一階線上復習與高深資訊教師</h3><span class="en">Teacher, 1st Phase & Advanced Studies</span></div>
+        
+      </div>
+      <div class="row glass">
+        <div class="art g5 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M50 14c8 14 24 24 24 44a24 24 0 0 1-48 0c0-12 7-19 12-25 1 9 5 13 10 14-3-12-2-22 2-33z" fill="rgba(255,255,255,.35)"/><path d="M50 52c4 6 9 9 9 16a9 9 0 0 1-18 0c0-6 5-10 9-16z" fill="#fff"/></svg></div>
+        <div class="text"><h3>擴大療癒法®二階慶典指導員</h3><span class="en">Teacher-Director, Magnified Healing® Celebration</span></div>
+        
+      </div>
+      <div class="row glass">
+        <div class="art g5 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M50 14c8 14 24 24 24 44a24 24 0 0 1-48 0c0-12 7-19 12-25 1 9 5 13 10 14-3-12-2-22 2-33z" fill="rgba(255,255,255,.35)"/><path d="M50 52c4 6 9 9 9 16a9 9 0 0 1-18 0c0-6 5-10 9-16z" fill="#fff"/></svg></div>
+        <div class="text"><h3>擴大療癒法®三階光能療癒教師</h3><span class="en">Teacher, 3rd Phase Light Healing</span></div>
+        
+      </div>
+      <div class="row glass">
+        <div class="art g2 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="50" cy="50" r="14" fill="rgba(255,255,255,.9)"/><path d="M50 16v12M50 72v12M16 50h12M72 50h12M26 26l8 8M66 66l8 8M74 26l-8 8M34 66l-8 8"/></svg></div>
+        <div class="text"><h3>臼井聖火靈氣 3 & 師傅階</h3><span class="en">Usui / Holy Fire® III Reiki Master</span></div>
+        
+      </div>
+      <div class="row glass">
+        <div class="art g2 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="50" cy="50" r="14" fill="rgba(255,255,255,.9)"/><path d="M50 16v12M50 72v12M16 50h12M72 50h12M26 26l8 8M66 66l8 8M74 26l-8 8M34 66l-8 8"/></svg></div>
+        <div class="text"><h3>聖火靈氣卡魯那師傅階</h3><span class="en">Holy Fire® III Karuna Reiki®</span></div>
+        
+      </div>
+      <div class="row glass">
+        <div class="art g6 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 70L36 46L56 54L72 26L86 40"/><circle cx="18" cy="70" r="3.5" fill="#fff"/><circle cx="36" cy="46" r="3" fill="#fff"/><circle cx="56" cy="54" r="3.5" fill="#fff"/><circle cx="72" cy="26" r="4.5" fill="#fff"/><circle cx="86" cy="40" r="3" fill="#fff"/></svg></div>
+        <div class="text"><h3>光的課程（行星二）</h3><span class="en">A Course in Light</span></div>
+        
+      </div>
+      <div class="row glass">
+        <div class="art g1 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="50" cy="64" rx="17" ry="14" fill="rgba(255,255,255,.85)" stroke="none"/><circle cx="28" cy="44" r="7" fill="#fff" stroke="none"/><circle cx="42" cy="30" r="7" fill="#fff" stroke="none"/><circle cx="58" cy="30" r="7" fill="#fff" stroke="none"/><circle cx="72" cy="44" r="7" fill="#fff" stroke="none"/></svg></div>
+        <div class="text"><h3>動物溝通</h3><span class="en">Animal Communication</span></div>
+        
+      </div>
+      <div class="row glass">
+        <div class="art g4 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M50 78c-14 0-28-8-30-22 10 0 18 4 22 10-4-14 0-28 8-38 8 10 12 24 8 38 4-6 12-10 22-10-2 14-16 22-30 22z" fill="rgba(255,255,255,.35)"/><path d="M28 86h44"/></svg></div>
+        <div class="text"><h3>譚崔項鍊、光語</h3><span class="en">Tantric Necklace, Light Language</span></div>
+        
+      </div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="links-title">
+    <div class="block-head"><h2 id="links-title">找到阿綸</h2></div>
+    <div class="rows">
+      <a class="row glass" href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener">
+        <div class="art g4 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="18" y="26" width="64" height="50" rx="16" fill="rgba(255,255,255,.3)"/><circle cx="50" cy="51" r="13"/><circle cx="68" cy="37" r="2.5" fill="#fff" stroke="none"/></svg></div>
+        <div class="text"><h3>Instagram</h3><span class="en">@nieia9319</span><span class="desc">私訊預約與約課</span></div>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
       </a>
-      <nav class="nav" aria-label="主要選單">
-        <a href="/services">療癒服務</a>
-        <a href="/oracle">宇宙訊息</a>
-        <a href="/workshops">工作坊</a>
-        <a href="/about" aria-current="page">關於阿綸</a>
-      </nav>
-    </header>
+      <a class="row glass" target="_blank" rel="noopener" href="https://myship.7-11.com.tw/general/detail/GM2512190455934">
+        <div class="art g5 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 36h52l-4 46H28z" fill="rgba(255,255,255,.35)"/><path d="M38 36v-6a12 12 0 0 1 24 0v6"/></svg></div>
+        <div class="text"><h3>聖照選物</h3><span class="en">7-11 賣貨便</span><span class="desc">紫色火焰、聖哲曼、默基瑟德等聖照卡</span></div>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="row glass" target="_blank" rel="noopener" href="https://vocus.cc/salon/67e4f401fd897800019395cf">
+        <div class="art g3 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M26 74l6-18 34-34 12 12-34 34z" fill="rgba(255,255,255,.35)"/><path d="M60 28l12 12"/><path d="M22 84h56"/></svg></div>
+        <div class="text"><h3>方格子文章</h3><span class="en">Vocus</span><span class="desc">阿綸的身心靈筆記</span></div>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="row glass" target="_blank" rel="noopener" href="https://linktr.ee/nieia9319">
+        <div class="art g6 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M42 58l16-16"/><path d="M36 50l-8 8a11 11 0 0 0 16 16l8-8"/><path d="M64 50l8-8a11 11 0 0 0-16-16l-8 8"/></svg></div>
+        <div class="text"><h3>Linktree</h3><span class="desc">所有連結一次看</span></div>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
+  </section>
 
-    <section class="page-head">
-      <h1>關於阿綸</h1>
-      <p class="lede">一個在台灣當上班族的馬來西亞人，也是斜槓的身心靈工作者。帶著對生命的慈悲與熱愛，陪伴每一個靈魂找回內在的純淨與力量。</p>
-    </section>
+  <footer class="foot">
+    <div class="links">
+      <a href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener">Instagram @nieia9319</a>
+      <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
+    </div>
+    <p>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
+  </footer>
+</main>
 
-    <section id="about">
-      <div class="about">
-        <ul class="creds">
-          <li>擴大療癒法®一階工作坊教師<span class="en">Teacher, Magnified Healing® 1st Phase</span></li>
-          <li>擴大療癒法®一階線上復習與高深資訊教師<span class="en">Teacher, 1st Phase &amp; Advanced Studies</span></li>
-          <li>擴大療癒法®二階慶典指導員<span class="en">Teacher-Director, Magnified Healing® Celebration</span></li>
-          <li>擴大療癒法®三階光能療癒教師<span class="en">Teacher, 3rd Phase Light Healing</span></li>
-          <li>臼井聖火靈氣 3 &amp; 師傅階<span class="en">Usui / Holy Fire® III Reiki Master</span></li>
-          <li>聖火靈氣卡魯那師傅階<span class="en">Holy Fire® III Karuna Reiki®</span></li>
-          <li>光的課程（行星二）<span class="en">A Course in Light</span></li>
-          <li>動物溝通、譚崔項鍊、光語<span class="en">Animal Communication, Tantric Necklace, Light Language</span></li>
-        </ul>
-      </div>
-    </section>
-
-    <footer>
-      <div class="links">
-        <a href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener">Instagram @nieia9319</a>
-        <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
-        <a href="https://myship.7-11.com.tw/general/detail/GM2512190455934" target="_blank" rel="noopener">聖照選物（7-11 賣貨便）</a>
-        <a href="https://vocus.cc/salon/67e4f401fd897800019395cf" target="_blank" rel="noopener">方格子文章</a>
-      </div>
-      <p class="disclaimer">療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
-    </footer>
-
-  </div>
-</div>
+<nav class="tabbar" aria-label="主要選單">
+  <a href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>首頁</span></a>
+  <a href="/services"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-4 0-8-3-8-7 3 0 5 1 6 3-1-4 0-8 2-11 2 3 3 7 2 11 1-2 3-3 6-3 0 4-4 7-8 7z"/></svg><span>服務</span></a>
+  <a href="/oracle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 16l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg><span>訊息</span></a>
+  <a href="/workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5V19c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5z"/><path d="M12 6v13.5"/></svg><span>工作坊</span></a>
+  <a href="/about" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg><span>關於</span></a>
+</nav>
 <script src="/assets/holo.js"></script>
+<script src="/assets/site.js"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/assets/site.css">
 </head>
 <body>
@@ -15,83 +15,81 @@
 <canvas id="holoA" aria-hidden="true"></canvas>
 <div class="holoB" id="holoB" aria-hidden="true" hidden></div>
 <div class="grain" aria-hidden="true"></div>
-<div class="page">
-  <div class="wrap">
 
-    <header class="topbar">
-      <a class="wordmark" href="/" aria-label="阿綸涅亞 NIEIA 首頁">
-        <span class="zh">阿綸涅亞</span><span class="en">NIEIA</span>
-      </a>
-      <nav class="nav" aria-label="主要選單">
-        <a href="/services" aria-current="page">療癒服務</a>
-        <a href="/oracle">宇宙訊息</a>
-        <a href="/workshops">工作坊</a>
-        <a href="/about">關於阿綸</a>
-      </nav>
-    </header>
+<main class="app">
+  <header class="appbar">
+    <a class="back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>首頁</a>
+    <h1>療癒服務</h1>
+    <p class="sub">六種療癒方式，皆以 IG 視訊遠距進行，台灣與馬來西亞都能預約。選好項目後，預約時會依項目詢問需要的資料。</p>
+  </header>
 
-    <section class="page-head">
-      <h1>療癒服務</h1>
-      <p class="lede">六種療癒方式，皆以 IG 視訊遠距進行。預約時只需選擇項目與時段，相關問題會依項目自動出現。</p>
-    </section>
-
-    <section id="services">
-      <div class="services">
-        <article class="service">
-          <h3>擴大療癒</h3>
-          <div class="en">Magnified Healing®</div>
-          <p>連結觀音與宇宙源頭的能量，深入情緒與靈性層面，溫柔地清理與平衡。</p>
-          <div class="meta">價格即將公布</div>
-        </article>
-        <article class="service">
-          <h3>聖火／卡魯那靈氣</h3>
-          <div class="en">Holy Fire® Karuna Reiki</div>
-          <p>溫和而高頻的聖火能量，陪伴身心進入深層放鬆，協助淨化與調頻。</p>
-          <div class="meta">價格即將公布</div>
-        </article>
-        <article class="service">
-          <h3>準提佛母火典</h3>
-          <div class="en">Cundi Arathi</div>
-          <p>以準提佛母的火典儀式獻上祝福，為你的心願與生活帶來清淨的力量。</p>
-          <div class="meta">價格即將公布</div>
-        </article>
-        <article class="service">
-          <h3>引渡之光</h3>
-          <div class="en">Light of Transmutation</div>
-          <p>為已逝的摯愛送上光與祝福，陪伴離開的人與留下的人，各自安心前行。</p>
-          <div class="meta">價格即將公布</div>
-        </article>
-        <article class="service">
-          <h3>靈魂藍圖諮詢</h3>
-          <div class="en">Soul Plan Consultation</div>
-          <p>從你的出生資料，看見這一世的天賦、挑戰與靈魂想走的方向。</p>
-          <div class="meta">價格即將公布</div>
-        </article>
-        <article class="service">
-          <h3>動物溝通</h3>
-          <div class="en">Animal Communication</div>
-          <p>聆聽毛孩想說的話，理解牠的感受與需要，讓彼此的陪伴更靠近。</p>
-          <div class="meta">價格即將公布</div>
-        </article>
-      </div>
-      <div class="remote-note">
-        <span>療程一律先付款，完成匯款後寄出確認信。</span>
-        <span>需改期請於 24 小時前告知。</span>
-      </div>
-    </section>
-
-    <footer>
-      <div class="links">
-        <a href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener">Instagram @nieia9319</a>
-        <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
-        <a href="https://myship.7-11.com.tw/general/detail/GM2512190455934" target="_blank" rel="noopener">聖照選物（7-11 賣貨便）</a>
-        <a href="https://vocus.cc/salon/67e4f401fd897800019395cf" target="_blank" rel="noopener">方格子文章</a>
-      </div>
-      <p class="disclaimer">療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
-    </footer>
-
+  <div class="chips" role="group" aria-label="依類型篩選" data-filter-group="#svc-list">
+    <button class="chip" type="button" data-filter="all" aria-pressed="true">全部</button>
+    <button class="chip" type="button" data-filter="energy" aria-pressed="false">能量療癒</button>
+    <button class="chip" type="button" data-filter="blessing" aria-pressed="false">祝福儀式</button>
+    <button class="chip" type="button" data-filter="consult" aria-pressed="false">諮詢與溝通</button>
   </div>
-</div>
+
+  <section class="rows" id="svc-list" aria-label="療癒項目">
+      <a class="row glass" href="#booking" data-cat="energy">
+        <div class="art g5 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M50 14c8 14 24 24 24 44a24 24 0 0 1-48 0c0-12 7-19 12-25 1 9 5 13 10 14-3-12-2-22 2-33z" fill="rgba(255,255,255,.35)"/><path d="M50 52c4 6 9 9 9 16a9 9 0 0 1-18 0c0-6 5-10 9-16z" fill="#fff"/></svg></div>
+        <div class="text"><h3>擴大療癒</h3><span class="en">Magnified Healing®</span><span class="desc">連結觀音與宇宙源頭的能量，深入情緒與靈性層面，溫柔地清理與平衡。</span><span class="meta">IG 視訊遠距｜價格即將公布</span></div>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="row glass" href="#booking" data-cat="energy">
+        <div class="art g2 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="50" cy="50" r="14" fill="rgba(255,255,255,.9)"/><path d="M50 16v12M50 72v12M16 50h12M72 50h12M26 26l8 8M66 66l8 8M74 26l-8 8M34 66l-8 8"/></svg></div>
+        <div class="text"><h3>聖火／卡魯那靈氣</h3><span class="en">Holy Fire® Karuna Reiki</span><span class="desc">溫和而高頻的聖火能量，陪伴身心進入深層放鬆，協助淨化與調頻。</span><span class="meta">IG 視訊遠距｜價格即將公布</span></div>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="row glass" href="#booking" data-cat="blessing">
+        <div class="art g4 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M50 78c-14 0-28-8-30-22 10 0 18 4 22 10-4-14 0-28 8-38 8 10 12 24 8 38 4-6 12-10 22-10-2 14-16 22-30 22z" fill="rgba(255,255,255,.35)"/><path d="M28 86h44"/></svg></div>
+        <div class="text"><h3>準提佛母火典</h3><span class="en">Cundi Arathi</span><span class="desc">以準提佛母的火典儀式獻上祝福，為你的心願與生活帶來清淨的力量。</span><span class="meta">IG 視訊遠距｜價格即將公布</span></div>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="row glass" href="#booking" data-cat="blessing">
+        <div class="art g3 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="68" cy="30" r="9" fill="#fff"/><path d="M12 58c10-8 20-8 30 0s20 8 30 0 14-6 18-4"/><path d="M12 72c10-8 20-8 30 0s20 8 30 0 14-6 18-4" stroke-opacity=".7"/><path d="M12 86c10-8 20-8 30 0s20 8 30 0 14-6 18-4" stroke-opacity=".4"/></svg></div>
+        <div class="text"><h3>引渡之光</h3><span class="en">Light of Transmutation</span><span class="desc">為已逝的摯愛送上光與祝福，陪伴離開的人與留下的人，各自安心前行。</span><span class="meta">IG 視訊遠距｜價格即將公布</span></div>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="row glass" href="#booking" data-cat="consult">
+        <div class="art g6 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="50" cy="50" r="30"/><path d="M50 20v60M20 50h60M29 29l42 42M71 29L29 71" stroke-opacity=".55"/><circle cx="50" cy="50" r="10" fill="rgba(255,255,255,.9)"/></svg></div>
+        <div class="text"><h3>靈魂藍圖諮詢</h3><span class="en">Soul Plan Consultation</span><span class="desc">從你的出生資料，看見這一世的天賦、挑戰與靈魂想走的方向。</span><span class="meta">IG 視訊遠距｜價格即將公布</span></div>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="row glass" href="#booking" data-cat="consult">
+        <div class="art g1 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="50" cy="64" rx="17" ry="14" fill="rgba(255,255,255,.85)" stroke="none"/><circle cx="28" cy="44" r="7" fill="#fff" stroke="none"/><circle cx="42" cy="30" r="7" fill="#fff" stroke="none"/><circle cx="58" cy="30" r="7" fill="#fff" stroke="none"/><circle cx="72" cy="44" r="7" fill="#fff" stroke="none"/></svg></div>
+        <div class="text"><h3>動物溝通</h3><span class="en">Animal Communication</span><span class="desc">聆聽毛孩想說的話，理解牠的感受與需要，讓彼此的陪伴更靠近。</span><span class="meta">IG 視訊遠距｜價格即將公布</span></div>
+        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+  </section>
+
+  <section class="notice glass" id="booking" aria-labelledby="notice-title">
+    <h2 id="notice-title">預約須知</h2>
+    <ul>
+      <li>線上預約即將開放，目前請透過 IG 私訊 @nieia9319 預約。</li>
+      <li>療程一律先付款，完成匯款後寄出確認信。</li>
+      <li>需改期請於 24 小時前告知，改期需酌收行政費用。</li>
+      <li>療程前請先追蹤並私訊 @nieia9319，當天以 IG 視訊進行。</li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    <div class="links">
+      <a href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener">Instagram @nieia9319</a>
+      <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
+    </div>
+    <p>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
+  </footer>
+</main>
+
+<nav class="tabbar" aria-label="主要選單">
+  <a href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>首頁</span></a>
+  <a href="/services" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-4 0-8-3-8-7 3 0 5 1 6 3-1-4 0-8 2-11 2 3 3 7 2 11 1-2 3-3 6-3 0 4-4 7-8 7z"/></svg><span>服務</span></a>
+  <a href="/oracle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 16l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg><span>訊息</span></a>
+  <a href="/workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5V19c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5z"/><path d="M12 6v13.5"/></svg><span>工作坊</span></a>
+  <a href="/about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg><span>關於</span></a>
+</nav>
 <script src="/assets/holo.js"></script>
+<script src="/assets/site.js"></script>
 </body>
 </html>

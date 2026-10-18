@@ -7,7 +7,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@300;400;500&family=Noto+Serif+TC:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/assets/site.css">
 </head>
 <body>
@@ -15,60 +15,49 @@
 <canvas id="holoA" aria-hidden="true"></canvas>
 <div class="holoB" id="holoB" aria-hidden="true" hidden></div>
 <div class="grain" aria-hidden="true"></div>
-<div class="page">
-  <div class="wrap">
 
-    <header class="topbar">
-      <a class="wordmark" href="/" aria-label="阿綸涅亞 NIEIA 首頁">
-        <span class="zh">阿綸涅亞</span><span class="en">NIEIA</span>
-      </a>
-      <nav class="nav" aria-label="主要選單">
-        <a href="/services">療癒服務</a>
-        <a href="/oracle" aria-current="page">宇宙訊息</a>
-        <a href="/workshops">工作坊</a>
-        <a href="/about">關於阿綸</a>
-      </nav>
-    </header>
+<main class="app">
+  <header class="appbar centered">
+    <a class="back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>首頁</a>
+    <h1>宇宙訊息</h1>
+    <p class="sub">靜下來，深呼吸一次，想著此刻心裡的問題，再輕觸卡片。68 張來自光的訊息，會有一張剛好屬於你。</p>
+  </header>
 
-    <section class="page-head centered">
-      <h1>宇宙訊息</h1>
-      <p class="lede">靜下來，深呼吸一次，想著此刻心裡的問題，再輕觸卡片。68 張來自光的訊息，會有一張剛好屬於你。</p>
-    </section>
-
-    <section id="oracle">
-      <div class="oracle">
-        <div class="deck">
-          <div class="card" id="card" role="button" tabindex="0" aria-live="polite" aria-label="輕觸抽一張宇宙訊息">
-            <div class="card-inner">
-              <div class="face face-front">
-                <div class="sigil"><span class="label">宇宙訊息</span></div>
-              </div>
-              <div class="face face-back">
-                <h3 id="cardTitle">一切安好</h3>
-                <p id="cardMessage">別擔心，一切都在神聖的安排之中。</p>
-                <div class="count latin" id="cardCount"></div>
-              </div>
-            </div>
-          </div>
-          <button class="btn btn-ghost" id="drawBtn" type="button">抽一張</button>
-          <div class="deck-hint" id="deckHint">抽到的卡片之後可以存成圖片，分享到 IG 限時動態。</div>
+  <section class="deck" aria-label="抽卡">
+    <div class="card" id="card" role="button" tabindex="0" aria-live="polite" aria-label="輕觸抽一張宇宙訊息">
+      <div class="card-inner">
+        <div class="face face-front">
+          <div class="sigil"><span class="label">宇宙訊息</span></div>
+        </div>
+        <div class="face face-back">
+          <h3 id="cardTitle">一切安好</h3>
+          <p id="cardMessage">別擔心，一切都在神聖的安排之中。</p>
+          <div class="count" id="cardCount"></div>
         </div>
       </div>
-    </section>
+    </div>
+    <button class="btn btn-primary" id="drawBtn" type="button">抽一張</button>
+    <p class="deck-hint">抽到的卡片之後可以存成圖片，分享到 IG 限時動態。</p>
+  </section>
 
-    <footer>
-      <div class="links">
-        <a href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener">Instagram @nieia9319</a>
-        <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
-        <a href="https://myship.7-11.com.tw/general/detail/GM2512190455934" target="_blank" rel="noopener">聖照選物（7-11 賣貨便）</a>
-        <a href="https://vocus.cc/salon/67e4f401fd897800019395cf" target="_blank" rel="noopener">方格子文章</a>
-      </div>
-      <p class="disclaimer">療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
-    </footer>
+  <footer class="foot">
+    <div class="links">
+      <a href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener">Instagram @nieia9319</a>
+      <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
+    </div>
+    <p>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
+  </footer>
+</main>
 
-  </div>
-</div>
+<nav class="tabbar" aria-label="主要選單">
+  <a href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>首頁</span></a>
+  <a href="/services"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-4 0-8-3-8-7 3 0 5 1 6 3-1-4 0-8 2-11 2 3 3 7 2 11 1-2 3-3 6-3 0 4-4 7-8 7z"/></svg><span>服務</span></a>
+  <a href="/oracle" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 16l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg><span>訊息</span></a>
+  <a href="/workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5V19c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5z"/><path d="M12 6v13.5"/></svg><span>工作坊</span></a>
+  <a href="/about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg><span>關於</span></a>
+</nav>
 <script src="/assets/holo.js"></script>
+<script src="/assets/site.js"></script>
 <script src="/assets/oracle.js"></script>
 </body>
 </html>

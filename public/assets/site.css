@@ -189,8 +189,9 @@ p { margin: 0; max-width: 34em; }
 .face-front .label { font-family: var(--display); font-size: var(--step-2); letter-spacing: .3em; padding-left: .3em; position: relative; z-index: 1; }
 .face-back {
   transform: rotateY(180deg);
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9), transparent 55%),
+    linear-gradient(160deg, #F6F1FB 0%, #FBF3F7 50%, #F2F2FB 100%);
   align-content: center; gap: 1.2rem;
 }
 .face-back h3 { font-size: var(--step-2); letter-spacing: .12em; }
@@ -262,3 +263,12 @@ img { max-width: 100%; }
 .page-head.centered { justify-items: center; text-align: center; }
 .page-head.centered .lede { margin-inline: auto; }
 .page-head.centered + section .deck { justify-items: center; text-align: center; }
+
+/* iPhone Safari 翻牌時背面會透出正面文字：翻到一半再隱藏看不到的那一面 */
+.face-front { visibility: visible; transition: visibility 0s linear .45s; }
+.face-back { visibility: hidden; transition: visibility 0s linear .45s; }
+.card.flipped .face-front { visibility: hidden; }
+.card.flipped .face-back { visibility: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .face-front, .face-back { transition: none; }
+}

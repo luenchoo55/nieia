@@ -320,14 +320,55 @@
   // ---------- QR Code ----------
   var url = location.origin + "/market";
   $("mkUrl").value = url;
+  var qr = null;
   if (window.qrcode) {
-    var qr = window.qrcode(0, "M");
+    qr = window.qrcode(0, "M");
     qr.addData(url);
     qr.make();
     $("mkQr").innerHTML = qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
   } else {
     $("mkQr").textContent = "QR Code 暫時無法顯示，請複製網址自行製作。";
+    $("mkQrDl").hidden = true;
   }
+
+  // 下載可列印的 PNG：上方標題、中間 QR Code、下方網址
+  function qrImage() {
+    var n = qr.getModuleCount();
+    var W = 1200, pad = 110, size = W - pad * 2, cell = size / (n + 4);
+    var H = 1560;
+    var c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    var g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+    var font = getComputedStyle(document.body).fontFamily || "sans-serif";
+    g.fillStyle = "#3A2F4A"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.font = "600 76px " + font; g.fillText("掃描取號", W / 2, 120);
+    g.font = "40px " + font; g.fillStyle = "#6B5F7B"; g.fillText("阿綸涅亞 NIEIA", W / 2, 200);
+    var top = 260;
+    g.fillStyle = "#000";
+    for (var r = 0; r < n; r++) for (var k = 0; k < n; k++) {
+      if (qr.isDark(r, k)) g.fillRect(Math.floor(pad + (k + 2) * cell), Math.floor(top + (r + 2) * cell), Math.ceil(cell), Math.ceil(cell));
+    }
+    g.font = "34px " + font; g.fillStyle = "#6B5F7B";
+    g.fillText(url.replace(/^https?:\/\//, ""), W / 2, top + size + 70);
+    g.fillText("用手機相機對準，就能看到排隊情況並取號", W / 2, top + size + 130);
+    return c;
+  }
+  $("mkQrDl").addEventListener("click", function () {
+    if (!qr) return;
+    var b = this;
+    b.disabled = true;
+    qrImage().toBlob(function (blob) {
+      b.disabled = false;
+      if (!blob) { A.toast("下載失敗，請再試一次"); return; }
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "nieia-market-qr.png";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      A.toast("已下載 QR Code 圖片");
+    }, "image/png");
+  });
   $("mkCopy").addEventListener("click", function () {
     var b = this;
     var done = function () { b.textContent = "已複製"; setTimeout(function () { b.textContent = "複製網址"; }, 1600); };

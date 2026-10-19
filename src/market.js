@@ -34,23 +34,43 @@ async function getMarket(db) {
   return { ...DEFAULTS, ...(doc || {}) };
 }
 
-// 把「項目名稱｜價格」一行一個的文字，整理成清單
+// 現場項目：名稱、分鐘、價格、說明（也相容舊的「名稱｜價格」文字格式）
 function parseServices(input) {
-  const lines = Array.isArray(input) ? input : String(input || "").split("\n");
-  return lines
-    .map((line) => (typeof line === "string" ? line : `${line.name || ""}｜${line.price || ""}`))
-    .map((line) => line.split(/[｜|]/))
-    .map(([name, price]) => ({ name: str(name, 40), price: str(price, 30) }))
+  const list = Array.isArray(input) ? input : String(input || "").split("\n");
+  return list
+    .map((item) => {
+      if (typeof item === "string") {
+        const [name, price] = item.split(/[｜|]/);
+        return { name, price };
+      }
+      return item || {};
+    })
+    .map((s) => {
+      const minutes = Number(s.minutes);
+      return {
+        name: str(s.name, 40),
+        minutes: Number.isInteger(minutes) && minutes >= 1 && minutes <= 240 ? minutes : null,
+        price: str(s.price, 30),
+        desc: str(s.desc, 120),
+      };
+    })
     .filter((s) => s.name)
     .slice(0, 20);
 }
+
+// 依每位客人選的項目估算時間；沒選項目或項目沒填分鐘時，用「每位大約幾分鐘」
+function minutesFor(m, ticket) {
+  const s = (m.services || []).find((x) => x.name === ticket.service);
+  return (s && s.minutes) || m.minutesPer || 15;
+}
+const sumMinutes = (m, tickets) => tickets.reduce((n, t) => n + minutesFor(m, t), 0);
 
 async function queueState(db, m) {
   if (!m.sessionId) return { serving: null, waiting: 0 };
   const tickets = db.collection("tickets");
   const [serving] = await tickets.find({ sessionId: m.sessionId, status: "serving" }).sort({ number: -1 }).limit(1).toArray();
-  const waiting = await tickets.countDocuments({ sessionId: m.sessionId, status: "waiting" });
-  return { serving: serving ? serving.number : null, waiting };
+  const waitingList = await tickets.find({ sessionId: m.sessionId, status: "waiting" }).sort({ number: 1 }).limit(500).toArray();
+  return { serving: serving ? serving.number : null, waiting: waitingList.length, estMinutes: sumMinutes(m, waitingList) };
 }
 
 function publicMarket(m, q) {
@@ -66,7 +86,7 @@ function publicMarket(m, q) {
     services: m.services,
     serving: q.serving,
     waiting: q.waiting,
-    estMinutes: q.waiting * m.minutesPer,
+    estMinutes: q.estMinutes || 0,
   };
 }
 
@@ -136,8 +156,8 @@ export function mountMarket(app) {
       };
       const res = await tickets.insertOne(ticket);
       purge(c);
-      const ahead = await tickets.countDocuments({ sessionId: m.sessionId, status: "waiting", number: { $lt: number } });
-      return c.json({ ok: true, ticket: { id: res.insertedId.toString(), token: ticket.token, number, name, service, status: "waiting", ahead, estMinutes: ahead * m.minutesPer } });
+      const aheadList = await tickets.find({ sessionId: m.sessionId, status: "waiting", number: { $lt: number } }).limit(500).toArray();
+      return c.json({ ok: true, ticket: { id: res.insertedId.toString(), token: ticket.token, number, name, service, status: "waiting", ahead: aheadList.length, estMinutes: sumMinutes(m, aheadList) } });
     });
   });
 
@@ -156,16 +176,17 @@ export function mountMarket(app) {
       if (!t) return bad(c, "找不到這個號碼。", 404);
       const m = await getMarket(db);
       const sameSession = m.active && m.sessionId === t.sessionId;
-      const ahead = t.status === "waiting"
-        ? await db.collection("tickets").countDocuments({ sessionId: t.sessionId, status: "waiting", number: { $lt: t.number } })
-        : 0;
+      const aheadList = t.status === "waiting"
+        ? await db.collection("tickets").find({ sessionId: t.sessionId, status: "waiting", number: { $lt: t.number } }).limit(500).toArray()
+        : [];
+      const ahead = aheadList.length;
       const q = sameSession ? await queueState(db, m) : { serving: null };
       return c.json({
         ok: true,
         ticket: {
           id: t._id.toString(), number: t.number, name: t.name, service: t.service,
           status: sameSession ? t.status : (t.status === "waiting" || t.status === "serving" ? "ended" : t.status),
-          ahead, estMinutes: ahead * m.minutesPer, serving: q.serving,
+          ahead, estMinutes: sumMinutes(m, aheadList), serving: q.serving,
         },
       });
     })

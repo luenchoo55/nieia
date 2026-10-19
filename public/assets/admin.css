@@ -177,3 +177,18 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 }
 .mail-actions .mail-btn:hover { background: var(--tint); }
 .bc-email { font-size: var(--step--2); color: var(--ink-soft); overflow-wrap: anywhere; }
+
+/* 現場項目 */
+.items-editor { gap: .6rem; }
+.item-list { display: grid; gap: 6px; }
+.item-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .8rem; padding: .6rem .8rem; border-radius: var(--r-sm); background: rgba(255, 255, 255, .6); border: 1px solid var(--line); }
+.item-info { display: grid; min-width: 0; font-size: var(--step--1); color: var(--ink-soft); }
+.item-info strong { color: var(--ink); font-size: var(--step-0); }
+.item-desc { font-size: var(--step--2); overflow-wrap: anywhere; }
+.item-row .actions { display: flex; gap: .3rem; }
+.item-row .actions button { border: 1px solid var(--line); background: rgba(255, 255, 255, .7); border-radius: 999px; padding: .25rem .75rem; font-size: var(--step--1); cursor: pointer; min-height: 36px; color: var(--ink); }
+.item-row .actions button:disabled { opacity: .35; cursor: default; }
+.item-add { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.2fr); gap: .8rem; align-items: end; padding: 1rem; border-radius: var(--r-md); background: var(--tint); }
+.item-add .wide { grid-column: 1 / -1; }
+.item-add .btn { grid-column: 1 / -1; justify-self: start; }
+@media (max-width: 520px) { .item-add { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .item-add .field:first-child { grid-column: 1 / -1; } }

@@ -7,6 +7,7 @@
   var data = null;
   var timer = null;
   var formDirty = false;
+  var items = [];
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -44,7 +45,8 @@
       $("mkHours").value = m.hours || "";
       $("mkMinutes").value = m.minutesPer || 15;
       $("mkNote").value = m.note || "";
-      $("mkServices").value = (m.services || []).map(function (s) { return s.price ? s.name + "｜" + s.price : s.name; }).join("\n");
+      items = (m.services || []).map(function (s) { return { name: s.name, minutes: s.minutes || null, price: s.price || "", desc: s.desc || "" }; });
+      renderItems();
     }
 
     var tickets = data.tickets || [];
@@ -162,7 +164,76 @@
     });
   });
 
-  ["mkLocation", "mkAddress", "mkHours", "mkMinutes", "mkServices", "mkNote"].forEach(function (id) {
+  // ---------- 現場項目 ----------
+  function renderItems() {
+    var box = $("mkItems");
+    box.innerHTML = "";
+    if (!items.length) { box.appendChild(el("p", "hint", "還沒有項目。用下方表單新增，客人取號時可以選擇想做的項目。")); return; }
+    items.forEach(function (it, i) {
+      var row = el("div", "item-row");
+      var info = el("div", "item-info");
+      info.appendChild(el("strong", null, it.name));
+      var meta = [];
+      if (it.minutes) meta.push(it.minutes + " 分鐘");
+      if (it.price) meta.push(it.price);
+      if (meta.length) info.appendChild(el("span", null, meta.join("｜")));
+      if (it.desc) info.appendChild(el("span", "item-desc", it.desc));
+      row.appendChild(info);
+      var actions = el("div", "actions");
+      var up = btn("↑", function () { moveItem(i, -1); }); up.setAttribute("aria-label", "往上移"); up.disabled = i === 0;
+      var down = btn("↓", function () { moveItem(i, 1); }); down.setAttribute("aria-label", "往下移"); down.disabled = i === items.length - 1;
+      var del = btn("刪除", function () { items.splice(i, 1); renderItems(); saveItems("已刪除項目"); });
+      actions.appendChild(up); actions.appendChild(down); actions.appendChild(del);
+      row.appendChild(actions);
+      box.appendChild(row);
+    });
+  }
+  function moveItem(i, d) {
+    var j = i + d;
+    if (j < 0 || j >= items.length) return;
+    var t = items[i]; items[i] = items[j]; items[j] = t;
+    renderItems();
+    saveItems("已調整順序");
+  }
+  $("mkIAdd").addEventListener("click", function () {
+    var msg = $("mkIMsg");
+    var name = $("mkIName").value.trim();
+    var min = $("mkIMin").value.trim();
+    if (!name) { msg.textContent = "請填寫項目名稱。"; $("mkIName").focus(); return; }
+    if (min && !(Number.isInteger(Number(min)) && Number(min) >= 1 && Number(min) <= 240)) { msg.textContent = "分鐘要是 1 到 240 之間的整數。"; return; }
+    if (items.some(function (x) { return x.name === name; })) { msg.textContent = "已經有同名的項目了。"; return; }
+    if (items.length >= 20) { msg.textContent = "最多 20 個項目。"; return; }
+    msg.textContent = "";
+    items.push({ name: name, minutes: min ? Number(min) : null, price: $("mkIPrice").value.trim(), desc: $("mkIDesc").value.trim() });
+    ["mkIName", "mkIMin", "mkIPrice", "mkIDesc"].forEach(function (id) { $(id).value = ""; });
+    renderItems();
+    saveItems("已新增項目");
+    $("mkIName").focus();
+  });
+  ["mkIName", "mkIMin", "mkIPrice", "mkIDesc"].forEach(function (id) {
+    $(id).addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("mkIAdd").click(); } });
+  });
+  // 項目一變動就存，不用另外按儲存
+  function saveItems(doneText) {
+    return A.api("/api/admin/market", { method: "PUT", body: formBody() }).then(function (r) {
+      if (r.status === 401) { A.checkSession(); return r; }
+      if (!r.ok) { A.toast(r.message || "儲存失敗"); return r; }
+      var keepDirty = formDirty;
+      formDirty = true; // 不要讓伺服器回傳的資料蓋掉正在編輯的欄位
+      data = r; render();
+      formDirty = keepDirty;
+      A.toast(doneText);
+      return r;
+    });
+  }
+  function formBody() {
+    return {
+      location: $("mkLocation").value, address: $("mkAddress").value, hours: $("mkHours").value,
+      minutesPer: Number($("mkMinutes").value), services: items, note: $("mkNote").value,
+    };
+  }
+
+  ["mkLocation", "mkAddress", "mkHours", "mkMinutes", "mkNote"].forEach(function (id) {
     $(id).addEventListener("input", function () { formDirty = true; });
   });
   function save() {
@@ -172,10 +243,7 @@
     $("mkSave").disabled = true;
     return A.api("/api/admin/market", {
       method: "PUT",
-      body: {
-        location: $("mkLocation").value, address: $("mkAddress").value, hours: $("mkHours").value,
-        minutesPer: Number($("mkMinutes").value), services: $("mkServices").value, note: $("mkNote").value,
-      },
+      body: formBody(),
     }).then(function (r) {
       $("mkSave").disabled = false;
       if (r.status === 401) { A.checkSession(); return r; }

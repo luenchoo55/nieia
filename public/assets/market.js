@@ -57,7 +57,16 @@
     ul.innerHTML = "";
     (market.services || []).forEach(function (s) {
       var li = document.createElement("li");
-      li.appendChild(document.createTextNode(s.name));
+      var left = document.createElement("div");
+      left.className = "ms-name";
+      var name = document.createElement("strong");
+      name.textContent = s.name;
+      left.appendChild(name);
+      var meta = [];
+      if (s.minutes) meta.push("約 " + s.minutes + " 分鐘");
+      if (s.desc) meta.push(s.desc);
+      if (meta.length) { var m = document.createElement("small"); m.textContent = meta.join("｜"); left.appendChild(m); }
+      li.appendChild(left);
       if (s.price) { var b = document.createElement("span"); b.textContent = s.price; li.appendChild(b); }
       ul.appendChild(li);
     });
@@ -76,7 +85,7 @@
       sel.appendChild(none);
       market.services.forEach(function (s) {
         var o = document.createElement("option");
-        o.value = s.name; o.textContent = s.name + (s.price ? "（" + s.price + "）" : "");
+        o.value = s.name; o.textContent = s.name + (s.price || s.minutes ? "（" + [s.price, s.minutes ? s.minutes + " 分鐘" : ""].filter(Boolean).join("，") + "）" : "");
         sel.appendChild(o);
       });
     }

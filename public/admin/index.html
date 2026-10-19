@@ -161,8 +161,19 @@
             <label class="field" for="mkLocation"><span>地點名稱</span><input id="mkLocation" maxlength="60" placeholder="例如 華山文創市集" required></label>
             <label class="field" for="mkAddress"><span>攤位位置（選填）</span><input id="mkAddress" maxlength="120" placeholder="例如 B 區 12 號攤"></label>
             <label class="field" for="mkHours"><span>擺攤時間</span><input id="mkHours" maxlength="60" placeholder="例如 10/26（六）13:00–19:00"></label>
-            <label class="field" for="mkMinutes"><span>每位大約幾分鐘</span><input id="mkMinutes" type="number" inputmode="numeric" min="1" max="240" value="15"></label>
-            <label class="field wide" for="mkServices"><span>現場項目與價格（一行一個，用｜隔開價格）</span><textarea id="mkServices" rows="4" placeholder="宇宙訊息抽卡｜NT$200&#10;能量療癒體驗 15 分鐘｜NT$600"></textarea></label>
+            <label class="field" for="mkMinutes"><span>每位大約幾分鐘（沒填分鐘的項目用這個估算）</span><input id="mkMinutes" type="number" inputmode="numeric" min="1" max="240" value="15"></label>
+            <div class="field wide items-editor">
+              <span>現場項目</span>
+              <div class="item-list" id="mkItems" aria-live="polite"></div>
+              <div class="item-add">
+                <label class="field" for="mkIName"><span>新項目名稱</span><input id="mkIName" maxlength="40" placeholder="例如 宇宙訊息抽卡"></label>
+                <label class="field" for="mkIMin"><span>分鐘</span><input id="mkIMin" type="number" inputmode="numeric" min="1" max="240" placeholder="例如 15"></label>
+                <label class="field" for="mkIPrice"><span>價格</span><input id="mkIPrice" maxlength="30" placeholder="NT$200 或 隨喜"></label>
+                <label class="field wide" for="mkIDesc"><span>說明（客人會看到）</span><input id="mkIDesc" maxlength="120" placeholder="選填"></label>
+                <p class="form-msg wide" id="mkIMsg" role="alert"></p>
+                <button class="btn btn-ghost" id="mkIAdd" type="button">新增項目</button>
+              </div>
+            </div>
             <label class="field wide" for="mkNote"><span>給客人的提醒（選填）</span><textarea id="mkNote" rows="2" maxlength="300" placeholder="例如 現場可刷卡、LINE Pay"></textarea></label>
           </div>
           <p class="form-msg" id="mkMsg" role="alert"></p>

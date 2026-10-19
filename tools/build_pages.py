@@ -277,6 +277,7 @@ creds = [
  ("flame","g5","擴大療癒法®一階工作坊教師","Teacher, Magnified Healing® 1st Phase"),
  ("flame","g5","擴大療癒法®一階線上復習與高深資訊教師","Teacher, 1st Phase & Advanced Studies"),
  ("flame","g5","擴大療癒法®二階慶典指導員","Teacher-Director, Magnified Healing® Celebration"),
+ ("flame","g5","擴大療癒法®三階光能療癒習修者","Practitioner, 3rd Phase Light Healing"),
  ("flame","g5","擴大療癒法®三階光能療癒教師","Teacher, 3rd Phase Light Healing"),
  ("sun","g2","臼井聖火靈氣 I & II 階","Usui / Holy Fire® Reiki I & II"),
  ("sun","g2","臼井聖火靈氣 III & 師傅階","Usui / Holy Fire® III Reiki Master"),

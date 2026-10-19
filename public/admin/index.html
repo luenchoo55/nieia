@@ -62,6 +62,7 @@
     <div class="seg admin-tabs" role="tablist" aria-label="後台功能" data-tabs>
       <button type="button" role="tab" id="tab-bookings" aria-controls="panel-bookings" aria-selected="true">預約</button>
       <button type="button" role="tab" id="tab-slots" aria-controls="panel-slots" aria-selected="false" tabindex="-1">時段</button>
+      <button type="button" role="tab" id="tab-market" aria-controls="panel-market" aria-selected="false" tabindex="-1">擺攤</button>
       <button type="button" role="tab" id="tab-services" aria-controls="panel-services" aria-selected="false" tabindex="-1">療癒項目</button>
       <button type="button" role="tab" id="tab-products" aria-controls="panel-products" aria-selected="false" tabindex="-1">商品</button>
     </div>
@@ -132,6 +133,51 @@
     </section>
     </div>
 
+    <div class="panel-stack" id="panel-market" role="tabpanel" aria-labelledby="tab-market" hidden>
+      <section class="glass form-card market-status" aria-labelledby="mk-status-title">
+        <div class="block-head"><h2 id="mk-status-title">擺攤狀態</h2><span class="pill closed" id="mkPill">未擺攤</span></div>
+        <p class="hint" id="mkHint">填好下方的擺攤資訊並儲存，就可以開始擺攤。開始後，首頁會出現擺攤提醒，客人可以用手機取號。</p>
+        <div class="editor-actions">
+          <button class="btn btn-primary" id="mkStart" type="button">開始擺攤</button>
+          <button class="btn btn-ghost" id="mkAccept" type="button" hidden>暫停取號</button>
+          <button class="btn btn-ghost danger-btn" id="mkEnd" type="button" hidden>結束擺攤</button>
+        </div>
+      </section>
+
+      <section class="glass form-card queue-admin" id="mkQueue" hidden aria-labelledby="mk-q-title">
+        <div class="block-head"><h2 id="mk-q-title">叫號</h2><span class="count" id="mkCount"></span></div>
+        <div class="now-serving">
+          <div><span class="hint">現在叫號</span><strong id="mkServing">—</strong><span class="hint" id="mkServingName"></span></div>
+          <button class="btn btn-primary call-next" id="mkNext" type="button">叫下一位</button>
+        </div>
+        <div class="q-list" id="mkWaiting"></div>
+        <details class="q-past"><summary id="mkPastLabel">已結束的號碼</summary><div class="q-list" id="mkPast"></div></details>
+      </section>
+
+      <section class="glass form-card" aria-labelledby="mk-info-title">
+        <h2 id="mk-info-title">擺攤資訊</h2>
+        <form id="mkForm" novalidate>
+          <div class="field-grid">
+            <label class="field" for="mkLocation"><span>地點名稱</span><input id="mkLocation" maxlength="60" placeholder="例如 華山文創市集" required></label>
+            <label class="field" for="mkAddress"><span>攤位位置（選填）</span><input id="mkAddress" maxlength="120" placeholder="例如 B 區 12 號攤"></label>
+            <label class="field" for="mkHours"><span>擺攤時間</span><input id="mkHours" maxlength="60" placeholder="例如 10/26（六）13:00–19:00"></label>
+            <label class="field" for="mkMinutes"><span>每位大約幾分鐘</span><input id="mkMinutes" type="number" inputmode="numeric" min="1" max="240" value="15"></label>
+            <label class="field wide" for="mkServices"><span>現場項目與價格（一行一個，用｜隔開價格）</span><textarea id="mkServices" rows="4" placeholder="宇宙訊息抽卡｜NT$200&#10;能量療癒體驗 15 分鐘｜NT$600"></textarea></label>
+            <label class="field wide" for="mkNote"><span>給客人的提醒（選填）</span><textarea id="mkNote" rows="2" maxlength="300" placeholder="例如 現場可刷卡、LINE Pay"></textarea></label>
+          </div>
+          <p class="form-msg" id="mkMsg" role="alert"></p>
+          <button class="btn btn-primary btn-block" id="mkSave" type="submit">儲存擺攤資訊</button>
+        </form>
+      </section>
+
+      <section class="glass form-card qr-card" aria-labelledby="mk-qr-title">
+        <h2 id="mk-qr-title">排隊頁 QR Code</h2>
+        <p class="hint">印出來放在攤位上，客人掃描就能取號。</p>
+        <div class="qr" id="mkQr" aria-label="排隊頁 QR Code"></div>
+        <div class="copy-row"><input id="mkUrl" readonly aria-label="排隊頁網址"><button class="btn btn-ghost" id="mkCopy" type="button">複製網址</button></div>
+      </section>
+    </div>
+
     <div class="panel-stack" id="panel-services" role="tabpanel" aria-labelledby="tab-services" hidden>
       <div class="block-head"><h2>療癒項目</h2><button class="btn btn-primary btn-small" type="button" data-new="services">新增療癒項目</button></div>
       <p class="hint">上架的項目會顯示在「療癒服務」頁，排序也會照這裡的順序。</p>
@@ -156,5 +202,7 @@
 <script src="/assets/admin.js"></script>
 <script src="/assets/admin-catalog.js"></script>
 <script src="/assets/admin-bookings.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="/assets/admin-market.js"></script>
 </body>
 </html>

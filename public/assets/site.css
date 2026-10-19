@@ -509,3 +509,59 @@ fieldset.field legend { padding: 0; margin-bottom: .35rem; }
 }
 .field textarea { line-height: 1.7; resize: vertical; }
 .field input:focus, .field select:focus, .field textarea:focus, .other:focus { outline: 2px solid var(--button); outline-offset: 1px; border-color: transparent; }
+
+/* ---------- 擺攤 ---------- */
+.dot { width: 10px; height: 10px; border-radius: 50%; background: #E0567A; box-shadow: 0 0 0 0 rgba(224, 86, 122, .6); animation: pulse 1.8s ease-out infinite; flex: none; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(224, 86, 122, .55); } 70% { box-shadow: 0 0 0 10px rgba(224, 86, 122, 0); } 100% { box-shadow: 0 0 0 0 rgba(224, 86, 122, 0); } }
+
+.market-banner {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  padding: 12px 12px 12px 16px; border-radius: var(--r-md); text-decoration: none; color: var(--ink);
+  border: 1px solid rgba(224, 86, 122, .35);
+}
+.mb-text { display: grid; min-width: 0; font-size: var(--step--1); line-height: 1.5; }
+.mb-text strong { font-size: var(--step-0); letter-spacing: .06em; }
+.mb-text span { color: var(--ink-soft); overflow-wrap: anywhere; }
+
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 30; display: grid; align-items: end; justify-items: center;
+  background: rgba(54, 47, 82, .28);
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.sheet { width: min(100%, 460px); padding: 1.8rem 1.4rem 1.4rem; display: grid; justify-items: center; gap: .9rem; text-align: center; background: var(--glass-strong); }
+.sheet h2 { font-size: var(--step-2); letter-spacing: .12em; }
+.sheet p { color: var(--ink-soft); font-size: var(--step--1); }
+.orb.small { width: 84px; }
+@media (min-width: 640px) { .sheet-backdrop { align-items: center; } }
+
+.market { display: grid; gap: 1.2rem; }
+.m-info { padding: 1.3rem 1.2rem; display: grid; gap: .3rem; }
+.m-live { display: flex; align-items: center; gap: .55rem; color: #B23A5C; font-size: var(--step--1); letter-spacing: .12em; }
+.m-info h2 { font-size: var(--step-2); letter-spacing: .08em; }
+.m-sub { color: var(--ink-soft); font-size: var(--step--1); }
+.m-note { margin-top: .4rem; font-size: var(--step--1); background: var(--tint); padding: .6rem .9rem; border-radius: var(--r-sm); }
+.m-services { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; }
+.m-services li { display: flex; justify-content: space-between; gap: 1rem; padding: .55rem 0; border-top: 1px solid var(--line); font-size: var(--step--1); }
+.m-services li span { color: var(--button); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.board { display: grid; grid-template-columns: 1fr 1fr; gap: 0; padding: .4rem; }
+.board .cell { display: grid; justify-items: center; gap: .1rem; padding: 1rem .6rem; text-align: center; }
+.board .cell + .cell { border-left: 1px solid var(--line); }
+.board .cell.wide { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--line); padding: .8rem; }
+.board .label { font-size: var(--step--1); color: var(--ink-soft); letter-spacing: .08em; }
+.board strong { font-family: var(--latin); font-weight: 500; font-size: clamp(2.4rem, 12vw, 3.4rem); line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--ink); }
+.board strong.small { font-family: var(--display); font-size: var(--step-1); }
+.board .unit { font-size: var(--step--1); color: var(--ink-soft); }
+
+.ticket { padding: 1.6rem 1.3rem; display: grid; justify-items: center; text-align: center; gap: .4rem; }
+.ticket .label { font-size: var(--step--1); color: var(--ink-soft); letter-spacing: .12em; }
+.t-number { font-family: var(--latin); font-weight: 500; font-size: clamp(4rem, 22vw, 6rem); line-height: 1; color: var(--button); font-variant-numeric: tabular-nums; }
+.t-name { color: var(--ink-soft); font-size: var(--step--1); }
+.t-status { max-width: 26em; line-height: 1.8; }
+.ticket.is-called { border: 2px solid #E0567A; animation: called 1.6s ease-in-out infinite; }
+.ticket.is-called .t-status { font-weight: 600; color: #B23A5C; font-size: var(--step-1); }
+@keyframes called { 0%, 100% { box-shadow: 0 0 0 0 rgba(224, 86, 122, .45); } 50% { box-shadow: 0 0 0 12px rgba(224, 86, 122, 0); } }
+.take { padding: 1.3rem 1.2rem; display: grid; gap: 1rem; }
+.take h2 { font-size: var(--step-1); letter-spacing: .08em; }
+
+@media (prefers-reduced-motion: reduce) { .dot, .ticket.is-called { animation: none; } }

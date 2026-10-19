@@ -124,7 +124,25 @@ def row(href, glyph, g, title, en, desc, meta, cat=None, tag="a"):
 reasons = [("moon","g1","身體需要放鬆"),("wave","g2","情緒需要梳理"),("heart","g4","關係渴望和諧"),
            ("spiral","g3","想要個人成長"),("constellation","g6","尋求靈性支持"),("sun","g5","為特定事件祝福")]
 tiles = '\n'.join(f'      <a class="tile glass" href="/services">{art(gl,g)}<span class="label">{t}</span></a>' for gl,g,t in reasons)
-home = f'''  <header class="appbar">
+home = f'''  <a class="market-banner glass" id="marketBanner" href="/market" hidden>
+    <span class="dot" aria-hidden="true"></span>
+    <span class="mb-text"><strong>阿綸正在擺攤</strong><span id="mbDetail"></span></span>
+    <span class="go">{CHEV}</span>
+  </a>
+
+  <div class="sheet-backdrop" id="marketSheet" hidden>
+    <section class="sheet glass" role="dialog" aria-modal="true" aria-labelledby="msTitle">
+      <div class="orb small">{G["bag"]}</div>
+      <h2 id="msTitle">阿綸正在擺攤</h2>
+      <p id="msDetail"></p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/market">現場取號</a>
+        <button class="btn btn-ghost" id="msClose" type="button">先逛逛網站</button>
+      </div>
+    </section>
+  </div>
+
+  <header class="appbar">
     <p class="sub"><span data-greeting>你好，</span>歡迎來到</p>
     <div class="brand"><h1>阿綸涅亞</h1><span class="en">NIEIA</span></div>
   </header>
@@ -199,7 +217,7 @@ home = f'''  <header class="appbar">
 {row("/about","lotus","g1","關於阿綸","","在台灣當上班族的馬來西亞人，斜槓身心靈。","")}
     </div>
   </section>'''
-page('index.html', '阿綸涅亞 NIEIA', 'home', home, ['/assets/cards.js', '/assets/home-draw.js'])
+page('index.html', '阿綸涅亞 NIEIA', 'home', home, ['/assets/cards.js', '/assets/home-draw.js', '/assets/market-banner.js'])
 
 # ---------------- services ----------------
 svc = [
@@ -508,6 +526,64 @@ booking = f'''{appbar("預約療癒", "選擇療癒項目與時段，填寫資�
     </section>
   </section>'''
 page('booking.html', '預約療癒｜阿綸涅亞 NIEIA', 'services', booking, ['/assets/glyphs.js', '/assets/catalog.js', '/assets/booking.js'])
+
+
+# ---------------- market ----------------
+market = f'''{appbar("擺攤排隊", "在攤位現場取號，輪到你時這個頁面會提醒你。頁面每 15 秒自動更新，請保持開啟。")}
+
+  <section class="feature glass" id="mClosed" hidden aria-labelledby="mClosedTitle">
+    <div class="orb">{G["bag"]}</div>
+    <h2 id="mClosedTitle">目前沒有在擺攤</h2>
+    <p>下次擺攤的時間和地點，會先公布在 IG。歡迎追蹤 @nieia4928，也可以先線上預約遠距療癒。</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">追蹤 IG</a>
+      <a class="btn btn-ghost" href="/services">線上預約</a>
+    </div>
+  </section>
+
+  <p class="muted" id="mLoading">正在查看擺攤狀態…</p>
+
+  <div class="market" id="mOpen" hidden>
+    <section class="m-info glass" aria-labelledby="mLocation">
+      <p class="m-live"><span class="dot" aria-hidden="true"></span>擺攤中</p>
+      <h2 id="mLocation"></h2>
+      <p class="m-sub" id="mAddress"></p>
+      <p class="m-sub" id="mHours"></p>
+      <p class="m-note" id="mNote" hidden></p>
+      <ul class="m-services" id="mServices" hidden></ul>
+    </section>
+
+    <section class="board glass" aria-label="排隊情況">
+      <div class="cell"><span class="label">現在叫號</span><strong id="mServing">—</strong></div>
+      <div class="cell"><span class="label">等候中</span><strong id="mWaiting">0</strong><span class="unit">位</span></div>
+      <div class="cell wide"><span class="label">現在取號約需等候</span><strong class="small" id="mEst">不用等</strong></div>
+    </section>
+
+    <section class="ticket glass" id="tView" hidden aria-live="polite" aria-labelledby="tLabel">
+      <p class="label" id="tLabel">你的號碼</p>
+      <strong class="t-number" id="tNumber"></strong>
+      <p class="t-name" id="tName"></p>
+      <p class="t-status" id="tStatus"></p>
+      <div class="actions">
+        <button class="btn btn-ghost" id="tCancel" type="button">取消這個號碼</button>
+        <button class="btn btn-primary" id="tAgain" type="button" hidden>重新取號</button>
+      </div>
+    </section>
+
+    <form class="take glass" id="takeForm" novalidate aria-labelledby="takeTitle">
+      <h2 id="takeTitle">現場取號</h2>
+      <p class="muted" id="takePaused" hidden>目前暫停取號，請稍後再試，或直接到攤位詢問。</p>
+      <div class="field-grid">
+        <label class="field" for="kName"><span>名字或暱稱（叫號時會用到）</span><input id="kName" maxlength="20" autocomplete="nickname" required></label>
+        <label class="field" for="kIg"><span>IG 帳號（選填）</span><input id="kIg" maxlength="31" autocomplete="off" placeholder="方便之後聯絡"></label>
+        <label class="field wide" for="kService" id="kServiceField" hidden><span>想做的項目</span><select id="kService"></select></label>
+        <label class="hp" aria-hidden="true">請勿填寫<input id="kWebsite" tabindex="-1" autocomplete="off"></label>
+      </div>
+      <p class="form-msg" id="takeMsg" role="alert"></p>
+      <button class="btn btn-primary btn-block" id="takeBtn" type="submit">取號</button>
+    </form>
+  </div>'''
+page('market.html', '擺攤排隊｜阿綸涅亞 NIEIA', '', market, ['/assets/market.js'])
 
 # ---------------- 404 ----------------
 nf = f'''  <section class="feature glass" aria-labelledby="nf-title" style="margin-top:2rem">

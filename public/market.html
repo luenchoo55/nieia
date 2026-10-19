@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>擺攤排隊｜阿綸涅亞 NIEIA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/icons/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#9698E7">
+<meta name="apple-mobile-web-app-title" content="NIEIA">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="aura" aria-hidden="true"></div>
+<canvas id="holoA" aria-hidden="true"></canvas>
+<div class="holoB" id="holoB" aria-hidden="true" hidden></div>
+<div class="grain" aria-hidden="true"></div>
+
+<main class="app">
+  <header class="appbar">
+    <a class="back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>首頁</a>
+    <h1>擺攤排隊</h1>
+    <p class="sub">在攤位現場取號，輪到你時這個頁面會提醒你。頁面每 15 秒自動更新，請保持開啟。</p>
+  </header>
+
+  <section class="feature glass" id="mClosed" hidden aria-labelledby="mClosedTitle">
+    <div class="orb"><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 36h52l-4 46H28z" fill="rgba(255,255,255,.35)"/><path d="M38 36v-6a12 12 0 0 1 24 0v6"/></svg></div>
+    <h2 id="mClosedTitle">目前沒有在擺攤</h2>
+    <p>下次擺攤的時間和地點，會先公布在 IG。歡迎追蹤 @nieia4928，也可以先線上預約遠距療癒。</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">追蹤 IG</a>
+      <a class="btn btn-ghost" href="/services">線上預約</a>
+    </div>
+  </section>
+
+  <p class="muted" id="mLoading">正在查看擺攤狀態…</p>
+
+  <div class="market" id="mOpen" hidden>
+    <section class="m-info glass" aria-labelledby="mLocation">
+      <p class="m-live"><span class="dot" aria-hidden="true"></span>擺攤中</p>
+      <h2 id="mLocation"></h2>
+      <p class="m-sub" id="mAddress"></p>
+      <p class="m-sub" id="mHours"></p>
+      <p class="m-note" id="mNote" hidden></p>
+      <ul class="m-services" id="mServices" hidden></ul>
+    </section>
+
+    <section class="board glass" aria-label="排隊情況">
+      <div class="cell"><span class="label">現在叫號</span><strong id="mServing">—</strong></div>
+      <div class="cell"><span class="label">等候中</span><strong id="mWaiting">0</strong><span class="unit">位</span></div>
+      <div class="cell wide"><span class="label">現在取號約需等候</span><strong class="small" id="mEst">不用等</strong></div>
+    </section>
+
+    <section class="ticket glass" id="tView" hidden aria-live="polite" aria-labelledby="tLabel">
+      <p class="label" id="tLabel">你的號碼</p>
+      <strong class="t-number" id="tNumber"></strong>
+      <p class="t-name" id="tName"></p>
+      <p class="t-status" id="tStatus"></p>
+      <div class="actions">
+        <button class="btn btn-ghost" id="tCancel" type="button">取消這個號碼</button>
+        <button class="btn btn-primary" id="tAgain" type="button" hidden>重新取號</button>
+      </div>
+    </section>
+
+    <form class="take glass" id="takeForm" novalidate aria-labelledby="takeTitle">
+      <h2 id="takeTitle">現場取號</h2>
+      <p class="muted" id="takePaused" hidden>目前暫停取號，請稍後再試，或直接到攤位詢問。</p>
+      <div class="field-grid">
+        <label class="field" for="kName"><span>名字或暱稱（叫號時會用到）</span><input id="kName" maxlength="20" autocomplete="nickname" required></label>
+        <label class="field" for="kIg"><span>IG 帳號（選填）</span><input id="kIg" maxlength="31" autocomplete="off" placeholder="方便之後聯絡"></label>
+        <label class="field wide" for="kService" id="kServiceField" hidden><span>想做的項目</span><select id="kService"></select></label>
+        <label class="hp" aria-hidden="true">請勿填寫<input id="kWebsite" tabindex="-1" autocomplete="off"></label>
+      </div>
+      <p class="form-msg" id="takeMsg" role="alert"></p>
+      <button class="btn btn-primary btn-block" id="takeBtn" type="submit">取號</button>
+    </form>
+  </div>
+
+  <footer class="foot">
+    <div class="links">
+      <a href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">Instagram @nieia4928</a>
+      <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
+    </div>
+    <p>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
+  </footer>
+</main>
+
+<nav class="tabbar" aria-label="主要選單">
+  <a href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>首頁</span></a>
+  <a href="/services"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-4 0-8-3-8-7 3 0 5 1 6 3-1-4 0-8 2-11 2 3 3 7 2 11 1-2 3-3 6-3 0 4-4 7-8 7z"/></svg><span>服務</span></a>
+  <a href="/oracle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 16l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg><span>訊息</span></a>
+  <a href="/workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5V19c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5z"/><path d="M12 6v13.5"/></svg><span>工作坊</span></a>
+  <a href="/about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg><span>關於</span></a>
+</nav>
+<script src="/assets/holo.js"></script>
+<script src="/assets/site.js"></script>
+<script src="/assets/market.js"></script>
+</body>
+</html>

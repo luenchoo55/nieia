@@ -24,6 +24,24 @@
 <div class="grain" aria-hidden="true"></div>
 
 <main class="app">
+  <a class="market-banner glass" id="marketBanner" href="/market" hidden>
+    <span class="dot" aria-hidden="true"></span>
+    <span class="mb-text"><strong>阿綸正在擺攤</strong><span id="mbDetail"></span></span>
+    <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+  </a>
+
+  <div class="sheet-backdrop" id="marketSheet" hidden>
+    <section class="sheet glass" role="dialog" aria-modal="true" aria-labelledby="msTitle">
+      <div class="orb small"><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 36h52l-4 46H28z" fill="rgba(255,255,255,.35)"/><path d="M38 36v-6a12 12 0 0 1 24 0v6"/></svg></div>
+      <h2 id="msTitle">阿綸正在擺攤</h2>
+      <p id="msDetail"></p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/market">現場取號</a>
+        <button class="btn btn-ghost" id="msClose" type="button">先逛逛網站</button>
+      </div>
+    </section>
+  </div>
+
   <header class="appbar">
     <p class="sub"><span data-greeting>你好，</span>歡迎來到</p>
     <div class="brand"><h1>阿綸涅亞</h1><span class="en">NIEIA</span></div>
@@ -132,5 +150,6 @@
 <script src="/assets/site.js"></script>
 <script src="/assets/cards.js"></script>
 <script src="/assets/home-draw.js"></script>
+<script src="/assets/market-banner.js"></script>
 </body>
 </html>

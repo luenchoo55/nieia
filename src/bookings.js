@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { withDb, ensureIndexes } from "./db.js";
 import { requireAdmin, sameOrigin } from "./auth.js";
+import { notifyNewBooking, notifyPaymentReported } from "./notify.js";
 
 // ---------- 匯款資訊（只在預約成功後提供給該位客人） ----------
 const PAYMENT = {
@@ -196,6 +197,7 @@ export function mountBookings(app) {
         await slots.updateOne({ _id: slotId, bookingRef: ref }, { $set: { status: "open" }, $unset: { bookingRef: "" } });
         throw err;
       }
+      notifyNewBooking(c, { ...booking, weekday: weekday(booking.date) });
       return c.json({ ok: true, token: booking.token, booking: publicView(booking) });
     });
   });
@@ -239,6 +241,7 @@ export function mountBookings(app) {
         { _id: b._id },
         { $set: { paymentReport, status: "payment_reported", updatedAt: new Date() } }
       );
+      notifyPaymentReported(c, { ...b, weekday: weekday(b.date) }, paymentReport);
       return c.json({ ok: true, booking: publicView({ ...b, paymentReport, status: "payment_reported" }) });
     });
   });

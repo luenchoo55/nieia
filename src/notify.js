@@ -41,7 +41,7 @@ ${table(rows)}
 </div>`;
 }
 
-async function send(env, subject, html) {
+async function send(env, subject, html, replyTo) {
   if (!env.RESEND_API_KEY || !env.NOTIFY_EMAIL) return { skipped: true };
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -49,6 +49,7 @@ async function send(env, subject, html) {
     body: JSON.stringify({
       from: env.NOTIFY_FROM || "NIEIA 預約通知 <onboarding@resend.dev>",
       to: [env.NOTIFY_EMAIL],
+      ...(replyTo ? { reply_to: replyTo } : {}),
       subject,
       html,
     }),
@@ -67,7 +68,7 @@ export function notifyNewBooking(c, b) {
   const extra = Object.entries(b.extra || {}).map(([k, v]) => [EXTRA_LABELS[k] || k, k === "practiced" ? (v === "yes" ? "有" : "沒有") : v]);
   const html = layout(
     "有新的預約",
-    "客人已送出預約，正在等待匯款。收到款項後，請到後台按「確認收款」。",
+    "客人已送出預約，正在等待匯款。收到款項後，請到後台按「確認收款」。直接按「回覆」就會寄給客人。",
     [
       ["療癒項目", b.serviceName],
       ["時段", when(b)],
@@ -85,7 +86,7 @@ export function notifyNewBooking(c, b) {
     ],
     adminUrl
   );
-  c.executionCtx.waitUntil(send(c.env, `新預約：${b.serviceName}｜${b.date} ${b.start}｜${b.name}`, html).catch((e) => console.error(e)));
+  c.executionCtx.waitUntil(send(c.env, `新預約：${b.serviceName}｜${b.date} ${b.start}｜${b.name}`, html, b.email).catch((e) => console.error(e)));
 }
 
 // 客人回報匯款
@@ -93,7 +94,7 @@ export function notifyPaymentReported(c, b, report) {
   const adminUrl = new URL("/admin", c.req.url).toString();
   const html = layout(
     "客人回報已匯款",
-    "請核對帳戶是否收到款項，確認後到後台按「確認收款」。",
+    "請核對帳戶是否收到款項，確認後到後台按「確認收款」。直接按「回覆」就會寄給客人。",
     [
       ["療癒項目", b.serviceName],
       ["時段", when(b)],
@@ -107,5 +108,5 @@ export function notifyPaymentReported(c, b, report) {
     ],
     adminUrl
   );
-  c.executionCtx.waitUntil(send(c.env, `已回報匯款：${b.name}｜末五碼 ${report.last5}`, html).catch((e) => console.error(e)));
+  c.executionCtx.waitUntil(send(c.env, `已回報匯款：${b.name}｜末五碼 ${report.last5}`, html, b.email).catch((e) => console.error(e)));
 }

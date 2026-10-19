@@ -170,3 +170,10 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .admin-tabs button { white-space: nowrap; padding-inline: .3rem; }
 @media (max-width: 420px) { .admin-tabs button { font-size: .8rem; letter-spacing: .02em; } }
 .q-info .q-tel { color: var(--button); font-variant-numeric: tabular-nums; width: fit-content; }
+.mail-actions { align-items: center; }
+.mail-actions .mail-btn {
+  display: inline-flex; align-items: center; min-height: 40px; padding: .4rem 1rem; border-radius: 999px;
+  border: 1px solid var(--button); color: var(--button); background: rgba(255, 255, 255, .7); text-decoration: none; font-size: var(--step--1);
+}
+.mail-actions .mail-btn:hover { background: var(--tint); }
+.bc-email { font-size: var(--step--2); color: var(--ink-soft); overflow-wrap: anywhere; }

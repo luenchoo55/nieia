@@ -36,6 +36,53 @@
     return Number(p[1]) + " 月 " + Number(p[2]) + " 日（" + weekday + "）";
   }
 
+  // 依預約狀態準備好回信內容，打開郵件 App
+  function mailto(b) {
+    var when = prettyDate(b.date, b.weekday) + " " + b.start + "–" + b.end;
+    var fee = b.priceMode === "inquiry" ? "隨喜服務" : money(b.amount, b.currency, b.priceMode);
+    var subject, lines;
+    if (b.status === "confirmed") {
+      subject = "【阿綸涅亞 NIEIA】預約確認：" + b.serviceName + " " + when;
+      lines = [
+        b.name + " 你好：",
+        "",
+        "已經收到你的款項，這次的預約正式成立，期待與你相見。",
+        "",
+        "療癒項目：" + b.serviceName,
+        "時段：" + when,
+        "進行方式：IG 視訊（請先追蹤並私訊 @nieia4928）",
+        "預約編號：" + b.ref,
+        "",
+        "需要改期請於 24 小時前告知。",
+        "",
+        "阿綸",
+      ];
+    } else {
+      subject = "【阿綸涅亞 NIEIA】已收到你的預約：" + b.serviceName + " " + when;
+      lines = [
+        b.name + " 你好：",
+        "",
+        "謝謝你的預約，以下是預約內容：",
+        "",
+        "療癒項目：" + b.serviceName,
+        "時段：" + when,
+        "費用：" + fee,
+        "預約編號：" + b.ref,
+        "",
+        b.paymentReport ? "已看到你回報的匯款（末五碼 " + b.paymentReport.last5 + "），核對後會再通知你。" : "完成匯款後，請在預約頁面回報匯款末五碼，阿綸確認收款後預約就正式成立。",
+        "療程當天以 IG 視訊進行，請先追蹤並私訊 @nieia4928。",
+        "",
+        "阿綸",
+      ];
+    }
+    return "mailto:" + encodeURIComponent(b.email) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
+  }
+
+  function copyEmail(b, btn) {
+    var done = function () { btn.textContent = "已複製"; setTimeout(function () { btn.textContent = "複製 Email"; }, 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(b.email).then(done, function () {});
+  }
+
   function load() {
     if (!items.length) { list.innerHTML = ""; list.appendChild(el("p", "empty glass", "載入中…")); }
     A.api("/api/admin/bookings").then(function (r) {
@@ -115,6 +162,17 @@
     row(dl, "想說的話", b.note);
     details.appendChild(dl);
     c.appendChild(details);
+
+    var mail = el("div", "actions mail-actions");
+    var write = el("a", "mail-btn", "寫信給客人");
+    write.href = mailto(b);
+    mail.appendChild(write);
+    var copy = el("button", null, "複製 Email");
+    copy.type = "button";
+    copy.addEventListener("click", function () { copyEmail(b, copy); });
+    mail.appendChild(copy);
+    mail.appendChild(el("span", "bc-email", b.email));
+    c.appendChild(mail);
 
     if (b.status !== "cancelled") {
       var actions = el("div", "actions");

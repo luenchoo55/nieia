@@ -225,11 +225,10 @@ svc = [
  ("sun","g2","聖火／卡魯那靈氣","Holy Fire® Karuna Reiki","溫和而高頻的聖火能量，陪伴身心進入深層放鬆，協助淨化與調頻。","energy"),
  ("lotus","g4","準提佛母火典","Cundi Arathi","以準提佛母的火典儀式獻上祝福，為你的心願與生活帶來清淨的力量。","blessing"),
  ("wave","g3","引渡之光","Light of Transmutation","為已逝的摯愛送上光與祝福，陪伴離開的人與留下的人，各自安心前行。","blessing"),
- ("blueprint","g6","靈魂藍圖諮詢","Soul Plan Consultation","從你的出生資料，看見這一世的天賦、挑戰與靈魂想走的方向。","consult"),
  ("paw","g1","動物溝通","Animal Communication","聆聽毛孩想說的話，理解牠的感受與需要，讓彼此的陪伴更靠近。","consult"),
 ]
 svc_rows = '\n'.join(row("/booking", gl, g, t, en, d, "IG 視訊遠距｜價格即將公布", cat) for gl,g,t,en,d,cat in svc)
-services = f'''{appbar("療癒服務", "六種療癒方式，皆以 IG 視訊遠距進行，台灣與馬來西亞都能預約。選好項目後，預約時會依項目詢問需要的資料。")}
+services = f'''{appbar("療癒服務", "多種療癒方式，皆以 IG 視訊遠距進行，台灣與馬來西亞都能預約。選好項目後，預約時會依項目詢問需要的資料。")}
 
   <div class="chips" role="group" aria-label="依類型篩選" data-filter-group="#svc-list">
     <button class="chip" type="button" data-filter="all" aria-pressed="true">全部</button>

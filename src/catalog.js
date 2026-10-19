@@ -84,7 +84,7 @@ export const SCHEMAS = {
       { name: "聖火／卡魯那靈氣", en: "Holy Fire® Karuna Reiki", desc: "溫和而高頻的聖火能量，陪伴身心進入深層放鬆，協助淨化與調頻。", category: "energy", glyph: "sun", palette: "g2" },
       { name: "準提佛母火典", en: "Cundi Arathi", desc: "以準提佛母的火典儀式獻上祝福，為你的心願與生活帶來清淨的力量。", category: "blessing", glyph: "lotus", palette: "g4" },
       { name: "引渡之光", extra: "departed", en: "Light of Transmutation", desc: "為已逝的摯愛送上光與祝福，陪伴離開的人與留下的人，各自安心前行。", category: "blessing", glyph: "wave", palette: "g3" },
-      { name: "靈魂藍圖諮詢", extra: "soulplan", en: "Soul Plan Consultation", desc: "從你的出生資料，看見這一世的天賦、挑戰與靈魂想走的方向。", category: "consult", glyph: "blueprint", palette: "g6" },
+      { name: "靈魂藍圖諮詢", extra: "soulplan", published: false, en: "Soul Plan Consultation", desc: "從你的出生資料，看見這一世的天賦、挑戰與靈魂想走的方向。", category: "consult", glyph: "blueprint", palette: "g6" },
       { name: "動物溝通", extra: "animal", en: "Animal Communication", desc: "聆聽毛孩想說的話，理解牠的感受與需要，讓彼此的陪伴更靠近。", category: "consult", glyph: "paw", palette: "g1" },
     ],
   },

@@ -148,6 +148,9 @@ export function mountBookings(app) {
 
       const service = await db.collection("services").findOne({ _id: new ObjectId(body.serviceId), published: true });
       if (!service) return bad(c, "這個療癒項目目前沒有開放預約，請重新選擇。", 409);
+      if (!service.priceMode || service.priceMode === "coming") {
+        return bad(c, "這個療癒項目的價格還沒公布，暫時無法預約，請選擇其他項目。", 409);
+      }
 
       const { out: extra, errors: extraErrors } = cleanExtra(service.extra || "none", body.extra);
       if (extraErrors.length) return bad(c, extraErrors.join(" "));

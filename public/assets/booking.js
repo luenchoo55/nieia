@@ -55,10 +55,12 @@
       return;
     }
     state.services.forEach(function (s) {
-      var label = el("label", "choice");
+      var bookable = s.priceMode && s.priceMode !== "coming";
+      var label = el("label", "choice" + (bookable ? "" : " is-disabled"));
       var input = el("input");
       input.type = "radio"; input.name = "service"; input.value = s.id;
-      input.checked = state.service && state.service.id === s.id;
+      input.disabled = !bookable;
+      input.checked = bookable && state.service && state.service.id === s.id;
       input.addEventListener("change", function () { state.service = s; renderExtra(); renderSummary(); });
       label.appendChild(input);
       label.appendChild(window.nieiaArt(s.glyph, s.palette));
@@ -66,7 +68,7 @@
       text.appendChild(el("strong", null, s.name));
       var meta = [];
       if (s.duration) meta.push(s.duration + " 分鐘");
-      meta.push(window.nieiaPrice(s, "service"));
+      meta.push(bookable ? window.nieiaPrice(s, "service") : "價格即將公布，尚未開放預約");
       text.appendChild(el("span", "meta", meta.join("｜")));
       label.appendChild(text);
       box.appendChild(label);
@@ -355,7 +357,7 @@
     api("/api/services").then(function (r) {
       state.services = r.ok ? r.items : [];
       var want = params.get("service");
-      state.service = state.services.filter(function (s) { return s.id === want; })[0] || null;
+      state.service = state.services.filter(function (s) { return s.id === want && s.priceMode && s.priceMode !== "coming"; })[0] || null;
       renderServices();
       renderExtra();
       renderSummary();

@@ -35,8 +35,9 @@
       if (!data.ok || !data.items) return;
       svcList.innerHTML = "";
       data.items.forEach(function (s) {
-        var row = el("a", "row glass");
-        row.href = "/booking?service=" + encodeURIComponent(s.id);
+        var bookable = s.priceMode && s.priceMode !== "coming";
+        var row = el(bookable ? "a" : "div", "row glass" + (bookable ? "" : " not-bookable"));
+        if (bookable) row.href = "/booking?service=" + encodeURIComponent(s.id);
         row.setAttribute("data-cat", s.category);
         row.appendChild(window.nieiaArt(s.glyph, s.palette));
         var text = el("div", "text");
@@ -45,12 +46,14 @@
         if (s.desc) text.appendChild(el("span", "desc", s.desc));
         var meta = ["IG 視訊遠距"];
         if (s.duration) meta.push(s.duration + " 分鐘");
-        meta.push(window.nieiaPrice(s, "service"));
+        meta.push(bookable ? window.nieiaPrice(s, "service") : "價格即將公布，尚未開放預約");
         text.appendChild(el("span", "meta", meta.join("｜")));
         row.appendChild(text);
-        var go = el("span", "go");
-        go.innerHTML = CHEV;
-        row.appendChild(go);
+        if (bookable) {
+          var go = el("span", "go");
+          go.innerHTML = CHEV;
+          row.appendChild(go);
+        }
         svcList.appendChild(row);
       });
       if (!data.items.length) svcList.appendChild(el("p", "notice glass", "目前沒有開放的療癒項目，請追蹤 IG @nieia4928 留意最新消息。"));

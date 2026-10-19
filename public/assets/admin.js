@@ -296,6 +296,10 @@
   });
 
   // 給療癒項目與商品管理使用
+  // 預約與時段在同一頁：切回這頁或預約狀態改變時，重新載入時段
+  $("tab-bookings").addEventListener("click", loadSlots);
+  document.addEventListener("nieia:slots", loadSlots);
+
   window.NieiaAdmin = { api: api, toast: toast, checkSession: checkSession };
 
   checkSession();

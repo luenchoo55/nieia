@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="NIEIA">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=LXGW+WenKai+TC:wght@400;700&display=swap">
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="stylesheet" href="/assets/admin.css">
 </head>
@@ -60,15 +60,15 @@
   <!-- 時段管理 -->
   <div id="dashView" hidden>
     <div class="seg admin-tabs" role="tablist" aria-label="後台功能" data-tabs>
-      <button type="button" role="tab" id="tab-bookings" aria-controls="panel-bookings" aria-selected="true">預約</button>
-      <button type="button" role="tab" id="tab-slots" aria-controls="panel-slots" aria-selected="false" tabindex="-1">時段</button>
+      <button type="button" role="tab" id="tab-bookings" aria-controls="panel-bookings" aria-selected="true">預約與時段</button>
       <button type="button" role="tab" id="tab-market" aria-controls="panel-market" aria-selected="false" tabindex="-1">擺攤</button>
       <button type="button" role="tab" id="tab-services" aria-controls="panel-services" aria-selected="false" tabindex="-1">療癒項目</button>
       <button type="button" role="tab" id="tab-products" aria-controls="panel-products" aria-selected="false" tabindex="-1">商品</button>
     </div>
 
     <div class="panel-stack" id="panel-bookings" role="tabpanel" aria-labelledby="tab-bookings">
-      <div class="block-head"><h2>預約</h2><span class="count" id="bookingCount"></span></div>
+    <section class="block" aria-labelledby="booking-title">
+      <div class="block-head"><h2 id="booking-title">預約</h2><span class="count" id="bookingCount"></span></div>
       <div class="chips" role="group" aria-label="依狀態篩選" id="bookingFilter">
         <button class="chip" type="button" data-bstatus="todo" aria-pressed="true">待處理</button>
         <button class="chip" type="button" data-bstatus="confirmed" aria-pressed="false">已成立</button>
@@ -76,9 +76,8 @@
         <button class="chip" type="button" data-bstatus="all" aria-pressed="false">全部</button>
       </div>
       <div class="booking-list" id="bookingList" aria-live="polite"></div>
-    </div>
+    </section>
 
-    <div class="panel-stack" id="panel-slots" role="tabpanel" aria-labelledby="tab-slots" hidden>
     <section class="glass form-card" aria-labelledby="add-title">
       <h2 id="add-title">新增可預約時段</h2>
       <form id="slotForm" novalidate>

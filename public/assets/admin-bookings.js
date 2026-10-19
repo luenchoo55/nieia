@@ -212,6 +212,8 @@
       Object.assign(b, r.item);
       render();
       A.toast(doneText + (r.slotReopened ? "，時段已重新開放" : ""));
+      // 時段列表在同一頁，跟著更新
+      document.dispatchEvent(new Event("nieia:slots"));
     });
   }
 

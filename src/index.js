@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { MongoClient } from "mongodb";
 
-const app = new Hono();
+// strict: false 讓 /api/health 和 /api/health/ 都能使用
+const app = new Hono({ strict: false });
 
 // 每個請求建立一個短暫的資料庫連線，用完即關閉。
 // Cloudflare Worker 的請求彼此獨立，不能共用長期連線。
@@ -45,6 +46,8 @@ app.get("/api/health", async (c) => {
   }
 });
 
-app.notFound((c) => c.json({ ok: false, message: "找不到這個 API。" }, 404));
+app.notFound((c) =>
+  c.json({ ok: false, message: "找不到這個 API。", path: new URL(c.req.url).pathname }, 404)
+);
 
 export default app;

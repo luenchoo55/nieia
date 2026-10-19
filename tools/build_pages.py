@@ -178,24 +178,6 @@ home = f'''  <a class="market-banner glass" id="marketBanner" href="/market" hid
           <span class="mini-face mini-back"><span class="mini-title"></span></span>
         </span>
       </button>
-      <button class="mini-card" type="button" aria-label="選第 4 張牌">
-        <span class="mini-inner">
-          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
-          <span class="mini-face mini-back"><span class="mini-title"></span></span>
-        </span>
-      </button>
-      <button class="mini-card" type="button" aria-label="選第 5 張牌">
-        <span class="mini-inner">
-          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
-          <span class="mini-face mini-back"><span class="mini-title"></span></span>
-        </span>
-      </button>
-      <button class="mini-card" type="button" aria-label="選第 6 張牌">
-        <span class="mini-inner">
-          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
-          <span class="mini-face mini-back"><span class="mini-title"></span></span>
-        </span>
-      </button>
     </div>
     <div class="reading glass" id="reading" hidden>
       <h3 id="readTitle"></h3>

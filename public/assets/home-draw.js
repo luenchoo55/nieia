@@ -1,4 +1,4 @@
-// 首頁：6 張蓋著的宇宙訊息牌，憑直覺選一張翻開
+// 首頁：3 張蓋著的宇宙訊息牌，憑直覺選一張翻開
 (function () {
   "use strict";
   var spread = document.getElementById("spread");
@@ -14,7 +14,7 @@
   var deal = [];
   var picked = false;
 
-  // 每次洗牌，6 張牌各自對應一則不重複的訊息
+  // 每次洗牌，3 張牌各自對應一則不重複的訊息
   function shuffle() {
     var pool = cards.map(function (_, i) { return i; });
     for (var i = pool.length - 1; i > 0; i--) {

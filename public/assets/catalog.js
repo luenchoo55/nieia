@@ -45,6 +45,8 @@
         if (s.en) text.appendChild(el("span", "en", s.en));
         if (s.desc) text.appendChild(el("span", "desc", s.desc));
         var meta = [];
+        if (s.mode === "onsite") meta.push("現場進行");
+        else if (s.mode === "both") meta.push("遠距或現場");
         if (s.duration) meta.push(s.duration + " 分鐘");
         meta.push(bookable ? window.nieiaPrice(s, "service") : "價格即將公布，尚未開放預約");
         text.appendChild(el("span", "meta", meta.join("｜")));

@@ -6,6 +6,7 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 
 const REGION = { TW: "台灣", MY: "馬來西亞" };
+const MODE = { remote: "IG 視訊遠距", onsite: "現場進行" };
 const EXTRA_LABELS = {
   practiced: "曾習修擴大療癒", departedName: "亡者全名", relation: "與客人的關係",
   birthName: "出生時的完整姓名", birthDate: "出生日期",
@@ -72,6 +73,7 @@ export function notifyNewBooking(c, b) {
     [
       ["療癒項目", b.serviceName],
       ["時段", when(b)],
+      ["進行方式", MODE[b.mode || "remote"]],
       ["姓名", b.name],
       ["IG", "@" + b.instagram],
       ["Email", b.email],
@@ -98,6 +100,7 @@ export function notifyPaymentReported(c, b, report) {
     [
       ["療癒項目", b.serviceName],
       ["時段", when(b)],
+      ["進行方式", MODE[b.mode || "remote"]],
       ["姓名", b.name],
       ["IG", "@" + b.instagram],
       ["金額", money(b.amount, b.currency, b.priceMode)],

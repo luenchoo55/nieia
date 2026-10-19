@@ -40,6 +40,8 @@
   function mailto(b) {
     var when = prettyDate(b.date, b.weekday) + " " + b.start + "–" + b.end;
     var fee = b.priceMode === "inquiry" ? "隨喜服務" : money(b.amount, b.currency, b.priceMode);
+    var onsite = b.mode === "onsite";
+    var how = onsite ? "現場進行（地點：＿＿＿＿）" : "IG 視訊（請先追蹤並私訊 @nieia4928）";
     var subject, lines;
     if (b.status === "confirmed") {
       subject = "【阿綸涅亞 NIEIA】預約確認：" + b.serviceName + " " + when;
@@ -50,7 +52,7 @@
         "",
         "療癒項目：" + b.serviceName,
         "時段：" + when,
-        "進行方式：IG 視訊（請先追蹤並私訊 @nieia4928）",
+        "進行方式：" + how,
         "預約編號：" + b.ref,
         "",
         "需要改期請於 24 小時前告知。",
@@ -70,7 +72,7 @@
         "預約編號：" + b.ref,
         "",
         b.paymentReport ? "已看到你回報的匯款（末五碼 " + b.paymentReport.last5 + "），核對後會再通知你。" : "完成匯款後，請在預約頁面回報匯款末五碼，阿綸確認收款後預約就正式成立。",
-        "療程當天以 IG 視訊進行，請先追蹤並私訊 @nieia4928。",
+        onsite ? "療程在現場進行，地點：＿＿＿＿。" : "療程當天以 IG 視訊進行，請先追蹤並私訊 @nieia4928。",
         "",
         "阿綸",
       ];
@@ -134,7 +136,7 @@
 
     var main = el("p", "bc-main");
     main.appendChild(el("strong", null, b.name));
-    main.appendChild(document.createTextNode("　" + b.serviceName + "　" + money(b.amount, b.currency, b.priceMode)));
+    main.appendChild(document.createTextNode("　" + b.serviceName + (b.mode === "onsite" ? "（現場）" : "") + "　" + money(b.amount, b.currency, b.priceMode)));
     c.appendChild(main);
 
     if (b.paymentReport) {

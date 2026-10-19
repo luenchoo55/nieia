@@ -150,7 +150,7 @@ home = f'''  <a class="market-banner glass" id="marketBanner" href="/market" hid
   <section class="feature glass" aria-labelledby="door-title">
     <div class="orb">{G["door"]}</div>
     <h2 id="door-title">療癒，是為你打開一扇門</h2>
-    <p>在安全、不帶評判的空間裡，陪你看見自己本來就擁有的力量。台灣與馬來西亞皆可透過 IG 視訊遠距進行。</p>
+    <p>在安全、不帶評判的空間裡，陪你看見自己本來就擁有的力量。台灣與馬來西亞皆可預約，可透過 IG 視訊遠距或現場進行。</p>
     <div class="actions">
       <a class="btn btn-primary" href="/services">預約療癒</a>
       <a class="btn btn-ghost" href="/oracle">抽一張宇宙訊息</a>
@@ -228,7 +228,7 @@ svc = [
  ("paw","g1","動物溝通","Animal Communication","聆聽毛孩想說的話，理解牠的感受與需要，讓彼此的陪伴更靠近。","consult"),
 ]
 svc_rows = '\n'.join(row("", gl, g, t, en, d, "價格即將公布，尚未開放預約", cat, tag="div").replace('class="row glass"', 'class="row glass not-bookable"') for gl,g,t,en,d,cat in svc)
-services = f'''{appbar("療癒服務", "多種療癒方式，皆以 IG 視訊遠距進行，台灣與馬來西亞都能預約。選好項目後，預約時會依項目詢問需要的資料。")}
+services = f'''{appbar("療癒服務", "多種療癒方式，可透過 IG 視訊遠距或現場進行，台灣與馬來西亞都能預約。選好項目後，預約時會依項目詢問需要的資料。")}
 
   <div class="chips" role="group" aria-label="依類型篩選" data-filter-group="#svc-list">
     <button class="chip" type="button" data-filter="all" aria-pressed="true">全部</button>
@@ -437,9 +437,16 @@ booking = f'''{appbar("預約療癒", "選擇療癒項目與時段，填寫資�
             <label><input type="radio" name="region" value="MY" id="regionMY"><span>馬來西亞</span></label>
           </div>
         </fieldset>
+        <fieldset class="field wide" id="modeField" hidden>
+          <legend>進行方式</legend>
+          <div class="pills-choice">
+            <label><input type="radio" name="mode" value="remote"><span>IG 視訊遠距</span></label>
+            <label><input type="radio" name="mode" value="onsite"><span>現場進行</span></label>
+          </div>
+        </fieldset>
         <label class="field" for="fName"><span>姓名</span><input id="fName" autocomplete="name" maxlength="40" required></label>
         <label class="field" for="fEmail"><span>Email</span><input id="fEmail" type="email" autocomplete="email" maxlength="120" required></label>
-        <label class="field" for="fIg"><span>IG 帳號（療程以 IG 視訊進行）</span><input id="fIg" autocomplete="off" maxlength="31" placeholder="例如 nieia4928" required></label>
+        <label class="field" for="fIg"><span>IG 帳號（聯絡用，遠距療程也以 IG 視訊進行）</span><input id="fIg" autocomplete="off" maxlength="31" placeholder="例如 nieia4928" required></label>
         <label class="field" for="fAge"><span>年齡</span>
           <select id="fAge" required>
             <option value="">請選擇</option>

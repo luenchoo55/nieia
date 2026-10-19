@@ -74,6 +74,7 @@ export const SCHEMAS = {
       priceTwd: F.int(0, 1000000),
       priceMyr: F.int(0, 100000),
       extra: F.oneOf(EXTRAS, "none"),
+      mode: F.oneOf(["remote", "onsite", "both"], "remote"),
       glyph: F.oneOf(GLYPHS, "lotus"),
       palette: F.oneOf(PALETTES, "g1"),
       published: F.bool(true),

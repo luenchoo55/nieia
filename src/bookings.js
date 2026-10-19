@@ -98,6 +98,7 @@ function publicView(b) {
     amount: b.amount,
     currency: b.currency,
     priceMode: b.priceMode || null,
+    mode: b.mode || "remote",
     payment: PAYMENT[b.region],
     paymentReport: b.paymentReport || null,
   };
@@ -152,6 +153,11 @@ export function mountBookings(app) {
         return bad(c, "這個療癒項目的價格還沒公布，暫時無法預約，請選擇其他項目。", 409);
       }
 
+      // 進行方式：項目設定「遠距或現場皆可」時由客人選擇
+      const svcMode = service.mode || "remote";
+      const mode = svcMode === "both" ? (["remote", "onsite"].includes(body.mode) ? body.mode : null) : svcMode;
+      if (!mode) return bad(c, "請選擇想要的進行方式（IG 視訊遠距或現場）。");
+
       const { out: extra, errors: extraErrors } = cleanExtra(service.extra || "none", body.extra);
       if (extraErrors.length) return bad(c, extraErrors.join(" "));
 
@@ -189,6 +195,7 @@ export function mountBookings(app) {
         currency: PAYMENT[region].currency,
         amount,
         priceMode: service.priceMode || "coming",
+        mode,
         name, email, instagram, age, gender, reasons, otherReason, note,
         extra,
         ip: ip(c),

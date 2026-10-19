@@ -40,6 +40,23 @@
     var r = document.querySelector('input[name="region"]:checked');
     return r ? r.value : null;
   }
+  // 進行方式：項目固定一種，或「皆可」時由客人選
+  function modeOf() {
+    var s = state.service;
+    if (!s) return null;
+    if (s.mode === "both") { var r = document.querySelector('input[name="mode"]:checked'); return r ? r.value : null; }
+    return s.mode || "remote";
+  }
+  function modeText(m) {
+    if (m === "onsite") return "現場進行（地點由阿綸另外告知）";
+    if (m === "remote") return "IG 視訊遠距";
+    return "";
+  }
+  function renderMode() {
+    var both = !!(state.service && state.service.mode === "both");
+    $("modeField").hidden = !both;
+    if (!both) document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.checked = false; });
+  }
   function priceFor(service, reg) {
     if (!service || service.priceMode !== "fixed") return null;
     var v = reg === "MY" ? service.priceMyr : service.priceTwd;
@@ -61,12 +78,14 @@
       input.type = "radio"; input.name = "service"; input.value = s.id;
       input.disabled = !bookable;
       input.checked = bookable && state.service && state.service.id === s.id;
-      input.addEventListener("change", function () { state.service = s; renderExtra(); renderSummary(); });
+      input.addEventListener("change", function () { state.service = s; renderMode(); renderExtra(); renderSummary(); });
       label.appendChild(input);
       label.appendChild(window.nieiaArt(s.glyph, s.palette));
       var text = el("span", "text");
       text.appendChild(el("strong", null, s.name));
       var meta = [];
+      if (s.mode === "onsite") meta.push("現場進行");
+      else if (s.mode === "both") meta.push("遠距或現場");
       if (s.duration) meta.push(s.duration + " 分鐘");
       meta.push(bookable ? window.nieiaPrice(s, "service") : "價格即將公布，尚未開放預約");
       text.appendChild(el("span", "meta", meta.join("｜")));
@@ -190,10 +209,10 @@
       ["療癒項目", state.service ? state.service.name : "尚未選擇"],
       ["時段", state.slot ? prettyDate(state.slot.date, state.slot.weekday) + " " + state.slot.start + "–" + state.slot.end : "尚未選擇"],
       ["費用", state.service ? (state.service.priceMode === "inquiry" ? "隨喜服務，金額依你的心意" : (priceFor(state.service, reg) || (state.service.priceMode === "fixed" && !reg ? "選擇居住地後顯示" : "阿綸會另外告知金額"))) : ""],
-      ["進行方式", "IG 視訊遠距"],
+      ["進行方式", state.service ? (modeText(modeOf()) || "請在上方選擇") : ""],
     ]);
   }
-  document.querySelectorAll('input[name="region"]').forEach(function (r) { r.addEventListener("change", renderSummary); });
+  document.querySelectorAll('input[name="region"], input[name="mode"]').forEach(function (r) { r.addEventListener("change", renderSummary); });
 
   // ---------- 送出 ----------
   $("bookForm").addEventListener("submit", function (e) {
@@ -203,6 +222,7 @@
     if (!state.service) problems.push("請選擇療癒項目");
     if (!state.slot) problems.push("請選擇時段");
     if (!region()) problems.push("請選擇居住地");
+    if (state.service && !modeOf()) problems.push("請選擇進行方式");
     if (!$("fName").value.trim()) problems.push("請填寫姓名");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($("fEmail").value.trim())) problems.push("請填寫正確的 Email");
     if (!/^@?[A-Za-z0-9._]{1,30}$/.test($("fIg").value.trim())) problems.push("請填寫正確的 IG 帳號");
@@ -222,6 +242,7 @@
         serviceId: state.service.id,
         slotId: state.slot.id,
         region: region(),
+        mode: modeOf(),
         name: $("fName").value,
         email: $("fEmail").value,
         instagram: $("fIg").value,
@@ -259,7 +280,7 @@
     summaryRows($("doneSummary"), [
       ["療癒項目", b.serviceName],
       ["時段", prettyDate(b.date, b.weekday) + " " + b.start + "–" + b.end],
-      ["進行方式", "IG 視訊遠距"],
+      ["進行方式", modeText(b.mode || "remote")],
     ]);
 
     var showPay = b.status === "pending_payment" || b.status === "payment_reported";
@@ -359,6 +380,7 @@
       var want = params.get("service");
       state.service = state.services.filter(function (s) { return s.id === want && s.priceMode && s.priceMode !== "coming"; })[0] || null;
       renderServices();
+      renderMode();
       renderExtra();
       renderSummary();
     });

@@ -1,0 +1,74 @@
+/* 後台：沿用網站的色彩與玻璃質感，介面以清楚好操作為主 */
+.admin { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)); gap: 1.6rem; }
+.admin-title { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.status-line { color: var(--ink-soft); font-size: var(--step--1); }
+
+.btn-small { min-height: 38px; padding: .3rem 1rem; }
+.btn-block { width: 100%; }
+.btn[disabled] { opacity: .55; cursor: wait; }
+
+.form-card { padding: 1.4rem 1.3rem; display: grid; gap: 1rem; }
+.form-card h2 { font-size: var(--step-1); letter-spacing: .08em; }
+.form-card form { display: grid; gap: 1rem; }
+.field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 1rem; }
+.field { display: grid; gap: .35rem; font-size: var(--step--1); color: var(--ink-soft); min-width: 0; }
+.field input, .field select {
+  width: 100%; min-height: 48px; padding: .6rem .9rem;
+  border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, .7); color: var(--ink);
+  font: inherit; font-size: var(--step-0);
+}
+.field input:focus, .field select:focus { outline: 2px solid var(--button); outline-offset: 1px; border-color: transparent; }
+.password-wrap { position: relative; display: block; }
+.password-wrap input { padding-right: 4.5rem; }
+.reveal {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  border: 0; background: transparent; color: var(--button); cursor: pointer;
+  font-size: var(--step--1); padding: .5rem .7rem; border-radius: 10px; min-height: 36px;
+}
+.form-msg { min-height: 1.2em; font-size: var(--step--1); color: #9B2C4A; }
+.form-msg:empty { display: none; }
+.preview { font-size: var(--step--1); color: var(--ink); background: var(--tint); border-radius: var(--r-sm); padding: .6rem .9rem; }
+.preview:empty { display: none; }
+
+.count { font-size: var(--step--1); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+.day-list { display: grid; gap: 1.2rem; }
+.day { display: grid; gap: .5rem; }
+.day h3 { font-size: var(--step--1); color: var(--ink-soft); letter-spacing: .08em; font-family: var(--body); font-weight: 500; }
+.slot {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .8rem;
+  padding: .8rem .9rem .8rem 1.1rem; border-radius: var(--r-md);
+}
+.slot .time { font-variant-numeric: tabular-nums; font-size: var(--step-1); font-family: var(--display); letter-spacing: .04em; }
+.slot .info { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .8rem; min-width: 0; }
+.slot .actions { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
+.slot .actions button {
+  border: 1px solid var(--line); background: rgba(255, 255, 255, .6); border-radius: 999px;
+  padding: .35rem .9rem; font-size: var(--step--1); cursor: pointer; min-height: 38px; color: var(--ink);
+}
+.slot .actions button:hover { border-color: var(--button); color: var(--button); }
+.slot .actions .danger { color: #9B2C4A; }
+.slot .actions .danger.confirm { background: #9B2C4A; color: #fff; border-color: #9B2C4A; }
+.slot.is-closed { opacity: .72; }
+
+.pill { display: inline-flex; align-items: center; gap: .35rem; font-size: var(--step--2); letter-spacing: .06em; padding: .15rem .65rem; border-radius: 999px; border: 1px solid currentColor; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.open { color: #2F7A5B; }
+.pill.closed { color: #8A7F99; }
+.pill.booked { color: var(--button); background: var(--tint); }
+
+.empty { padding: 1.4rem 1.3rem; text-align: center; color: var(--ink-soft); font-size: var(--step--1); }
+
+.toast {
+  position: fixed; z-index: 20; left: 50%; transform: translateX(-50%);
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  max-width: calc(100% - 32px); padding: .7rem 1.2rem; border-radius: 999px;
+  background: var(--ink); color: var(--milk); font-size: var(--step--1);
+  box-shadow: 0 16px 30px -16px rgba(54, 47, 82, .7);
+}
+
+@media (max-width: 480px) {
+  .slot { grid-template-columns: minmax(0, 1fr); }
+  .slot .actions { justify-content: flex-start; }
+}

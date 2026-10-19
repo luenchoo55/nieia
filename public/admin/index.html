@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>後台｜阿綸涅亞 NIEIA</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/admin.css">
+</head>
+<body>
+<div class="aura" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<main class="app admin">
+  <header class="appbar">
+    <a class="back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>回到網站</a>
+    <div class="admin-title">
+      <h1>後台</h1>
+      <button class="btn btn-ghost btn-small" id="logoutBtn" type="button" hidden>登出</button>
+    </div>
+    <p class="sub" id="subtitle">只有阿綸可以進入，用來管理可預約的時段。</p>
+  </header>
+
+  <p class="status-line" id="loading">正在確認登入狀態…</p>
+
+  <!-- 尚未設定密碼 -->
+  <section class="notice glass" id="setupView" hidden aria-labelledby="setup-title">
+    <h2 id="setup-title">還沒有設定後台密碼</h2>
+    <p>請到 Cloudflare 的 nieia → Settings → Variables and Secrets 新增一個 Secret：名稱填 ADMIN_PASSWORD，值填你想用的後台密碼。儲存並部署後，重新整理這一頁就能登入。</p>
+  </section>
+
+  <!-- 登入 -->
+  <section class="glass form-card" id="loginView" hidden aria-labelledby="login-title">
+    <h2 id="login-title">登入後台</h2>
+    <form id="loginForm" novalidate>
+      <label class="field" for="password">
+        <span>後台密碼</span>
+        <span class="password-wrap">
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <button class="reveal" id="revealBtn" type="button" aria-pressed="false" aria-controls="password">顯示</button>
+        </span>
+      </label>
+      <p class="form-msg" id="loginMsg" role="alert"></p>
+      <button class="btn btn-primary btn-block" id="loginBtn" type="submit">登入</button>
+    </form>
+  </section>
+
+  <!-- 時段管理 -->
+  <div id="dashView" hidden>
+    <section class="glass form-card" aria-labelledby="add-title">
+      <h2 id="add-title">新增可預約時段</h2>
+      <form id="slotForm" novalidate>
+        <div class="field-grid">
+          <label class="field" for="slotDate">
+            <span>日期</span>
+            <input id="slotDate" type="date" required>
+          </label>
+          <label class="field" for="slotStart">
+            <span>開始時間</span>
+            <input id="slotStart" type="time" step="900" value="19:00" required>
+          </label>
+          <label class="field" for="slotLength">
+            <span>療程長度</span>
+            <select id="slotLength">
+              <option value="60" selected>60 分鐘</option>
+              <option value="90">90 分鐘</option>
+              <option value="120">120 分鐘</option>
+              <option value="custom">自訂結束時間</option>
+            </select>
+          </label>
+          <label class="field" for="slotEnd" id="endField" hidden>
+            <span>結束時間</span>
+            <input id="slotEnd" type="time" step="900">
+          </label>
+          <label class="field" for="slotWeeks">
+            <span>重複</span>
+            <select id="slotWeeks">
+              <option value="1" selected>只有這一次</option>
+              <option value="2">每週同一時間，共 2 週</option>
+              <option value="4">每週同一時間，共 4 週</option>
+              <option value="8">每週同一時間，共 8 週</option>
+              <option value="12">每週同一時間，共 12 週</option>
+            </select>
+          </label>
+        </div>
+        <p class="preview" id="slotPreview" aria-live="polite"></p>
+        <p class="form-msg" id="slotMsg" role="alert"></p>
+        <button class="btn btn-primary btn-block" id="slotBtn" type="submit">新增時段</button>
+      </form>
+    </section>
+
+    <section class="block" aria-labelledby="list-title">
+      <div class="block-head"><h2 id="list-title">接下來的時段</h2><span class="count" id="slotCount"></span></div>
+      <div class="chips" role="group" aria-label="依狀態篩選" id="statusFilter">
+        <button class="chip" type="button" data-status="all" aria-pressed="true">全部</button>
+        <button class="chip" type="button" data-status="open" aria-pressed="false">可預約</button>
+        <button class="chip" type="button" data-status="closed" aria-pressed="false">暫停</button>
+        <button class="chip" type="button" data-status="booked" aria-pressed="false">已預約</button>
+      </div>
+      <div id="slotList" class="day-list" aria-live="polite"></div>
+    </section>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="/assets/admin.js"></script>
+</body>
+</html>

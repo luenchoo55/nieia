@@ -33,6 +33,13 @@
 - `"database": "not_configured"`：尚未在 Cloudflare 設定 `MONGODB_URI`
 - `"database": "unreachable"`：連線字串、密碼或 MongoDB Network Access 有誤
 
+## 後台
+
+- 網址：`/admin`
+- 需要在 Cloudflare 新增 Secret `ADMIN_PASSWORD`（後台密碼）
+- 登入後可新增、暫停、刪除可預約時段（時間一律為 UTC+8）
+- 密碼 15 分鐘內錯 5 次會暫時鎖定；更換 `ADMIN_PASSWORD` 後，所有已登入的裝置都需重新登入
+
 ## 注意
 
 資料庫帳號密碼等機密資訊一律設定在 Cloudflare 的環境變數中，不放進這個 repository。

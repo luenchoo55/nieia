@@ -1,28 +1,17 @@
 import { Hono } from "hono";
-import { MongoClient } from "mongodb";
+import { withDb } from "./db.js";
+import { mountAuth } from "./auth.js";
+import { mountSlots } from "./slots.js";
 
 // strict: false 讓 /api/health 和 /api/health/ 都能使用
 const app = new Hono({ strict: false });
 
-// 每個請求建立一個短暫的資料庫連線，用完即關閉。
-// Cloudflare Worker 的請求彼此獨立，不能共用長期連線。
-async function withDb(env, ctx, fn) {
-  if (!env.MONGODB_URI) {
-    const err = new Error("尚未設定 MONGODB_URI");
-    err.code = "NO_URI";
-    throw err;
-  }
-  const client = new MongoClient(env.MONGODB_URI, {
-    maxPoolSize: 1,
-    serverSelectionTimeoutMS: 8000,
-  });
-  try {
-    await client.connect();
-    return await fn(client.db(env.DB_NAME || "nieia"));
-  } finally {
-    ctx.waitUntil(client.close());
-  }
-}
+// 後台與 API 的回應不讓瀏覽器或搜尋引擎留存
+app.use("/api/*", async (c, next) => {
+  await next();
+  c.header("Cache-Control", "no-store");
+  c.header("X-Robots-Tag", "noindex");
+});
 
 // 連線測試：確認網站能連上 MongoDB Atlas。
 app.get("/api/health", async (c) => {
@@ -46,8 +35,20 @@ app.get("/api/health", async (c) => {
   }
 });
 
+mountAuth(app);
+mountSlots(app);
+
 app.notFound((c) =>
   c.json({ ok: false, message: "找不到這個 API。", path: new URL(c.req.url).pathname }, 404)
 );
+
+// 資料庫連不上或其他未預期的錯誤，回傳看得懂的訊息
+app.onError((err, c) => {
+  console.error(err);
+  if (err.code === "NO_URI") {
+    return c.json({ ok: false, message: "資料庫尚未設定，請在 Cloudflare 新增 MONGODB_URI。" }, 503);
+  }
+  return c.json({ ok: false, message: "伺服器暫時無法處理，請稍後再試。" }, 500);
+});
 
 export default app;

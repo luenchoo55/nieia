@@ -53,7 +53,7 @@
         row.appendChild(go);
         svcList.appendChild(row);
       });
-      if (!data.items.length) svcList.appendChild(el("p", "notice glass", "目前沒有開放的療癒項目，請追蹤 IG @nieia9319 留意最新消息。"));
+      if (!data.items.length) svcList.appendChild(el("p", "notice glass", "目前沒有開放的療癒項目，請追蹤 IG @nieia4928 留意最新消息。"));
       // 重新套用目前選中的分類
       var active = document.querySelector('[data-filter-group="#svc-list"] [aria-pressed="true"]');
       if (active) active.click();

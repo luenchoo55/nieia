@@ -60,7 +60,7 @@ def appbar(title, sub, back=True, centered=False):
 
 FOOT = '''  <footer class="foot">
     <div class="links">
-      <a href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener">Instagram @nieia9319</a>
+      <a href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">Instagram @nieia4928</a>
       <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
     </div>
     <p>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
@@ -183,10 +183,10 @@ services = f'''{appbar("療癒服務", "六種療癒方式，皆以 IG 視訊遠
   <section class="notice glass" id="booking" aria-labelledby="notice-title">
     <h2 id="notice-title">預約須知</h2>
     <ul>
-      <li>線上預約即將開放，目前請透過 IG 私訊 @nieia9319 預約。</li>
+      <li>線上預約即將開放，目前請透過 IG 私訊 @nieia4928 預約。</li>
       <li>療程一律先付款，完成匯款後寄出確認信。</li>
       <li>需改期請於 24 小時前告知，改期需酌收行政費用。</li>
-      <li>療程前請先追蹤並私訊 @nieia9319，當天以 IG 視訊進行。</li>
+      <li>療程前請先追蹤並私訊 @nieia4928，當天以 IG 視訊進行。</li>
     </ul>
   </section>'''
 page('services.html', '療癒服務｜阿綸涅亞 NIEIA', 'services', services, ['/assets/glyphs.js', '/assets/catalog.js'])
@@ -238,7 +238,7 @@ def ws_panel(pid, tabid, hidden, glyph, g, title, en, intro, facts, topics, pric
 {rows_html}
         </tbody>
       </table>
-      <div class="actions"><a class="btn btn-primary" href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener">IG 私訊約課</a></div>
+      <div class="actions"><a class="btn btn-primary" href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">IG 私訊約課</a></div>
     </div>
   </section>'''
 
@@ -301,7 +301,7 @@ def cred_group(title, en, items):
       </div>'''
 cred_rows = '\n'.join(cred_group(*g) for g in CRED_GROUPS)
 links = '\n'.join([
- row("https://www.instagram.com/nieia9319/","camera","g4","Instagram","@nieia9319","私訊預約與約課","").replace('<a class="row glass" href="https://www.instagram.com/nieia9319/"','<a class="row glass" href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener"'),
+ row("https://www.instagram.com/nieia4928/","camera","g4","Instagram","@nieia4928","私訊預約與約課","").replace('<a class="row glass" href="https://www.instagram.com/nieia4928/"','<a class="row glass" href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener"'),
  row("/shop","bag","g5","聖照選物","","紫色火焰、聖哲曼、默基瑟德等聖照卡",""),
  row("https://vocus.cc/salon/67e4f401fd897800019395cf","pen","g3","方格子文章","Vocus","阿綸的身心靈筆記","").replace('href="https://vocus','target="_blank" rel="noopener" href="https://vocus'),
  row("https://linktr.ee/nieia9319","link","g6","Linktree","","所有連結一次看","").replace('href="https://linktr','target="_blank" rel="noopener" href="https://linktr'),
@@ -346,7 +346,7 @@ shop = f'''{appbar("聖照選物", "阿綸親自挑選與加持的聖照卡。�
     <h2 id="shop-notice">購買須知</h2>
     <ul>
       <li>目前透過 7-11 賣貨便下單與取貨。</li>
-      <li>馬來西亞的朋友想購買，請先 IG 私訊 @nieia9319 詢問寄送方式。</li>
+      <li>馬來西亞的朋友想購買，請先 IG 私訊 @nieia4928 詢問寄送方式。</li>
     </ul>
   </section>'''
 page('shop.html', '聖照選物｜阿綸涅亞 NIEIA', '', shop, ['/assets/glyphs.js', '/assets/catalog.js'])

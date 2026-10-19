@@ -44,7 +44,7 @@
         text.appendChild(el("h3", null, s.name));
         if (s.en) text.appendChild(el("span", "en", s.en));
         if (s.desc) text.appendChild(el("span", "desc", s.desc));
-        var meta = ["IG 視訊遠距"];
+        var meta = [];
         if (s.duration) meta.push(s.duration + " 分鐘");
         meta.push(bookable ? window.nieiaPrice(s, "service") : "價格即將公布，尚未開放預約");
         text.appendChild(el("span", "meta", meta.join("｜")));

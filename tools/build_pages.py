@@ -227,7 +227,7 @@ svc = [
  ("wave","g3","引渡之光","Light of Transmutation","為已逝的摯愛送上光與祝福，陪伴離開的人與留下的人，各自安心前行。","blessing"),
  ("paw","g1","動物溝通","Animal Communication","聆聽毛孩想說的話，理解牠的感受與需要，讓彼此的陪伴更靠近。","consult"),
 ]
-svc_rows = '\n'.join(row("", gl, g, t, en, d, "IG 視訊遠距｜價格即將公布，尚未開放預約", cat, tag="div").replace('class="row glass"', 'class="row glass not-bookable"') for gl,g,t,en,d,cat in svc)
+svc_rows = '\n'.join(row("", gl, g, t, en, d, "價格即將公布，尚未開放預約", cat, tag="div").replace('class="row glass"', 'class="row glass not-bookable"') for gl,g,t,en,d,cat in svc)
 services = f'''{appbar("療癒服務", "多種療癒方式，皆以 IG 視訊遠距進行，台灣與馬來西亞都能預約。選好項目後，預約時會依項目詢問需要的資料。")}
 
   <div class="chips" role="group" aria-label="依類型篩選" data-filter-group="#svc-list">

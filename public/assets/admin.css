@@ -41,6 +41,8 @@
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .8rem;
   padding: .8rem .9rem .8rem 1.1rem; border-radius: var(--r-md);
 }
+/* 前台 .time 是選時段的按鈕樣式，後台這裡只是文字 */
+.slot .time, .bc-when .time { min-height: 0; border: 0; border-radius: 0; background: none; cursor: default; }
 .slot .time { font-variant-numeric: tabular-nums; font-size: var(--step-1); font-family: var(--display); letter-spacing: .04em; }
 .slot .info { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .8rem; min-width: 0; }
 .slot .actions { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
@@ -128,7 +130,8 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .bc-details summary { cursor: pointer; color: var(--ink-soft); font-size: var(--step--1); min-height: 32px; display: flex; align-items: center; }
 .bc-details .summary { margin-top: .4rem; }
 .bc-details a { color: var(--button); }
-.booking-card .actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+/* site.css 的 .actions 預設置中，後台卡片內一律靠左 */
+.booking-card .actions { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-start; }
 .booking-card .actions button {
   border: 1px solid var(--line); background: rgba(255, 255, 255, .6); border-radius: 999px;
   padding: .4rem 1rem; font-size: var(--step--1); cursor: pointer; min-height: 40px; color: var(--ink);
@@ -177,7 +180,10 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
   border: 1px solid var(--button); color: var(--button); background: rgba(255, 255, 255, .7); text-decoration: none; font-size: var(--step--1);
 }
 .mail-actions .mail-btn:hover { background: var(--tint); }
-.bc-email { font-size: var(--step--2); color: var(--ink-soft); overflow-wrap: anywhere; }
+.bc-reply { display: grid; gap: .45rem; }
+.bc-email { display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem; font-size: var(--step--1); color: var(--ink); overflow-wrap: anywhere; }
+.bc-email span { font-size: var(--step--2); color: var(--ink-soft); letter-spacing: .06em; }
+.bc-status-actions { padding-top: .7rem; border-top: 1px solid var(--line); }
 
 /* 現場項目 */
 .items-editor { gap: .6rem; }

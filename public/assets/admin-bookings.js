@@ -36,8 +36,8 @@
     return Number(p[1]) + " 月 " + Number(p[2]) + " 日（" + weekday + "）";
   }
 
-  // 依預約狀態準備好回信內容，打開郵件 App
-  function mailto(b) {
+  // 依預約狀態準備好回信的主旨與內容
+  function letter(b) {
     var when = prettyDate(b.date, b.weekday) + " " + b.start + "–" + b.end;
     var fee = b.priceMode === "inquiry" ? "隨喜服務" : money(b.amount, b.currency, b.priceMode);
     var onsite = b.mode === "onsite";
@@ -77,12 +77,19 @@
         "阿綸",
       ];
     }
-    return "mailto:" + encodeURIComponent(b.email) + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(lines.join("\n"));
+    return { subject: subject, body: lines.join("\n") };
   }
 
-  function copyEmail(b, btn) {
-    var done = function () { btn.textContent = "已複製"; setTimeout(function () { btn.textContent = "複製 Email"; }, 1600); };
-    if (navigator.clipboard) navigator.clipboard.writeText(b.email).then(done, function () {});
+  // 電腦沒有設定郵件 App 時 mailto: 會沒反應，所以直接開 Gmail 的寫信畫面
+  function gmailUrl(b) {
+    var m = letter(b);
+    return "https://mail.google.com/mail/?view=cm&fs=1&to=" + encodeURIComponent(b.email) +
+      "&su=" + encodeURIComponent(m.subject) + "&body=" + encodeURIComponent(m.body);
+  }
+
+  function copyText(text, btn, label) {
+    var done = function () { btn.textContent = "已複製"; setTimeout(function () { btn.textContent = label; }, 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () { A.toast("無法複製，請手動選取"); });
   }
 
   function load() {
@@ -165,19 +172,29 @@
     details.appendChild(dl);
     c.appendChild(details);
 
+    var reply = el("div", "bc-reply");
+    var to = el("p", "bc-email");
+    to.appendChild(el("span", null, "回覆客人"));
+    to.appendChild(document.createTextNode(b.email));
+    reply.appendChild(to);
     var mail = el("div", "actions mail-actions");
-    var write = el("a", "mail-btn", "寫信給客人");
-    write.href = mailto(b);
+    var write = el("a", "mail-btn", "用 Gmail 寫信");
+    write.href = gmailUrl(b);
+    write.target = "_blank"; write.rel = "noopener";
     mail.appendChild(write);
+    var copyLetter = el("button", null, "複製信件內容");
+    copyLetter.type = "button";
+    copyLetter.addEventListener("click", function () { var m = letter(b); copyText(m.subject + "\n\n" + m.body, copyLetter, "複製信件內容"); });
+    mail.appendChild(copyLetter);
     var copy = el("button", null, "複製 Email");
     copy.type = "button";
-    copy.addEventListener("click", function () { copyEmail(b, copy); });
+    copy.addEventListener("click", function () { copyText(b.email, copy, "複製 Email"); });
     mail.appendChild(copy);
-    mail.appendChild(el("span", "bc-email", b.email));
-    c.appendChild(mail);
+    reply.appendChild(mail);
+    c.appendChild(reply);
 
     if (b.status !== "cancelled") {
-      var actions = el("div", "actions");
+      var actions = el("div", "actions bc-status-actions");
       if (b.status !== "confirmed") {
         var ok = el("button", "primary-action", "確認收款");
         ok.type = "button";

@@ -144,6 +144,7 @@ home = f'''  <header class="appbar">
     <div class="rows">
 {row("/oracle","card","g2","今日宇宙訊息","","靜下心，抽一張 68 張中屬於你的訊息。","")}
 {row("/workshops","book","g3","工作坊","","臼井聖火靈氣、擴大療癒，兩天完整教學。","目前開放約課")}
+{row("/shop","bag","g5","聖照選物","","紫色火焰、聖哲曼、默基瑟德等聖照卡。","")}
 {row("/about","lotus","g1","關於阿綸","","在台灣當上班族的馬來西亞人，斜槓身心靈。","")}
     </div>
   </section>'''
@@ -181,7 +182,7 @@ services = f'''{appbar("療癒服務", "六種療癒方式，皆以 IG 視訊遠
       <li>療程前請先追蹤並私訊 @nieia9319，當天以 IG 視訊進行。</li>
     </ul>
   </section>'''
-page('services.html', '療癒服務｜阿綸涅亞 NIEIA', 'services', services)
+page('services.html', '療癒服務｜阿綸涅亞 NIEIA', 'services', services, ['/assets/glyphs.js', '/assets/catalog.js'])
 
 # ---------------- oracle ----------------
 oracle = f'''{appbar("宇宙訊息", "靜下來，深呼吸一次，想著此刻心裡的問題，再輕觸卡片。68 張來自光的訊息，會有一張剛好屬於你。", centered=True)}
@@ -279,7 +280,7 @@ creds = [
 cred_rows = '\n'.join(row("", gl, g, t, en, "", "", tag="div") for gl,g,t,en in creds)
 links = '\n'.join([
  row("https://www.instagram.com/nieia9319/","camera","g4","Instagram","@nieia9319","私訊預約與約課","").replace('<a class="row glass" href="https://www.instagram.com/nieia9319/"','<a class="row glass" href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener"'),
- row("https://myship.7-11.com.tw/general/detail/GM2512190455934","bag","g5","聖照選物","7-11 賣貨便","紫色火焰、聖哲曼、默基瑟德等聖照卡","").replace('href="https://myship','target="_blank" rel="noopener" href="https://myship'),
+ row("/shop","bag","g5","聖照選物","","紫色火焰、聖哲曼、默基瑟德等聖照卡",""),
  row("https://vocus.cc/salon/67e4f401fd897800019395cf","pen","g3","方格子文章","Vocus","阿綸的身心靈筆記","").replace('href="https://vocus','target="_blank" rel="noopener" href="https://vocus'),
  row("https://linktr.ee/nieia9319","link","g6","Linktree","","所有連結一次看","").replace('href="https://linktr','target="_blank" rel="noopener" href="https://linktr'),
 ])
@@ -305,6 +306,28 @@ about = f'''  <header class="appbar"><a class="back" href="/">{BACK}首頁</a></
     </div>
   </section>'''
 page('about.html', '關於阿綸｜阿綸涅亞 NIEIA', 'about', about)
+
+
+# ---------------- shop ----------------
+SEED_PRODUCTS = [("紫色火焰","flame","g1"),("YHWH 四字神名","sun","g5"),("聖哲曼聖照","lotus","g4"),("默基瑟德聖照","constellation","g6"),("瑟拉貝斯彼聖照","rings","g2")]
+SHOP_URL = "https://myship.7-11.com.tw/general/detail/GM2512190455934"
+shop_tiles = '\n'.join(
+  f'      <a class="tile product glass" href="{SHOP_URL}" target="_blank" rel="noopener">{art(gl,g)}<span class="label">{n}</span><span class="price">NT$300</span><span class="pdesc">105 × 148 mm 聖照卡，可放在聖壇、書桌或隨身帶著。</span></a>'
+  for n,gl,g in SEED_PRODUCTS)
+shop = f'''{appbar("聖照選物", "阿綸親自挑選與加持的聖照卡。點選商品會前往 7-11 賣貨便下單，可在台灣的 7-11 取貨。")}
+
+  <section class="tiles shop" id="shop-list" aria-label="商品">
+{shop_tiles}
+  </section>
+
+  <section class="notice glass" aria-labelledby="shop-notice">
+    <h2 id="shop-notice">購買須知</h2>
+    <ul>
+      <li>目前透過 7-11 賣貨便下單與取貨。</li>
+      <li>馬來西亞的朋友想購買，請先 IG 私訊 @nieia9319 詢問寄送方式。</li>
+    </ul>
+  </section>'''
+page('shop.html', '聖照選物｜阿綸涅亞 NIEIA', '', shop, ['/assets/glyphs.js', '/assets/catalog.js'])
 
 # ---------------- 404 ----------------
 nf = f'''  <section class="feature glass" aria-labelledby="nf-title" style="margin-top:2rem">

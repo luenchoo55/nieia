@@ -52,6 +52,13 @@
 
   <!-- 時段管理 -->
   <div id="dashView" hidden>
+    <div class="seg admin-tabs" role="tablist" aria-label="後台功能" data-tabs>
+      <button type="button" role="tab" id="tab-slots" aria-controls="panel-slots" aria-selected="true">時段</button>
+      <button type="button" role="tab" id="tab-services" aria-controls="panel-services" aria-selected="false" tabindex="-1">療癒項目</button>
+      <button type="button" role="tab" id="tab-products" aria-controls="panel-products" aria-selected="false" tabindex="-1">商品</button>
+    </div>
+
+    <div class="panel-stack" id="panel-slots" role="tabpanel" aria-labelledby="tab-slots">
     <section class="glass form-card" aria-labelledby="add-title">
       <h2 id="add-title">新增可預約時段</h2>
       <form id="slotForm" novalidate>
@@ -104,11 +111,30 @@
       </div>
       <div id="slotList" class="day-list" aria-live="polite"></div>
     </section>
+    </div>
+
+    <div class="panel-stack" id="panel-services" role="tabpanel" aria-labelledby="tab-services" hidden>
+      <div class="block-head"><h2>療癒項目</h2><button class="btn btn-primary btn-small" type="button" data-new="services">新增療癒項目</button></div>
+      <p class="hint">上架的項目會顯示在「療癒服務」頁，排序也會照這裡的順序。</p>
+      <div data-editor="services"></div>
+      <div class="rows" data-list="services" aria-live="polite"></div>
+    </div>
+
+    <div class="panel-stack" id="panel-products" role="tabpanel" aria-labelledby="tab-products" hidden>
+      <div class="block-head"><h2>商品</h2><button class="btn btn-primary btn-small" type="button" data-new="products">新增商品</button></div>
+      <p class="hint">上架的商品會顯示在「聖照選物」頁。填了購買連結，客人點商品就會前往下單。</p>
+      <div data-editor="products"></div>
+      <div class="rows" data-list="products" aria-live="polite"></div>
+    </div>
   </div>
 </main>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="/assets/site.js"></script>
+<script src="/assets/glyphs.js"></script>
+<script src="/assets/catalog.js"></script>
 <script src="/assets/admin.js"></script>
+<script src="/assets/admin-catalog.js"></script>
 </body>
 </html>

@@ -72,3 +72,45 @@
   .slot { grid-template-columns: minmax(0, 1fr); }
   .slot .actions { justify-content: flex-start; }
 }
+
+/* ---------- 分頁與療癒項目／商品 ---------- */
+.admin-tabs { margin-bottom: 1.4rem; }
+.panel-stack { display: grid; gap: 1.2rem; }
+.panel-stack .block-head h2 { font-size: var(--step-1); letter-spacing: .08em; }
+.hint { font-size: var(--step--1); color: var(--ink-soft); }
+small.hint { font-size: var(--step--2); line-height: 1.5; }
+
+.field textarea {
+  width: 100%; padding: .7rem .9rem; border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, .7); color: var(--ink); font: inherit; font-size: var(--step-0); line-height: 1.7; resize: vertical;
+}
+.field textarea:focus { outline: 2px solid var(--button); outline-offset: 1px; border-color: transparent; }
+.field.wide { grid-column: 1 / -1; }
+.field.check { grid-column: 1 / -1; display: flex; align-items: center; gap: .6rem; color: var(--ink); font-size: var(--step-0); cursor: pointer; min-height: 44px; }
+.field.check input { width: 20px; height: 20px; accent-color: var(--button); margin: 0; }
+
+.picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 8px; }
+.pick { padding: 3px; border: 2px solid transparent; border-radius: 14px; background: transparent; cursor: pointer; }
+.pick .art { width: 100%; aspect-ratio: 1; border-radius: 10px; }
+.pick[aria-checked="true"] { border-color: var(--button); }
+.pick:focus-visible { outline: 2px solid var(--button); outline-offset: 2px; }
+
+.editor { border: 1px solid var(--button); }
+.editor-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.editor-actions .danger-btn { margin-left: auto; color: #9B2C4A; border-color: #9B2C4A; }
+.editor-actions .danger-btn.confirm { background: #9B2C4A; color: #fff; }
+
+.catalog-row { grid-template-columns: 64px minmax(0, 1fr); }
+.catalog-row .actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .4rem; }
+.catalog-row .actions button {
+  border: 1px solid var(--line); background: rgba(255, 255, 255, .6); border-radius: 999px;
+  padding: .35rem .9rem; font-size: var(--step--1); cursor: pointer; min-height: 38px; color: var(--ink);
+}
+.catalog-row .actions button:hover:not(:disabled) { border-color: var(--button); color: var(--button); }
+.catalog-row .actions button:disabled { opacity: .35; cursor: default; }
+.catalog-row.is-closed .art, .catalog-row.is-closed h3 { opacity: .6; }
+.pills { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .2rem; }
+@media (min-width: 620px) {
+  .catalog-row { grid-template-columns: 64px minmax(0, 1fr) auto; }
+  .catalog-row .actions { grid-column: auto; justify-content: flex-end; }
+}

@@ -29,6 +29,8 @@ export async function ensureIndexes(db) {
     db.collection("availability").createIndex({ status: 1, startAt: 1 }),
     db.collection("loginAttempts").createIndex({ at: 1 }, { expireAfterSeconds: 900 }),
     db.collection("loginAttempts").createIndex({ ip: 1, at: 1 }),
+    db.collection("services").createIndex({ order: 1 }),
+    db.collection("products").createIndex({ order: 1 }),
   ]);
   indexesReady = true;
 }

@@ -114,3 +114,25 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
   .catalog-row { grid-template-columns: 64px minmax(0, 1fr) auto; }
   .catalog-row .actions { grid-column: auto; justify-content: flex-end; }
 }
+
+/* ---------- 預約 ---------- */
+.booking-list { display: grid; gap: 10px; }
+.booking-card { padding: 1rem 1.1rem; display: grid; gap: .6rem; border-radius: var(--r-md); }
+.bc-head { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; }
+.bc-when { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; }
+.bc-when .time { font-variant-numeric: tabular-nums; font-size: var(--step-1); font-family: var(--display); }
+.bc-date { font-size: var(--step--1); color: var(--ink-soft); }
+.bc-main { font-size: var(--step-0); }
+.bc-pay { font-size: var(--step--1); color: var(--button); background: var(--tint); padding: .5rem .8rem; border-radius: var(--r-sm); }
+.bc-details summary { cursor: pointer; color: var(--ink-soft); font-size: var(--step--1); min-height: 32px; display: flex; align-items: center; }
+.bc-details .summary { margin-top: .4rem; }
+.bc-details a { color: var(--button); }
+.booking-card .actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.booking-card .actions button {
+  border: 1px solid var(--line); background: rgba(255, 255, 255, .6); border-radius: 999px;
+  padding: .4rem 1rem; font-size: var(--step--1); cursor: pointer; min-height: 40px; color: var(--ink);
+}
+.booking-card .actions .primary-action { background: var(--button); color: var(--button-ink); border-color: var(--button); }
+.booking-card .actions .danger { color: #9B2C4A; }
+.booking-card .actions .danger.confirm { background: #9B2C4A; color: #fff; border-color: #9B2C4A; }
+.booking-card.is-closed { opacity: .65; }

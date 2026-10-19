@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>預約療癒｜阿綸涅亞 NIEIA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/icons/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#9698E7">
+<meta name="apple-mobile-web-app-title" content="NIEIA">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="aura" aria-hidden="true"></div>
+<canvas id="holoA" aria-hidden="true"></canvas>
+<div class="holoB" id="holoB" aria-hidden="true" hidden></div>
+<div class="grain" aria-hidden="true"></div>
+
+<main class="app">
+  <header class="appbar">
+    <a class="back" href="/services"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>療癒服務</a>
+    <h1>預約療癒</h1>
+    <p class="sub">選擇療癒項目與時段，填寫資料後就會看到匯款資訊。療程以 IG 視訊進行，台灣與馬來西亞時間相同。</p>
+  </header>
+
+  <form class="booking" id="bookForm" novalidate>
+    <section class="step glass" aria-labelledby="s1">
+      <h2 id="s1"><span class="num" aria-hidden="true">1</span>選擇療癒項目</h2>
+      <div class="choices" id="serviceChoices" role="radiogroup" aria-labelledby="s1"><p class="muted">載入中…</p></div>
+    </section>
+
+    <section class="step glass" aria-labelledby="s2">
+      <h2 id="s2"><span class="num" aria-hidden="true">2</span>選擇時段</h2>
+      <div class="date-chips" id="dateChips" role="tablist" aria-label="日期"></div>
+      <div class="time-grid" id="timeGrid" role="radiogroup" aria-labelledby="s2"><p class="muted">載入中…</p></div>
+    </section>
+
+    <section class="step glass" aria-labelledby="s3">
+      <h2 id="s3"><span class="num" aria-hidden="true">3</span>填寫資料</h2>
+      <div class="field-grid">
+        <fieldset class="field wide">
+          <legend>你住在</legend>
+          <div class="pills-choice">
+            <label><input type="radio" name="region" value="TW" id="regionTW"><span>台灣</span></label>
+            <label><input type="radio" name="region" value="MY" id="regionMY"><span>馬來西亞</span></label>
+          </div>
+        </fieldset>
+        <label class="field" for="fName"><span>姓名</span><input id="fName" autocomplete="name" maxlength="40" required></label>
+        <label class="field" for="fEmail"><span>Email</span><input id="fEmail" type="email" autocomplete="email" maxlength="120" required></label>
+        <label class="field" for="fIg"><span>IG 帳號（療程以 IG 視訊進行）</span><input id="fIg" autocomplete="off" maxlength="31" placeholder="例如 nieia4928" required></label>
+        <label class="field" for="fAge"><span>年齡</span>
+          <select id="fAge" required>
+            <option value="">請選擇</option>
+            <option>20 歲以下</option><option>21–30 歲</option><option>31–40 歲</option>
+            <option>41–50 歲</option><option>51–60 歲</option><option>61 歲以上</option>
+          </select>
+        </label>
+        <fieldset class="field wide">
+          <legend>性別</legend>
+          <div class="pills-choice">
+            <label><input type="radio" name="gender" value="女"><span>女</span></label>
+            <label><input type="radio" name="gender" value="男"><span>男</span></label>
+            <label><input type="radio" name="gender" value="多元"><span>多元</span></label>
+            <label><input type="radio" name="gender" value="不便透露"><span>不便透露</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="field wide">
+          <legend>接受療癒的原因（可複選）</legend>
+          <div class="pills-choice">
+            <label><input type="checkbox" name="reasons" value="身體放鬆"><span>身體放鬆</span></label>
+            <label><input type="checkbox" name="reasons" value="情緒梳理"><span>情緒梳理</span></label>
+            <label><input type="checkbox" name="reasons" value="關係和諧"><span>關係和諧</span></label>
+            <label><input type="checkbox" name="reasons" value="個人成長"><span>個人成長</span></label>
+            <label><input type="checkbox" name="reasons" value="靈性支持"><span>靈性支持</span></label>
+            <label><input type="checkbox" name="reasons" value="特定事件與遠距祝福"><span>特定事件與遠距祝福</span></label>
+          </div>
+          <input id="fOther" class="other" maxlength="100" placeholder="其他原因（選填）" aria-label="其他原因">
+        </fieldset>
+        <div class="field wide extra" id="extraFields" hidden></div>
+        <label class="field wide" for="fNote"><span>想對阿綸說的話（選填）</span><textarea id="fNote" rows="3" maxlength="1000"></textarea></label>
+        <label class="hp" aria-hidden="true">請勿填寫<input id="fWebsite" tabindex="-1" autocomplete="off"></label>
+      </div>
+    </section>
+
+    <section class="step glass" aria-labelledby="s4">
+      <h2 id="s4"><span class="num" aria-hidden="true">4</span>確認並送出</h2>
+      <dl class="summary" id="summary"></dl>
+      <div class="rules">
+        <p><strong>預約須知</strong></p>
+        <ul>
+          <li>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代正統醫療、心理諮商或法律診斷。</li>
+          <li>療程一律先付款，送出後會看到匯款資訊，阿綸確認收款後預約即成立。</li>
+          <li>需改期請於 24 小時前告知，改期需酌收行政費用。若無故遲到，時間不予順延。</li>
+          <li>療程前請先追蹤並私訊 IG @nieia4928，當天以 IG 視訊進行。</li>
+          <li>你填寫的所有資料都會保密，只有阿綸看得到。</li>
+        </ul>
+      </div>
+      <label class="agree" for="fAgree"><input type="checkbox" id="fAgree"><span>我已閱讀並同意預約須知</span></label>
+      <p class="form-msg" id="bookMsg" role="alert"></p>
+      <button class="btn btn-primary btn-block" id="bookBtn" type="submit">送出預約</button>
+    </section>
+  </form>
+
+  <section class="done" id="doneView" hidden aria-labelledby="doneTitle">
+    <div class="feature glass">
+      <div class="orb"><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M28 86V44a22 22 0 0 1 44 0v42" /><path d="M36 86V46a14 14 0 0 1 28 0v40" fill="rgba(255,255,255,.55)" stroke-opacity=".6"/><path d="M18 86h64"/><path d="M50 14l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#fff" stroke="none"/></svg></div>
+      <h2 id="doneTitle">預約已送出</h2>
+      <p id="doneStatus"></p>
+      <div class="ref">預約編號<strong id="doneRef"></strong></div>
+    </div>
+    <dl class="summary glass" id="doneSummary"></dl>
+    <section class="pay glass" id="payCard" aria-labelledby="payTitle">
+      <h2 id="payTitle">匯款資訊</h2>
+      <p class="amount" id="payAmount"></p>
+      <dl class="pay-lines" id="payLines"></dl>
+      <p class="muted">匯款完成後，請在下方回報，方便阿綸核對。</p>
+    </section>
+    <form class="pay glass" id="reportForm" novalidate aria-labelledby="reportTitle">
+      <h2 id="reportTitle">回報匯款</h2>
+      <div class="field-grid">
+        <label class="field" for="rDate"><span>匯款日期</span><input id="rDate" type="date" required></label>
+        <label class="field" for="rLast5"><span>匯款帳號末五碼</span><input id="rLast5" inputmode="numeric" maxlength="5" pattern="\d{5}" required></label>
+        <label class="field wide" for="rName"><span>匯款人姓名（選填）</span><input id="rName" maxlength="40"></label>
+      </div>
+      <p class="form-msg" id="reportMsg" role="alert"></p>
+      <button class="btn btn-primary btn-block" id="reportBtn" type="submit">回報匯款</button>
+    </form>
+    <p class="reported glass" id="reportedNote" hidden></p>
+    <section class="keep glass" aria-labelledby="keepTitle">
+      <h2 id="keepTitle">保存這筆預約</h2>
+      <p>之後要查看預約狀態或回報匯款，請用下面這個專屬網址。建議加入書籤，或直接截圖這個畫面。</p>
+      <div class="copy-row"><input id="keepUrl" readonly aria-label="預約專屬網址"><button class="btn btn-ghost" id="copyUrl" type="button">複製網址</button></div>
+    </section>
+  </section>
+
+  <footer class="foot">
+    <div class="links">
+      <a href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">Instagram @nieia4928</a>
+      <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
+    </div>
+    <p>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
+  </footer>
+</main>
+
+<nav class="tabbar" aria-label="主要選單">
+  <a href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>首頁</span></a>
+  <a href="/services" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-4 0-8-3-8-7 3 0 5 1 6 3-1-4 0-8 2-11 2 3 3 7 2 11 1-2 3-3 6-3 0 4-4 7-8 7z"/></svg><span>服務</span></a>
+  <a href="/oracle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 16l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg><span>訊息</span></a>
+  <a href="/workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5V19c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5z"/><path d="M12 6v13.5"/></svg><span>工作坊</span></a>
+  <a href="/about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg><span>關於</span></a>
+</nav>
+<script src="/assets/holo.js"></script>
+<script src="/assets/site.js"></script>
+<script src="/assets/glyphs.js"></script>
+<script src="/assets/catalog.js"></script>
+<script src="/assets/booking.js"></script>
+</body>
+</html>

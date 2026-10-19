@@ -5,6 +5,8 @@ import { requireAdmin } from "./auth.js";
 // 縮圖可選的圖案與色調（前台 glyphs.js 也有同一份清單）
 export const GLYPHS = ["moon", "spiral", "constellation", "rings", "flame", "sun", "lotus", "wave", "heart", "paw", "blueprint", "door", "book", "card", "bag", "pen"];
 export const PALETTES = ["g1", "g2", "g3", "g4", "g5", "g6"];
+// 預約時依項目額外詢問的資料
+export const EXTRAS = ["none", "magnified", "departed", "soulplan", "animal"];
 
 // ---------- 欄位驗證 ----------
 const F = {
@@ -71,18 +73,19 @@ export const SCHEMAS = {
       priceMode: F.oneOf(["coming", "fixed", "inquiry"], "coming"),
       priceTwd: F.int(0, 1000000),
       priceMyr: F.int(0, 100000),
+      extra: F.oneOf(EXTRAS, "none"),
       glyph: F.oneOf(GLYPHS, "lotus"),
       palette: F.oneOf(PALETTES, "g1"),
       published: F.bool(true),
     },
     labels: { name: "名稱", en: "英文名稱", desc: "介紹", duration: "療程長度", priceTwd: "台幣價格", priceMyr: "馬幣價格" },
     seed: [
-      { name: "擴大療癒", en: "Magnified Healing®", desc: "連結觀音與宇宙源頭的能量，深入情緒與靈性層面，溫柔地清理與平衡。", category: "energy", glyph: "flame", palette: "g5" },
+      { name: "擴大療癒", extra: "magnified", en: "Magnified Healing®", desc: "連結觀音與宇宙源頭的能量，深入情緒與靈性層面，溫柔地清理與平衡。", category: "energy", glyph: "flame", palette: "g5" },
       { name: "聖火／卡魯那靈氣", en: "Holy Fire® Karuna Reiki", desc: "溫和而高頻的聖火能量，陪伴身心進入深層放鬆，協助淨化與調頻。", category: "energy", glyph: "sun", palette: "g2" },
       { name: "準提佛母火典", en: "Cundi Arathi", desc: "以準提佛母的火典儀式獻上祝福，為你的心願與生活帶來清淨的力量。", category: "blessing", glyph: "lotus", palette: "g4" },
-      { name: "引渡之光", en: "Light of Transmutation", desc: "為已逝的摯愛送上光與祝福，陪伴離開的人與留下的人，各自安心前行。", category: "blessing", glyph: "wave", palette: "g3" },
-      { name: "靈魂藍圖諮詢", en: "Soul Plan Consultation", desc: "從你的出生資料，看見這一世的天賦、挑戰與靈魂想走的方向。", category: "consult", glyph: "blueprint", palette: "g6" },
-      { name: "動物溝通", en: "Animal Communication", desc: "聆聽毛孩想說的話，理解牠的感受與需要，讓彼此的陪伴更靠近。", category: "consult", glyph: "paw", palette: "g1" },
+      { name: "引渡之光", extra: "departed", en: "Light of Transmutation", desc: "為已逝的摯愛送上光與祝福，陪伴離開的人與留下的人，各自安心前行。", category: "blessing", glyph: "wave", palette: "g3" },
+      { name: "靈魂藍圖諮詢", extra: "soulplan", en: "Soul Plan Consultation", desc: "從你的出生資料，看見這一世的天賦、挑戰與靈魂想走的方向。", category: "consult", glyph: "blueprint", palette: "g6" },
+      { name: "動物溝通", extra: "animal", en: "Animal Communication", desc: "聆聽毛孩想說的話，理解牠的感受與需要，讓彼此的陪伴更靠近。", category: "consult", glyph: "paw", palette: "g1" },
     ],
   },
   products: {
@@ -117,8 +120,21 @@ export const SCHEMAS = {
 
 // 第一次使用時，把網站原本的內容匯入資料庫（只做一次，之後刪光也不會再匯入）
 const seeded = new Set(); // 同一個 Worker 執行個體內記住已檢查過，省下一次查詢
+const EXTRA_BY_NAME = { "擴大療癒": "magnified", "引渡之光": "departed", "靈魂藍圖諮詢": "soulplan", "動物溝通": "animal" };
+async function migrateExtras(db) {
+  const settings = db.collection("settings");
+  if (await settings.findOne({ _id: "migrate:services:extra:v1" })) return;
+  const col = db.collection("services");
+  const docs = await col.find({}).toArray();
+  for (const d of docs) {
+    if (d.extra === undefined) await col.updateOne({ _id: d._id }, { $set: { extra: EXTRA_BY_NAME[d.name] || "none" } });
+  }
+  try { await settings.insertOne({ _id: "migrate:services:extra:v1", at: new Date() }); } catch (err) { if (err.code !== 11000) throw err; }
+}
+
 async function seedOnce(db, schema) {
   if (seeded.has(schema.seedKey)) return;
+  if (schema.collection === "services") await migrateExtras(db);
   const settings = db.collection("settings");
   if (await settings.findOne({ _id: schema.seedKey })) { seeded.add(schema.seedKey); return; }
   const col = db.collection(schema.collection);

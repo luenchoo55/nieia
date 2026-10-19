@@ -36,7 +36,7 @@
       svcList.innerHTML = "";
       data.items.forEach(function (s) {
         var row = el("a", "row glass");
-        row.href = "#booking";
+        row.href = "/booking?service=" + encodeURIComponent(s.id);
         row.setAttribute("data-cat", s.category);
         row.appendChild(window.nieiaArt(s.glyph, s.palette));
         var text = el("div", "text");

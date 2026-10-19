@@ -18,7 +18,7 @@
       api: "/api/admin/services",
       noun: "療癒項目",
       priceKind: "service",
-      blank: { name: "", en: "", desc: "", category: "energy", duration: "", priceMode: "coming", priceTwd: "", priceMyr: "", glyph: "lotus", palette: "g1", published: true },
+      blank: { name: "", en: "", desc: "", category: "energy", duration: "", priceMode: "coming", priceTwd: "", priceMyr: "", extra: "none", glyph: "lotus", palette: "g1", published: true },
       fields: [
         { key: "name", label: "名稱", type: "text", max: 40, required: true },
         { key: "en", label: "英文名稱", type: "text", max: 60, hint: "選填，會以英文字體顯示在名稱下方" },
@@ -28,6 +28,7 @@
         { key: "priceMode", label: "價格顯示", type: "select", options: [["coming", "價格即將公布"], ["fixed", "固定價格"], ["inquiry", "價格請私訊詢問"]] },
         { key: "priceTwd", label: "台幣價格（NT$）", type: "number", min: 0, max: 1000000, showIf: function (v) { return v.priceMode === "fixed"; } },
         { key: "priceMyr", label: "馬幣價格（RM）", type: "number", min: 0, max: 100000, showIf: function (v) { return v.priceMode === "fixed"; }, hint: "沒填就不顯示馬幣價格" },
+        { key: "extra", label: "預約時額外詢問", type: "select", options: [["none", "不需要"], ["magnified", "是否習修過擴大療癒"], ["departed", "亡者全名（引渡之光）"], ["soulplan", "出生日期與姓名拼音（靈魂藍圖）"], ["animal", "毛孩資料（動物溝通）"]] },
         { key: "glyph", label: "縮圖圖案", type: "glyph" },
         { key: "palette", label: "縮圖色調", type: "palette" },
         { key: "published", label: "上架（客人看得到）", type: "check" },

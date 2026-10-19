@@ -3,6 +3,7 @@ import { withDb } from "./db.js";
 import { mountAuth } from "./auth.js";
 import { mountSlots } from "./slots.js";
 import { mountCatalog } from "./catalog.js";
+import { mountBookings } from "./bookings.js";
 
 // strict: false 讓 /api/health 和 /api/health/ 都能使用
 const app = new Hono({ strict: false });
@@ -39,6 +40,7 @@ app.get("/api/health", async (c) => {
 mountAuth(app);
 mountSlots(app);
 mountCatalog(app);
+mountBookings(app);
 
 app.notFound((c) =>
   c.json({ ok: false, message: "找不到這個 API。", path: new URL(c.req.url).pathname }, 404)

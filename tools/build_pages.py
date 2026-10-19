@@ -49,8 +49,8 @@ def tabbar(cur):
         items.append(f'  <a href="{href}"{c}>{icon(key)}<span>{label}</span></a>')
     return '<nav class="tabbar" aria-label="主要選單">\n' + '\n'.join(items) + '\n</nav>'
 
-def appbar(title, sub, back=True, centered=False):
-    b = f'<a class="back" href="/">{BACK}首頁</a>' if back else ''
+def appbar(title, sub, back=True, centered=False, back_href="/", back_label="首頁"):
+    b = f'<a class="back" href="{back_href}">{BACK}{back_label}</a>' if back else ''
     c = ' centered' if centered else ''
     return f'''  <header class="appbar{c}">
     {b}
@@ -210,7 +210,7 @@ svc = [
  ("blueprint","g6","靈魂藍圖諮詢","Soul Plan Consultation","從你的出生資料，看見這一世的天賦、挑戰與靈魂想走的方向。","consult"),
  ("paw","g1","動物溝通","Animal Communication","聆聽毛孩想說的話，理解牠的感受與需要，讓彼此的陪伴更靠近。","consult"),
 ]
-svc_rows = '\n'.join(row("#booking", gl, g, t, en, d, "IG 視訊遠距｜價格即將公布", cat) for gl,g,t,en,d,cat in svc)
+svc_rows = '\n'.join(row("/booking", gl, g, t, en, d, "IG 視訊遠距｜價格即將公布", cat) for gl,g,t,en,d,cat in svc)
 services = f'''{appbar("療癒服務", "六種療癒方式，皆以 IG 視訊遠距進行，台灣與馬來西亞都能預約。選好項目後，預約時會依項目詢問需要的資料。")}
 
   <div class="chips" role="group" aria-label="依類型篩選" data-filter-group="#svc-list">
@@ -227,7 +227,7 @@ services = f'''{appbar("療癒服務", "六種療癒方式，皆以 IG 視訊遠
   <section class="notice glass" id="booking" aria-labelledby="notice-title">
     <h2 id="notice-title">預約須知</h2>
     <ul>
-      <li>線上預約即將開放，目前請透過 IG 私訊 @nieia4928 預約。</li>
+      <li>點選療癒項目即可線上預約，選擇時段並填寫資料。</li>
       <li>療程一律先付款，完成匯款後寄出確認信。</li>
       <li>需改期請於 24 小時前告知，改期需酌收行政費用。</li>
       <li>療程前請先追蹤並私訊 @nieia4928，當天以 IG 視訊進行。</li>
@@ -393,6 +393,121 @@ shop = f'''{appbar("聖照選物", "阿綸親自挑選與加持的聖照卡。�
     </ul>
   </section>'''
 page('shop.html', '聖照選物｜阿綸涅亞 NIEIA', '', shop, ['/assets/glyphs.js', '/assets/catalog.js'])
+
+
+# ---------------- booking ----------------
+booking = f'''{appbar("預約療癒", "選擇療癒項目與時段，填寫資料後就會看到匯款資訊。療程以 IG 視訊進行，台灣與馬來西亞時間相同。", back_href="/services", back_label="療癒服務")}
+
+  <form class="booking" id="bookForm" novalidate>
+    <section class="step glass" aria-labelledby="s1">
+      <h2 id="s1"><span class="num" aria-hidden="true">1</span>選擇療癒項目</h2>
+      <div class="choices" id="serviceChoices" role="radiogroup" aria-labelledby="s1"><p class="muted">載入中…</p></div>
+    </section>
+
+    <section class="step glass" aria-labelledby="s2">
+      <h2 id="s2"><span class="num" aria-hidden="true">2</span>選擇時段</h2>
+      <div class="date-chips" id="dateChips" role="tablist" aria-label="日期"></div>
+      <div class="time-grid" id="timeGrid" role="radiogroup" aria-labelledby="s2"><p class="muted">載入中…</p></div>
+    </section>
+
+    <section class="step glass" aria-labelledby="s3">
+      <h2 id="s3"><span class="num" aria-hidden="true">3</span>填寫資料</h2>
+      <div class="field-grid">
+        <fieldset class="field wide">
+          <legend>你住在</legend>
+          <div class="pills-choice">
+            <label><input type="radio" name="region" value="TW" id="regionTW"><span>台灣</span></label>
+            <label><input type="radio" name="region" value="MY" id="regionMY"><span>馬來西亞</span></label>
+          </div>
+        </fieldset>
+        <label class="field" for="fName"><span>姓名</span><input id="fName" autocomplete="name" maxlength="40" required></label>
+        <label class="field" for="fEmail"><span>Email</span><input id="fEmail" type="email" autocomplete="email" maxlength="120" required></label>
+        <label class="field" for="fIg"><span>IG 帳號（療程以 IG 視訊進行）</span><input id="fIg" autocomplete="off" maxlength="31" placeholder="例如 nieia4928" required></label>
+        <label class="field" for="fAge"><span>年齡</span>
+          <select id="fAge" required>
+            <option value="">請選擇</option>
+            <option>20 歲以下</option><option>21–30 歲</option><option>31–40 歲</option>
+            <option>41–50 歲</option><option>51–60 歲</option><option>61 歲以上</option>
+          </select>
+        </label>
+        <fieldset class="field wide">
+          <legend>性別</legend>
+          <div class="pills-choice">
+            <label><input type="radio" name="gender" value="女"><span>女</span></label>
+            <label><input type="radio" name="gender" value="男"><span>男</span></label>
+            <label><input type="radio" name="gender" value="多元"><span>多元</span></label>
+            <label><input type="radio" name="gender" value="不便透露"><span>不便透露</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="field wide">
+          <legend>接受療癒的原因（可複選）</legend>
+          <div class="pills-choice">
+            <label><input type="checkbox" name="reasons" value="身體放鬆"><span>身體放鬆</span></label>
+            <label><input type="checkbox" name="reasons" value="情緒梳理"><span>情緒梳理</span></label>
+            <label><input type="checkbox" name="reasons" value="關係和諧"><span>關係和諧</span></label>
+            <label><input type="checkbox" name="reasons" value="個人成長"><span>個人成長</span></label>
+            <label><input type="checkbox" name="reasons" value="靈性支持"><span>靈性支持</span></label>
+            <label><input type="checkbox" name="reasons" value="特定事件與遠距祝福"><span>特定事件與遠距祝福</span></label>
+          </div>
+          <input id="fOther" class="other" maxlength="100" placeholder="其他原因（選填）" aria-label="其他原因">
+        </fieldset>
+        <div class="field wide extra" id="extraFields" hidden></div>
+        <label class="field wide" for="fNote"><span>想對阿綸說的話（選填）</span><textarea id="fNote" rows="3" maxlength="1000"></textarea></label>
+        <label class="hp" aria-hidden="true">請勿填寫<input id="fWebsite" tabindex="-1" autocomplete="off"></label>
+      </div>
+    </section>
+
+    <section class="step glass" aria-labelledby="s4">
+      <h2 id="s4"><span class="num" aria-hidden="true">4</span>確認並送出</h2>
+      <dl class="summary" id="summary"></dl>
+      <div class="rules">
+        <p><strong>預約須知</strong></p>
+        <ul>
+          <li>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代正統醫療、心理諮商或法律診斷。</li>
+          <li>療程一律先付款，送出後會看到匯款資訊，阿綸確認收款後預約即成立。</li>
+          <li>需改期請於 24 小時前告知，改期需酌收行政費用。若無故遲到，時間不予順延。</li>
+          <li>療程前請先追蹤並私訊 IG @nieia4928，當天以 IG 視訊進行。</li>
+          <li>你填寫的所有資料都會保密，只有阿綸看得到。</li>
+        </ul>
+      </div>
+      <label class="agree" for="fAgree"><input type="checkbox" id="fAgree"><span>我已閱讀並同意預約須知</span></label>
+      <p class="form-msg" id="bookMsg" role="alert"></p>
+      <button class="btn btn-primary btn-block" id="bookBtn" type="submit">送出預約</button>
+    </section>
+  </form>
+
+  <section class="done" id="doneView" hidden aria-labelledby="doneTitle">
+    <div class="feature glass">
+      <div class="orb">{G["door"]}</div>
+      <h2 id="doneTitle">預約已送出</h2>
+      <p id="doneStatus"></p>
+      <div class="ref">預約編號<strong id="doneRef"></strong></div>
+    </div>
+    <dl class="summary glass" id="doneSummary"></dl>
+    <section class="pay glass" id="payCard" aria-labelledby="payTitle">
+      <h2 id="payTitle">匯款資訊</h2>
+      <p class="amount" id="payAmount"></p>
+      <dl class="pay-lines" id="payLines"></dl>
+      <p class="muted">匯款完成後，請在下方回報，方便阿綸核對。</p>
+    </section>
+    <form class="pay glass" id="reportForm" novalidate aria-labelledby="reportTitle">
+      <h2 id="reportTitle">回報匯款</h2>
+      <div class="field-grid">
+        <label class="field" for="rDate"><span>匯款日期</span><input id="rDate" type="date" required></label>
+        <label class="field" for="rLast5"><span>匯款帳號末五碼</span><input id="rLast5" inputmode="numeric" maxlength="5" pattern="\\d{{5}}" required></label>
+        <label class="field wide" for="rName"><span>匯款人姓名（選填）</span><input id="rName" maxlength="40"></label>
+      </div>
+      <p class="form-msg" id="reportMsg" role="alert"></p>
+      <button class="btn btn-primary btn-block" id="reportBtn" type="submit">回報匯款</button>
+    </form>
+    <p class="reported glass" id="reportedNote" hidden></p>
+    <section class="keep glass" aria-labelledby="keepTitle">
+      <h2 id="keepTitle">保存這筆預約</h2>
+      <p>之後要查看預約狀態或回報匯款，請用下面這個專屬網址。建議加入書籤，或直接截圖這個畫面。</p>
+      <div class="copy-row"><input id="keepUrl" readonly aria-label="預約專屬網址"><button class="btn btn-ghost" id="copyUrl" type="button">複製網址</button></div>
+    </section>
+  </section>'''
+page('booking.html', '預約療癒｜阿綸涅亞 NIEIA', 'services', booking, ['/assets/glyphs.js', '/assets/catalog.js', '/assets/booking.js'])
 
 # ---------------- 404 ----------------
 nf = f'''  <section class="feature glass" aria-labelledby="nf-title" style="margin-top:2rem">

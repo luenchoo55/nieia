@@ -25,7 +25,7 @@
         { key: "desc", label: "介紹", type: "textarea", max: 300, hint: "顯示在列表上的一兩句話" },
         { key: "detail", label: "詳細介紹（點進項目時顯示）", type: "textarea", max: 4000, rows: 10, hint: "空一行分段；「1. 」或「# 」開頭是小標題；「- 」開頭是條列；**文字** 是粗體" },
         { key: "category", label: "分類", type: "select", options: [["energy", "能量療癒"], ["blessing", "祝福儀式"], ["consult", "諮詢與溝通"]] },
-        { key: "duration", label: "療程長度（分鐘）", type: "number", min: 15, max: 480, hint: "選填" },
+        { key: "duration", label: "療程長度（分鐘）", type: "number", min: 15, max: 480, placeholder: "選填" },
         { key: "mode", label: "進行方式", type: "select", options: [["remote", "IG 視訊遠距"], ["onsite", "現場進行"], ["both", "遠距或現場皆可（客人預約時選擇）"]] },
         { key: "priceMode", label: "價格顯示", type: "select", options: [["coming", "價格即將公布"], ["fixed", "固定價格"], ["inquiry", "隨喜服務"]] },
         { key: "priceTwd", label: "台幣價格（NT$）", type: "number", min: 0, max: 1000000, showIf: function (v) { return v.priceMode === "fixed"; } },
@@ -336,6 +336,7 @@
     input.id = id;
     if (f.max && f.type !== "number") input.maxLength = f.max;
     if (f.required) input.required = true;
+    if (f.placeholder) input.placeholder = f.placeholder;
     input.value = values[f.key] == null ? "" : values[f.key];
     input.addEventListener(f.type === "select" ? "change" : "input", function () { values[f.key] = input.value; onChange(); });
     wrap.appendChild(input);

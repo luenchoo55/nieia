@@ -153,7 +153,6 @@ home = f'''  <a class="market-banner glass" id="marketBanner" href="/market" hid
     <p>在安全、不帶評判的空間裡，陪你看見自己本來就擁有的力量。台灣與馬來西亞皆可預約，可透過 IG 視訊遠距或現場進行。</p>
     <div class="actions">
       <a class="btn btn-primary" href="/services">預約療癒</a>
-      <a class="btn btn-ghost" href="/oracle">抽一張宇宙訊息</a>
     </div>
   </section>
 

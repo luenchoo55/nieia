@@ -573,3 +573,39 @@ fieldset.field legend { padding: 0; margin-bottom: .35rem; }
 .m-services .ms-name { display: grid; gap: .1rem; min-width: 0; }
 .m-services .ms-name strong { font-weight: 500; color: var(--ink); }
 .m-services .ms-name small { color: var(--ink-soft); font-size: var(--step--2); line-height: 1.5; }
+
+/* ---------- 療癒項目詳細介紹彈窗 ---------- */
+html.no-scroll, html.no-scroll body { overflow: hidden; }
+.detail-backdrop { z-index: 40; }
+.detail-sheet {
+  position: relative; width: min(100%, 560px); max-height: min(88dvh, 820px);
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 0;
+  padding: 0; text-align: left; justify-items: stretch; overflow: hidden;
+}
+.detail-x {
+  position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid var(--line); background: rgba(252, 248, 248, .7); color: var(--ink);
+  display: grid; place-items: center; cursor: pointer; z-index: 1;
+}
+.detail-x svg { width: 18px; height: 18px; }
+.detail-head { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px; align-items: center; padding: 1.3rem 3.6rem 1rem 1.2rem; border-bottom: 1px solid var(--line); }
+.detail-head .art { width: 64px; height: 64px; border-radius: 14px; }
+.detail-title { display: grid; gap: .1rem; min-width: 0; }
+.detail-title h2 { font-size: var(--step-1); letter-spacing: .08em; line-height: 1.4; }
+.detail-title .en { font-family: var(--latin); color: var(--ink-soft); font-size: var(--step--1); }
+.detail-title .meta { font-size: var(--step--2); color: var(--ink-soft); letter-spacing: .06em; }
+.detail-body { overflow-y: auto; overscroll-behavior: contain; padding: 1.1rem 1.3rem 1.3rem; -webkit-overflow-scrolling: touch; }
+.rich { display: grid; gap: .7rem; font-size: var(--step--1); line-height: 1.85; color: var(--ink); }
+.rich p { margin: 0; color: var(--ink); font-size: inherit; }
+.rich h3 { margin: .5rem 0 -.3rem; font-size: var(--step-0); letter-spacing: .06em; display: flex; align-items: baseline; gap: .5rem; }
+.rich h3 .num { flex: none; display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--tint); color: var(--button); font-size: var(--step--1); }
+.rich ul { margin: 0; padding-left: 1.2em; display: grid; gap: .35rem; }
+.rich li::marker { color: var(--button); }
+.rich strong { font-weight: 600; }
+.detail-foot { padding: .9rem 1.2rem 1.2rem; border-top: 1px solid var(--line); display: grid; gap: .6rem; justify-items: center; text-align: center; background: rgba(252, 248, 248, .35); }
+.detail-ask { margin: 0; color: var(--ink-soft); font-size: var(--step--1); }
+.detail-foot .actions { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
+.row.not-bookable { grid-template-columns: 64px minmax(0, 1fr) auto; }
+.row.not-bookable .go { background: rgba(70, 60, 120, .35); }
+.detail-backdrop { background: rgba(54, 47, 82, .42); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.detail-sheet { background: rgba(251, 248, 251, .97); }

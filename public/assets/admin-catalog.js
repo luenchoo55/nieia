@@ -18,11 +18,12 @@
       api: "/api/admin/services",
       noun: "療癒項目",
       priceKind: "service",
-      blank: { name: "", en: "", desc: "", category: "energy", duration: "", priceMode: "coming", priceTwd: "", priceMyr: "", extra: "none", mode: "remote", glyph: "lotus", palette: "g1", published: true },
+      blank: { name: "", en: "", desc: "", detail: "", category: "energy", duration: "", priceMode: "coming", priceTwd: "", priceMyr: "", extra: "none", mode: "remote", glyph: "lotus", palette: "g1", published: true },
       fields: [
         { key: "name", label: "名稱", type: "text", max: 40, required: true },
         { key: "en", label: "英文名稱", type: "text", max: 60, hint: "選填，會以英文字體顯示在名稱下方" },
-        { key: "desc", label: "介紹", type: "textarea", max: 300 },
+        { key: "desc", label: "介紹", type: "textarea", max: 300, hint: "顯示在列表上的一兩句話" },
+        { key: "detail", label: "詳細介紹（點進項目時顯示）", type: "textarea", max: 4000, rows: 10, hint: "空一行分段；「1. 」或「# 」開頭是小標題；「- 」開頭是條列；**文字** 是粗體" },
         { key: "category", label: "分類", type: "select", options: [["energy", "能量療癒"], ["blessing", "祝福儀式"], ["consult", "諮詢與溝通"]] },
         { key: "duration", label: "療程長度（分鐘）", type: "number", min: 15, max: 480, hint: "選填" },
         { key: "mode", label: "進行方式", type: "select", options: [["remote", "IG 視訊遠距"], ["onsite", "現場進行"], ["both", "遠距或現場皆可（客人預約時選擇）"]] },
@@ -319,7 +320,7 @@
     var input;
     if (f.type === "textarea") {
       input = el("textarea");
-      input.rows = 3;
+      input.rows = f.rows || 3;
     } else if (f.type === "select") {
       input = el("select");
       f.options.forEach(function (o) {

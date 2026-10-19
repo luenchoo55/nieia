@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { withDb } from "./db.js";
 import { requireAdmin } from "./auth.js";
+import { detailFor } from "./details.js";
 
 // 縮圖可選的圖案與色調（前台 glyphs.js 也有同一份清單）
 export const GLYPHS = ["moon", "spiral", "constellation", "rings", "flame", "sun", "lotus", "wave", "heart", "paw", "blueprint", "door", "book", "card", "bag", "pen"];
@@ -68,6 +69,7 @@ export const SCHEMAS = {
       name: F.text(40, true),
       en: F.text(60),
       desc: F.text(300),
+      detail: F.text(4000),
       category: F.oneOf(["energy", "blessing", "consult"], "energy"),
       duration: F.int(15, 480),
       priceMode: F.oneOf(["coming", "fixed", "inquiry"], "coming"),
@@ -79,7 +81,7 @@ export const SCHEMAS = {
       palette: F.oneOf(PALETTES, "g1"),
       published: F.bool(true),
     },
-    labels: { name: "名稱", en: "英文名稱", desc: "介紹", duration: "療程長度", priceTwd: "台幣價格", priceMyr: "馬幣價格" },
+    labels: { name: "名稱", en: "英文名稱", desc: "介紹", detail: "詳細介紹", duration: "療程長度", priceTwd: "台幣價格", priceMyr: "馬幣價格" },
     seed: [
       { name: "擴大療癒", extra: "magnified", en: "Magnified Healing®", desc: "連結觀音與宇宙源頭的能量，深入情緒與靈性層面，溫柔地清理與平衡。", category: "energy", glyph: "flame", palette: "g5" },
       { name: "聖火／卡魯那靈氣", en: "Holy Fire® Karuna Reiki", desc: "溫和而高頻的聖火能量，陪伴身心進入深層放鬆，協助淨化與調頻。", category: "energy", glyph: "sun", palette: "g2" },
@@ -87,7 +89,7 @@ export const SCHEMAS = {
       { name: "引渡之光", extra: "departed", en: "Light of Transmutation", desc: "為已逝的摯愛送上光與祝福，陪伴離開的人與留下的人，各自安心前行。", category: "blessing", glyph: "wave", palette: "g3" },
       { name: "靈魂藍圖諮詢", extra: "soulplan", published: false, en: "Soul Plan Consultation", desc: "從你的出生資料，看見這一世的天賦、挑戰與靈魂想走的方向。", category: "consult", glyph: "blueprint", palette: "g6" },
       { name: "動物溝通", extra: "animal", en: "Animal Communication", desc: "聆聽毛孩想說的話，理解牠的感受與需要，讓彼此的陪伴更靠近。", category: "consult", glyph: "paw", palette: "g1" },
-    ],
+    ].map((s) => ({ ...s, detail: detailFor(s.name) })),
   },
   products: {
     collection: "products",
@@ -132,10 +134,21 @@ async function migrateExtras(db) {
   }
   try { await settings.insertOne({ _id: "migrate:services:extra:v1", at: new Date() }); } catch (err) { if (err.code !== 11000) throw err; }
 }
+// 為原本的項目補上詳細介紹（只做一次，已經寫過的不覆蓋）
+async function migrateDetails(db) {
+  const settings = db.collection("settings");
+  if (await settings.findOne({ _id: "migrate:services:detail:v1" })) return;
+  const col = db.collection("services");
+  for (const d of await col.find({}).toArray()) {
+    const text = detailFor(d.name);
+    if (!d.detail && text) await col.updateOne({ _id: d._id }, { $set: { detail: text } });
+  }
+  try { await settings.insertOne({ _id: "migrate:services:detail:v1", at: new Date() }); } catch (err) { if (err.code !== 11000) throw err; }
+}
 
 async function seedOnce(db, schema) {
   if (seeded.has(schema.seedKey)) return;
-  if (schema.collection === "services") await migrateExtras(db);
+  if (schema.collection === "services") { await migrateExtras(db); await migrateDetails(db); }
   const settings = db.collection("settings");
   if (await settings.findOne({ _id: schema.seedKey })) { seeded.add(schema.seedKey); return; }
   const col = db.collection(schema.collection);

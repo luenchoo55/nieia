@@ -8,6 +8,7 @@
   var timer = null;
   var formDirty = false;
   var items = [];
+  var editing = -1; // 正在編輯的項目位置，-1 表示沒有
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -39,7 +40,7 @@
     $("mkAccept").textContent = m.accepting ? "暫停取號" : "恢復取號";
     $("mkQueue").hidden = !m.active;
 
-    if (!formDirty) {
+    if (!formDirty && editing < 0) {
       $("mkLocation").value = m.location || "";
       $("mkAddress").value = m.address || "";
       $("mkHours").value = m.hours || "";
@@ -165,11 +166,69 @@
   });
 
   // ---------- 現場項目 ----------
+  function validItem(it, skip) {
+    if (!it.name) return "請填寫項目名稱。";
+    if (it.minutes != null && !(Number.isInteger(it.minutes) && it.minutes >= 1 && it.minutes <= 240)) return "分鐘要是 1 到 240 之間的整數。";
+    if (items.some(function (x, k) { return k !== skip && x.name === it.name; })) return "已經有同名的項目了。";
+    return "";
+  }
+  function readItem(name, min, price, desc) {
+    var m = min.value.trim();
+    return { name: name.value.trim(), minutes: m ? Number(m) : null, price: price.value.trim(), desc: desc.value.trim() };
+  }
+  function input(label, value, opts) {
+    var f = el("label", "field" + (opts.wide ? " wide" : ""));
+    f.appendChild(el("span", null, label));
+    var i = el("input");
+    i.type = opts.type || "text";
+    if (opts.type === "number") { i.min = 1; i.max = 240; i.inputMode = "numeric"; }
+    if (opts.max) i.maxLength = opts.max;
+    if (opts.placeholder) i.placeholder = opts.placeholder;
+    i.value = value == null ? "" : value;
+    f.appendChild(i);
+    return { field: f, input: i };
+  }
+  function renderEditor(it, i) {
+    var row = el("div", "item-add item-edit");
+    var n = input("項目名稱", it.name, { max: 40 });
+    var mi = input("分鐘", it.minutes, { type: "number" });
+    var p = input("價格", it.price, { max: 30, placeholder: "NT$200 或 隨喜" });
+    var d = input("說明（客人會看到）", it.desc, { max: 120, wide: true });
+    [n, mi, p, d].forEach(function (x) { row.appendChild(x.field); });
+    var msg = el("p", "form-msg wide");
+    msg.setAttribute("role", "status");
+    row.appendChild(msg);
+    var acts = el("div", "edit-actions wide");
+    var ok = el("button", "btn", "儲存修改"); ok.type = "button";
+    var cancel = el("button", "btn btn-ghost", "取消"); cancel.type = "button";
+    ok.addEventListener("click", function () {
+      var next = readItem(n.input, mi.input, p.input, d.input);
+      var err = validItem(next, i);
+      if (err) { msg.textContent = err; return; }
+      items[i] = next;
+      editing = -1;
+      renderItems();
+      saveItems("已更新項目");
+    });
+    cancel.addEventListener("click", function () { editing = -1; renderItems(); });
+    [n, mi, p, d].forEach(function (x) {
+      x.input.addEventListener("input", function () { msg.textContent = ""; });
+      x.input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); ok.click(); }
+        if (e.key === "Escape") { e.preventDefault(); cancel.click(); }
+      });
+    });
+    acts.appendChild(ok); acts.appendChild(cancel);
+    row.appendChild(acts);
+    setTimeout(function () { n.input.focus(); }, 0);
+    return row;
+  }
   function renderItems() {
     var box = $("mkItems");
     box.innerHTML = "";
     if (!items.length) { box.appendChild(el("p", "hint", "還沒有項目。用下方表單新增，客人取號時可以選擇想做的項目。")); return; }
     items.forEach(function (it, i) {
+      if (i === editing) { box.appendChild(renderEditor(it, i)); return; }
       var row = el("div", "item-row");
       var info = el("div", "item-info");
       info.appendChild(el("strong", null, it.name));
@@ -180,10 +239,12 @@
       if (it.desc) info.appendChild(el("span", "item-desc", it.desc));
       row.appendChild(info);
       var actions = el("div", "actions");
-      var up = btn("↑", function () { moveItem(i, -1); }); up.setAttribute("aria-label", "往上移"); up.disabled = i === 0;
-      var down = btn("↓", function () { moveItem(i, 1); }); down.setAttribute("aria-label", "往下移"); down.disabled = i === items.length - 1;
-      var del = btn("刪除", function () { items.splice(i, 1); renderItems(); saveItems("已刪除項目"); });
-      actions.appendChild(up); actions.appendChild(down); actions.appendChild(del);
+      var busy = editing >= 0;
+      var up = btn("↑", function () { moveItem(i, -1); }); up.setAttribute("aria-label", "往上移"); up.disabled = busy || i === 0;
+      var down = btn("↓", function () { moveItem(i, 1); }); down.setAttribute("aria-label", "往下移"); down.disabled = busy || i === items.length - 1;
+      var edit = btn("編輯", function () { editing = i; renderItems(); }); edit.disabled = busy;
+      var del = btn("刪除", function () { items.splice(i, 1); renderItems(); saveItems("已刪除項目"); }); del.disabled = busy;
+      actions.appendChild(up); actions.appendChild(down); actions.appendChild(edit); actions.appendChild(del);
       row.appendChild(actions);
       box.appendChild(row);
     });
@@ -200,8 +261,8 @@
     var name = $("mkIName").value.trim();
     var min = $("mkIMin").value.trim();
     if (!name) { msg.textContent = "請填寫項目名稱。"; $("mkIName").focus(); return; }
-    if (min && !(Number.isInteger(Number(min)) && Number(min) >= 1 && Number(min) <= 240)) { msg.textContent = "分鐘要是 1 到 240 之間的整數。"; return; }
-    if (items.some(function (x) { return x.name === name; })) { msg.textContent = "已經有同名的項目了。"; return; }
+    var err = validItem({ name: name, minutes: min ? Number(min) : null }, -1);
+    if (err) { msg.textContent = err; return; }
     if (items.length >= 20) { msg.textContent = "最多 20 個項目。"; return; }
     msg.textContent = "";
     items.push({ name: name, minutes: min ? Number(min) : null, price: $("mkIPrice").value.trim(), desc: $("mkIDesc").value.trim() });

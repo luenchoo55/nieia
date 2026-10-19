@@ -192,3 +192,7 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .item-add .wide { grid-column: 1 / -1; }
 .item-add .btn { grid-column: 1 / -1; justify-self: start; }
 @media (max-width: 520px) { .item-add { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .item-add .field:first-child { grid-column: 1 / -1; } }
+.item-edit { border: 1px solid var(--line); }
+.item-edit .edit-actions { grid-column: 1 / -1; display: flex; gap: .6rem; flex-wrap: wrap; }
+.item-edit .edit-actions .btn { grid-column: auto; }
+@media (max-width: 520px) { .item-row { grid-template-columns: minmax(0, 1fr); } .item-row .actions { justify-content: flex-end; } }

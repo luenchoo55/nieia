@@ -75,9 +75,13 @@
     info.appendChild(el("strong", null, t.name));
     var meta = [];
     if (t.service) meta.push(t.service);
-    if (t.instagram) meta.push("@" + t.instagram);
     if (!active) meta.push(LABEL[t.status] || t.status);
     if (meta.length) info.appendChild(el("span", null, meta.join("｜")));
+    if (t.phone) {
+      var tel = el("a", "q-tel", t.phone);
+      tel.href = "tel:" + t.phone;
+      info.appendChild(tel);
+    }
     row.appendChild(info);
     var actions = el("div", "actions");
     if (active) {

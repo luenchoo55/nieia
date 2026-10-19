@@ -574,7 +574,7 @@ market = f'''{appbar("擺攤排隊", "在攤位現場取號，輪到你時這個
       <p class="muted" id="takePaused" hidden>目前暫停取號，請稍後再試，或直接到攤位詢問。</p>
       <div class="field-grid">
         <label class="field" for="kName"><span>名字或暱稱（叫號時會用到）</span><input id="kName" maxlength="20" autocomplete="nickname" required></label>
-        <label class="field" for="kIg"><span>IG 帳號（選填）</span><input id="kIg" maxlength="31" autocomplete="off" placeholder="方便之後聯絡"></label>
+        <label class="field" for="kPhone"><span>電話號碼（選填）</span><input id="kPhone" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" placeholder="輪到你時，如果不在附近會打給你"></label>
         <label class="field wide" for="kService" id="kServiceField" hidden><span>想做的項目</span><select id="kService"></select></label>
         <label class="hp" aria-hidden="true">請勿填寫<input id="kWebsite" tabindex="-1" autocomplete="off"></label>
       </div>

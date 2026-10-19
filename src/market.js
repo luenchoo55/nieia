@@ -104,10 +104,10 @@ export function mountMarket(app) {
     try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
     if (body.website) return bad(c, "取號失敗，請再試一次。");
     const name = str(body.name, 20);
-    const instagram = str(body.instagram, 31).replace(/^@+/, "");
+    const phone = str(body.phone, 20).replace(/[\s-]/g, "");
     const service = str(body.service, 40);
     if (!name) return bad(c, "請填寫名字或暱稱，叫號時會用到。");
-    if (instagram && !/^[A-Za-z0-9._]{1,30}$/.test(instagram)) return bad(c, "IG 帳號格式不正確，可以留空。");
+    if (phone && !/^\+?\d{8,15}$/.test(phone)) return bad(c, "電話號碼格式不正確，請只填數字，也可以留空。");
 
     return withDb(c.env, c.executionCtx, async (db) => {
       await ensureIndexes(db);
@@ -131,7 +131,7 @@ export function mountMarket(app) {
       const number = prev.nextNumber || 1;
 
       const ticket = {
-        sessionId: m.sessionId, number, name, instagram, service,
+        sessionId: m.sessionId, number, name, phone, service,
         status: "waiting", token: newToken(), ip: ip(c), createdAt: new Date(),
       };
       const res = await tickets.insertOne(ticket);

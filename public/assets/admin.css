@@ -169,3 +169,4 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 /* 後台分頁有 5 個，手機上縮小間距、不換行 */
 .admin-tabs button { white-space: nowrap; padding-inline: .3rem; }
 @media (max-width: 420px) { .admin-tabs button { font-size: .8rem; letter-spacing: .02em; } }
+.q-info .q-tel { color: var(--button); font-variant-numeric: tabular-nums; width: fit-content; }

@@ -139,7 +139,7 @@
     btn.disabled = true; btn.textContent = "取號中…";
     api("/api/market/tickets", {
       method: "POST",
-      body: { name: name, instagram: $("kIg").value, service: $("kService").value, website: $("kWebsite").value },
+      body: { name: name, phone: $("kPhone").value, service: $("kService").value, website: $("kWebsite").value },
     }).then(function (r) {
       btn.disabled = false; btn.textContent = "取號";
       if (!r.ok) { msg.textContent = r.message || "取號失敗，請再試一次。"; refresh(); return; }

@@ -109,7 +109,9 @@ export function mountSlots(app) {
       if (!created.length) {
         return bad(c, "沒有新增任何時段，因為都和已有的時段重疊：" + skipped.join("、"), 409);
       }
-      return c.json({ ok: true, created, skipped });
+      const from = new Date(Date.now() - 24 * 3600 * 1000);
+      const all = await col.find({ startAt: { $gte: from } }).sort({ startAt: 1 }).limit(500).toArray();
+      return c.json({ ok: true, created, skipped, slots: all.map(present) });
     });
   });
 

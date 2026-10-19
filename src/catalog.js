@@ -116,9 +116,11 @@ export const SCHEMAS = {
 };
 
 // 第一次使用時，把網站原本的內容匯入資料庫（只做一次，之後刪光也不會再匯入）
+const seeded = new Set(); // 同一個 Worker 執行個體內記住已檢查過，省下一次查詢
 async function seedOnce(db, schema) {
+  if (seeded.has(schema.seedKey)) return;
   const settings = db.collection("settings");
-  if (await settings.findOne({ _id: schema.seedKey })) return;
+  if (await settings.findOne({ _id: schema.seedKey })) { seeded.add(schema.seedKey); return; }
   const col = db.collection(schema.collection);
   if ((await col.countDocuments({})) === 0) {
     const now = new Date();
@@ -130,6 +132,7 @@ async function seedOnce(db, schema) {
   } catch (err) {
     if (err.code !== 11000) throw err; // 另一個請求同時完成了
   }
+  seeded.add(schema.seedKey);
 }
 
 function present(doc) {
@@ -143,17 +146,39 @@ async function readJson(c) {
   try { return await c.req.json(); } catch { return null; }
 }
 
+const edgeCache = () => (typeof caches !== "undefined" ? caches.default : null);
+const PUBLIC_TTL = 60;
+
 function mountOne(app, publicPath, adminPath, schema) {
   const col = (db) => db.collection(schema.collection);
+  const listAll = async (db) => (await col(db).find({}).sort({ order: 1 }).toArray()).map(present);
+  const cacheKey = (c) => new Request(new URL(publicPath, c.req.url).toString());
+
+  // 後台有變更時，清掉前台的快取，讓客人馬上看到新內容
+  const purge = (c) => {
+    const cache = edgeCache();
+    if (cache) c.executionCtx.waitUntil(cache.delete(cacheKey(c)));
+  };
 
   // 公開：只回傳已上架的
-  app.get(publicPath, (c) =>
-    withDb(c.env, c.executionCtx, async (db) => {
+  app.get(publicPath, async (c) => {
+    const cache = edgeCache();
+    if (cache) {
+      const hit = await cache.match(cacheKey(c));
+      if (hit) return new Response(hit.body, { status: 200, headers: { "content-type": "application/json; charset=UTF-8", "x-cache": "hit" } });
+    }
+    return withDb(c.env, c.executionCtx, async (db) => {
       await seedOnce(db, schema);
       const docs = await col(db).find({ published: true }).sort({ order: 1 }).toArray();
-      return c.json({ ok: true, items: docs.map(present) });
-    })
-  );
+      const body = JSON.stringify({ ok: true, items: docs.map(present) });
+      if (cache) {
+        c.executionCtx.waitUntil(cache.put(cacheKey(c), new Response(body, {
+          headers: { "content-type": "application/json; charset=UTF-8", "cache-control": `public, max-age=${PUBLIC_TTL}` },
+        })));
+      }
+      return new Response(body, { status: 200, headers: { "content-type": "application/json; charset=UTF-8" } });
+    });
+  });
 
   app.use(adminPath, requireAdmin);
   app.use(adminPath + "/*", requireAdmin);
@@ -161,8 +186,7 @@ function mountOne(app, publicPath, adminPath, schema) {
   app.get(adminPath, (c) =>
     withDb(c.env, c.executionCtx, async (db) => {
       await seedOnce(db, schema);
-      const docs = await col(db).find({}).sort({ order: 1 }).toArray();
-      return c.json({ ok: true, items: docs.map(present) });
+      return c.json({ ok: true, items: await listAll(db) });
     })
   );
 
@@ -176,7 +200,8 @@ function mountOne(app, publicPath, adminPath, schema) {
       const now = new Date();
       const doc = { ...data, order: (last[0]?.order || 0) + 1, createdAt: now, updatedAt: now };
       const res = await col(db).insertOne(doc);
-      return c.json({ ok: true, item: present({ ...doc, _id: res.insertedId }) });
+      purge(c);
+      return c.json({ ok: true, item: present({ ...doc, _id: res.insertedId }), items: await listAll(db) });
     });
   });
 
@@ -191,7 +216,8 @@ function mountOne(app, publicPath, adminPath, schema) {
       const doc = await col(db).findOne({ _id: id });
       if (!doc) return bad(c, "找不到這個項目，可能已經刪除了。", 404);
       await col(db).updateOne({ _id: id }, { $set: { ...data, updatedAt: new Date() } });
-      return c.json({ ok: true, item: present({ ...doc, ...data }) });
+      purge(c);
+      return c.json({ ok: true, item: present({ ...doc, ...data }), items: await listAll(db) });
     });
   });
 
@@ -209,10 +235,13 @@ function mountOne(app, publicPath, adminPath, schema) {
         .sort({ order: up ? -1 : 1 })
         .limit(1)
         .toArray();
-      if (!next) return c.json({ ok: true, moved: false });
-      await col(db).updateOne({ _id: doc._id }, { $set: { order: next.order } });
-      await col(db).updateOne({ _id: next._id }, { $set: { order: doc.order } });
-      return c.json({ ok: true, moved: true });
+      if (!next) return c.json({ ok: true, moved: false, items: await listAll(db) });
+      await Promise.all([
+        col(db).updateOne({ _id: doc._id }, { $set: { order: next.order } }),
+        col(db).updateOne({ _id: next._id }, { $set: { order: doc.order } }),
+      ]);
+      purge(c);
+      return c.json({ ok: true, moved: true, items: await listAll(db) });
     });
   });
 
@@ -223,7 +252,8 @@ function mountOne(app, publicPath, adminPath, schema) {
       const doc = await col(db).findOne({ _id: id });
       if (!doc) return bad(c, "找不到這個項目，可能已經刪除了。", 404);
       await col(db).deleteOne({ _id: id });
-      return c.json({ ok: true });
+      purge(c);
+      return c.json({ ok: true, items: await listAll(db) });
     });
   });
 }

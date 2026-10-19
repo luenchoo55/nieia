@@ -165,7 +165,7 @@
         msg.textContent = "略過的時段：" + r.skipped.join("、");
       }
       toast(text);
-      loadSlots();
+      if (r.slots) { slots = r.slots; render(); } else loadSlots();
     });
   });
 

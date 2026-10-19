@@ -65,8 +65,10 @@
   // ---------- 列表 ----------
   function load(kind) {
     var list = document.querySelector('[data-list="' + kind + '"]');
-    list.innerHTML = "";
-    list.appendChild(el("p", "empty glass", "載入中…"));
+    if (!state[kind].loaded) {
+      list.innerHTML = "";
+      list.appendChild(el("p", "empty glass", "載入中…"));
+    }
     A.api(KINDS[kind].api).then(function (r) {
       if (r.status === 401) return A.checkSession();
       if (!r.ok) { list.innerHTML = ""; list.appendChild(el("p", "empty glass", r.message || "暫時無法載入，請重新整理。")); return; }
@@ -74,6 +76,11 @@
       state[kind].loaded = true;
       render(kind);
     });
+  }
+
+  function applyItems(kind, r) {
+    if (r && r.items) { state[kind].items = r.items; state[kind].loaded = true; render(kind); }
+    else load(kind);
   }
 
   function render(kind) {
@@ -108,7 +115,12 @@
       actions.appendChild(up);
       actions.appendChild(down);
       var toggle = button(item.published ? "下架" : "上架", function () {
-        save(kind, item.id, { published: !item.published }, toggle, item.published ? "已下架" : "已上架");
+        var before = item.published;
+        item.published = !before;
+        render(kind);
+        save(kind, item.id, { published: item.published }, null, before ? "已下架" : "已上架").then(function (r) {
+          if (!r || !r.ok) { item.published = before; render(kind); }
+        });
       });
       actions.appendChild(toggle);
       row.appendChild(actions);
@@ -124,11 +136,17 @@
   }
 
   function move(kind, item, direction, btn) {
-    btn.disabled = true;
+    var items = state[kind].items;
+    var i = items.indexOf(item);
+    var j = direction === "up" ? i - 1 : i + 1;
+    if (i < 0 || j < 0 || j >= items.length) return;
+    var snapshot = items.slice();
+    items[i] = items[j]; items[j] = item;
+    render(kind);
     A.api(KINDS[kind].api + "/" + item.id + "/move", { method: "POST", body: { direction: direction } }).then(function (r) {
       if (r.status === 401) return A.checkSession();
-      if (!r.ok) { btn.disabled = false; A.toast(r.message || "調整順序失敗"); return; }
-      load(kind);
+      if (!r.ok) { state[kind].items = snapshot; render(kind); A.toast(r.message || "調整順序失敗"); return; }
+      applyItems(kind, r);
     });
   }
 
@@ -143,7 +161,7 @@
       if (r.status === 401) { A.checkSession(); return r; }
       if (!r.ok) { A.toast(r.message || "儲存失敗"); return r; }
       A.toast(doneText || "已儲存");
-      load(kind);
+      applyItems(kind, r);
       return r;
     });
   }
@@ -213,7 +231,7 @@
           if (!r.ok) { A.toast(r.message || "刪除失敗"); return; }
           host.innerHTML = "";
           A.toast("已刪除");
-          load(kind);
+          applyItems(kind, r);
         });
       });
       bar.appendChild(del);
@@ -335,8 +353,7 @@
   document.addEventListener("nieia:dash", function () {
     state.services.loaded = false;
     state.products.loaded = false;
-    ["services", "products"].forEach(function (kind) {
-      if (document.getElementById("tab-" + kind).getAttribute("aria-selected") === "true") load(kind);
-    });
+    load("services");
+    load("products");
   });
 })();

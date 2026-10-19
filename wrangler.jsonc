@@ -5,6 +5,8 @@
   "compatibility_date": "2026-09-01",
   // MongoDB 官方驅動程式需要 Node.js 相容模式
   "compatibility_flags": ["nodejs_compat"],
+  // 讓需要連資料庫的程式自動在靠近 MongoDB（新加坡）的機房執行，減少連線往返時間
+  "placement": { "mode": "smart" },
   "assets": {
     "directory": "./public",
     // 網頁檔案直接提供；/api/ 開頭的請求交給 Worker 處理

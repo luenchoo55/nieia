@@ -284,7 +284,20 @@ creds = [
  ("paw","g1","動物溝通","Animal Communication"),
  ("lotus","g4","譚崔項鍊、光語","Tantric Necklace, Light Language"),
 ]
-cred_rows = '\n'.join(row("", gl, g, t, en, "", "", tag="div") for gl,g,t,en in creds)
+CRED_GROUPS = [
+ ("擴大療癒法®", "Magnified Healing®", [c for c in creds if c[0] == "flame"]),
+ ("聖火靈氣", "Holy Fire® Reiki", [c for c in creds if c[0] == "sun"]),
+ ("其他學習", "Other studies", [c for c in creds if c[0] not in ("flame", "sun")]),
+]
+def cred_group(title, en, items):
+    lis = '\n'.join(f'          <li><span class="zh">{t}</span><span class="en">{e}</span></li>' for _, _, t, e in items)
+    return f'''      <div class="cred-group">
+        <h3>{title}<span class="en">{en}</span></h3>
+        <ul class="cred-list">
+{lis}
+        </ul>
+      </div>'''
+cred_rows = '\n'.join(cred_group(*g) for g in CRED_GROUPS)
 links = '\n'.join([
  row("https://www.instagram.com/nieia9319/","camera","g4","Instagram","@nieia9319","私訊預約與約課","").replace('<a class="row glass" href="https://www.instagram.com/nieia9319/"','<a class="row glass" href="https://www.instagram.com/nieia9319/" target="_blank" rel="noopener"'),
  row("/shop","bag","g5","聖照選物","","紫色火焰、聖哲曼、默基瑟德等聖照卡",""),
@@ -301,7 +314,7 @@ about = f'''  <header class="appbar"><a class="back" href="/">{BACK}首頁</a></
 
   <section class="block" aria-labelledby="creds-title">
     <div class="block-head"><h2 id="creds-title">身心靈探索歷程</h2></div>
-    <div class="rows">
+    <div class="creds">
 {cred_rows}
     </div>
   </section>

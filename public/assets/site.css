@@ -328,3 +328,20 @@ a.row:hover .go { background: #3a3163; }
 .tile.product.sold-out { opacity: .6; }
 .tile.product.sold-out .price { color: var(--ink-soft); }
 @media (min-width: 640px) { .tiles.shop { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* ---------- 資歷：純文字清單（不可點，所以不用卡片） ---------- */
+.creds { display: grid; gap: 1.6rem; }
+.cred-group { display: grid; gap: .4rem; }
+.cred-group h3 {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem .7rem;
+  font-size: var(--step--1); color: var(--ink-soft); letter-spacing: .1em; font-family: var(--body); font-weight: 500;
+}
+.cred-group h3 .en { font-family: var(--latin); font-size: var(--step--1); letter-spacing: .04em; }
+.cred-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.cred-list li { display: grid; gap: .05rem; padding: .75rem 0 .75rem 1.1rem; border-bottom: 1px solid var(--line); position: relative; }
+.cred-list li::before {
+  content: ""; position: absolute; left: 0; top: 1.35rem; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--lavender); box-shadow: 0 0 8px var(--lavender);
+}
+.cred-list .zh { font-family: var(--display); font-size: var(--step-0); letter-spacing: .04em; line-height: 1.6; }
+.cred-list .en { font-family: var(--latin); color: var(--ink-soft); font-size: var(--step--1); line-height: 1.4; }

@@ -39,26 +39,61 @@
     </div>
   </section>
 
-  <section class="block" aria-labelledby="reasons-title">
-    <div class="block-head"><h2 id="reasons-title">你是不是正在經歷</h2><a href="/services">看全部服務</a></div>
-    <div class="tiles">
-      <a class="tile glass" href="/services"><div class="art g1 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M64 20a32 32 0 1 0 18 52A27 27 0 0 1 64 20z" fill="rgba(255,255,255,.85)"/><path d="M28 30l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff" stroke="none"/></svg></div><span class="label">身體需要放鬆</span></a>
-      <a class="tile glass" href="/services"><div class="art g2 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="68" cy="30" r="9" fill="#fff"/><path d="M12 58c10-8 20-8 30 0s20 8 30 0 14-6 18-4"/><path d="M12 72c10-8 20-8 30 0s20 8 30 0 14-6 18-4" stroke-opacity=".7"/><path d="M12 86c10-8 20-8 30 0s20 8 30 0 14-6 18-4" stroke-opacity=".4"/></svg></div><span class="label">情緒需要梳理</span></a>
-      <a class="tile glass" href="/services"><div class="art g4 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M50 80S16 60 16 36a16 16 0 0 1 34-6 16 16 0 0 1 34 6c0 24-34 44-34 44z" fill="rgba(255,255,255,.35)"/></svg></div><span class="label">關係渴望和諧</span></a>
-      <a class="tile glass" href="/services"><div class="art g3 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M52 50a3 3 0 1 1-6 0a8 8 0 1 1 16 0a14 14 0 1 1-28 0a20 20 0 1 1 40 0a26 26 0 1 1-52 0"/></svg></div><span class="label">想要個人成長</span></a>
-      <a class="tile glass" href="/services"><div class="art g6 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 70L36 46L56 54L72 26L86 40"/><circle cx="18" cy="70" r="3.5" fill="#fff"/><circle cx="36" cy="46" r="3" fill="#fff"/><circle cx="56" cy="54" r="3.5" fill="#fff"/><circle cx="72" cy="26" r="4.5" fill="#fff"/><circle cx="86" cy="40" r="3" fill="#fff"/></svg></div><span class="label">尋求靈性支持</span></a>
-      <a class="tile glass" href="/services"><div class="art g5 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="50" cy="50" r="14" fill="rgba(255,255,255,.9)"/><path d="M50 16v12M50 72v12M16 50h12M72 50h12M26 26l8 8M66 66l8 8M74 26l-8 8M34 66l-8 8"/></svg></div><span class="label">為特定事件祝福</span></a>
+  <section class="block" aria-labelledby="draw-title">
+    <div class="block-head"><h2 id="draw-title">憑直覺選一張牌</h2><a href="/oracle">宇宙訊息頁</a></div>
+    <p class="hint-text">深呼吸一次，想著此刻心裡的問題，選一張最吸引你的牌。</p>
+    <div class="spread" id="spread">
+      <button class="mini-card" type="button" aria-label="選第 1 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
+      <button class="mini-card" type="button" aria-label="選第 2 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
+      <button class="mini-card" type="button" aria-label="選第 3 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
+      <button class="mini-card" type="button" aria-label="選第 4 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
+      <button class="mini-card" type="button" aria-label="選第 5 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
+      <button class="mini-card" type="button" aria-label="選第 6 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
     </div>
+    <div class="reading glass" id="reading" hidden>
+      <h3 id="readTitle"></h3>
+      <p id="readMsg"></p>
+      <div class="actions">
+        <button class="btn btn-ghost" id="reshuffle" type="button">重新洗牌</button>
+        <a class="btn btn-primary" href="/services">想更深入，預約療癒</a>
+      </div>
+    </div>
+    <p class="sr-only" id="drawStatus" aria-live="polite"></p>
   </section>
 
   <section class="block" aria-labelledby="more-title">
     <div class="block-head"><h2 id="more-title">更多</h2></div>
     <div class="rows">
-      <a class="row glass" href="/oracle">
-        <div class="art g2 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="28" y="16" width="44" height="64" rx="8" fill="rgba(255,255,255,.35)"/><path d="M50 36l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#fff" stroke="none"/></svg></div>
-        <div class="text"><h3>今日宇宙訊息</h3><span class="desc">靜下心，抽一張 68 張中屬於你的訊息。</span></div>
-        <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
-      </a>
       <a class="row glass" href="/workshops">
         <div class="art g3 "><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 26c10-4 22-4 32 4 10-8 22-8 32-4v50c-10-4-22-4-32 4-10-8-22-8-32-4z" fill="rgba(255,255,255,.3)"/><path d="M50 30v50"/></svg></div>
         <div class="text"><h3>工作坊</h3><span class="desc">臼井聖火靈氣、擴大療癒，兩天完整教學。</span><span class="meta">目前開放約課</span></div>
@@ -95,5 +130,7 @@
 </nav>
 <script src="/assets/holo.js"></script>
 <script src="/assets/site.js"></script>
+<script src="/assets/cards.js"></script>
+<script src="/assets/home-draw.js"></script>
 </body>
 </html>

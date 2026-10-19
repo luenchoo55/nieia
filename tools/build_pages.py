@@ -139,23 +139,67 @@ home = f'''  <header class="appbar">
     </div>
   </section>
 
-  <section class="block" aria-labelledby="reasons-title">
-    <div class="block-head"><h2 id="reasons-title">你是不是正在經歷</h2><a href="/services">看全部服務</a></div>
-    <div class="tiles">
-{tiles}
+  <section class="block" aria-labelledby="draw-title">
+    <div class="block-head"><h2 id="draw-title">憑直覺選一張牌</h2><a href="/oracle">宇宙訊息頁</a></div>
+    <p class="hint-text">深呼吸一次，想著此刻心裡的問題，選一張最吸引你的牌。</p>
+    <div class="spread" id="spread">
+      <button class="mini-card" type="button" aria-label="選第 1 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
+      <button class="mini-card" type="button" aria-label="選第 2 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
+      <button class="mini-card" type="button" aria-label="選第 3 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
+      <button class="mini-card" type="button" aria-label="選第 4 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
+      <button class="mini-card" type="button" aria-label="選第 5 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
+      <button class="mini-card" type="button" aria-label="選第 6 張牌">
+        <span class="mini-inner">
+          <span class="mini-face mini-front"><span class="mini-sigil"></span></span>
+          <span class="mini-face mini-back"><span class="mini-title"></span></span>
+        </span>
+      </button>
     </div>
+    <div class="reading glass" id="reading" hidden>
+      <h3 id="readTitle"></h3>
+      <p id="readMsg"></p>
+      <div class="actions">
+        <button class="btn btn-ghost" id="reshuffle" type="button">重新洗牌</button>
+        <a class="btn btn-primary" href="/services">想更深入，預約療癒</a>
+      </div>
+    </div>
+    <p class="sr-only" id="drawStatus" aria-live="polite"></p>
   </section>
 
   <section class="block" aria-labelledby="more-title">
     <div class="block-head"><h2 id="more-title">更多</h2></div>
     <div class="rows">
-{row("/oracle","card","g2","今日宇宙訊息","","靜下心，抽一張 68 張中屬於你的訊息。","")}
 {row("/workshops","book","g3","工作坊","","臼井聖火靈氣、擴大療癒，兩天完整教學。","目前開放約課")}
 {row("/shop","bag","g5","聖照選物","","紫色火焰、聖哲曼、默基瑟德等聖照卡。","")}
 {row("/about","lotus","g1","關於阿綸","","在台灣當上班族的馬來西亞人，斜槓身心靈。","")}
     </div>
   </section>'''
-page('index.html', '阿綸涅亞 NIEIA', 'home', home)
+page('index.html', '阿綸涅亞 NIEIA', 'home', home, ['/assets/cards.js', '/assets/home-draw.js'])
 
 # ---------------- services ----------------
 svc = [
@@ -210,7 +254,7 @@ oracle = f'''{appbar("宇宙訊息", "靜下來，深呼吸一次，想著此刻
     <button class="btn btn-primary" id="drawBtn" type="button">抽一張</button>
     <p class="deck-hint">抽到的卡片之後可以存成圖片，分享到 IG 限時動態。</p>
   </section>'''
-page('oracle.html', '宇宙訊息｜阿綸涅亞 NIEIA', 'oracle', oracle, ['/assets/oracle.js'])
+page('oracle.html', '宇宙訊息｜阿綸涅亞 NIEIA', 'oracle', oracle, ['/assets/cards.js', '/assets/oracle.js'])
 
 # ---------------- workshops ----------------
 def ws_panel(pid, tabid, hidden, glyph, g, title, en, intro, facts, topics, prices):

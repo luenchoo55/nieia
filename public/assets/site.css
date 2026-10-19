@@ -345,3 +345,62 @@ a.row:hover .go { background: #3a3163; }
 }
 .cred-list .zh { font-family: var(--display); font-size: var(--step-0); letter-spacing: .04em; line-height: 1.6; }
 .cred-list .en { font-family: var(--latin); color: var(--ink-soft); font-size: var(--step--1); line-height: 1.4; }
+
+/* ---------- 首頁抽牌 ---------- */
+.hint-text { color: var(--ink-soft); font-size: var(--step--1); margin-top: -.4rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.spread { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.mini-card {
+  position: relative; aspect-ratio: 5 / 7; max-width: 100%; padding: 0; border: 0; background: transparent;
+  perspective: 900px; cursor: pointer; border-radius: 16px;
+  transition: transform .35s ease, opacity .45s ease;
+}
+.mini-card:hover:not(:disabled) { transform: translateY(-4px); }
+.mini-card:disabled { cursor: default; }
+.mini-card.dim { opacity: .32; transform: scale(.95); }
+.mini-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.2, .7, .2, 1); }
+.mini-card.flipped .mini-inner { transform: rotateY(180deg); }
+.mini-face {
+  position: absolute; inset: 0; border-radius: 16px; overflow: hidden; display: grid; place-items: center;
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  border: 1px solid rgba(255, 255, 255, .75);
+  box-shadow: 0 18px 34px -22px rgba(74, 63, 120, .55);
+}
+.mini-front {
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, .8), transparent 45%),
+    conic-gradient(from var(--spin, 0deg) at 50% 55%, #e9d6ff, #ffd9ef, #d4f3ff, #e0ffef, #fff1cf, #e9d6ff);
+}
+.mini-sigil { width: 56%; aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(54, 47, 82, .3); position: relative; }
+.mini-sigil::before, .mini-sigil::after { content: ""; position: absolute; border-radius: 50%; border: 1px solid rgba(54, 47, 82, .22); inset: 18%; }
+.mini-sigil::after { inset: 38%; background: rgba(255, 255, 255, .7); border-color: transparent; box-shadow: 0 0 12px #fff; }
+.mini-back {
+  transform: rotateY(180deg); padding: .6rem;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, .9), transparent 55%),
+    linear-gradient(160deg, #F6F1FB 0%, #FBF3F7 50%, #F2F2FB 100%);
+}
+.mini-title { font-family: var(--display); font-size: clamp(.9rem, 3.6vw, 1.15rem); letter-spacing: .12em; line-height: 1.5; color: var(--ink); text-align: center; }
+/* iPhone：翻到一半再隱藏背對的那一面 */
+.mini-front { visibility: visible; transition: visibility 0s linear .4s; }
+.mini-back { visibility: hidden; transition: visibility 0s linear .4s; }
+.mini-card.flipped .mini-front { visibility: hidden; }
+.mini-card.flipped .mini-back { visibility: visible; }
+.mini-card:focus-visible { outline: 2px solid var(--button); outline-offset: 3px; }
+
+.spread.shuffling .mini-card { animation: shuffle .7s ease; }
+.spread.shuffling .mini-card:nth-child(odd) { animation-direction: reverse; }
+@keyframes shuffle {
+  0%, 100% { transform: none; }
+  30% { transform: translateX(10px) rotate(4deg); }
+  60% { transform: translateX(-8px) rotate(-3deg); }
+}
+
+.reading { padding: 1.4rem 1.3rem; display: grid; gap: .8rem; text-align: center; justify-items: center; }
+.reading h3 { font-size: var(--step-2); letter-spacing: .12em; }
+.reading p { max-width: 28em; line-height: 1.9; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-card, .mini-inner, .mini-front, .mini-back { transition: none; }
+  .spread.shuffling .mini-card { animation: none; }
+}

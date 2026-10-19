@@ -1,0 +1,15 @@
+{
+  "name": "阿綸涅亞 NIEIA",
+  "short_name": "NIEIA",
+  "description": "阿綸涅亞 NIEIA 療癒工作室：擴大療癒、聖火靈氣、靈魂藍圖與動物溝通，台灣與馬來西亞皆可遠距預約。",
+  "lang": "zh-Hant",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FCF8F8",
+  "theme_color": "#9698E7",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

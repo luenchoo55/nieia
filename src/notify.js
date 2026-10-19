@@ -12,7 +12,8 @@ const EXTRA_LABELS = {
   petName: "毛孩名字", species: "種類", petAge: "毛孩年齡", questions: "想溝通的問題",
 };
 
-function money(amount, currency) {
+function money(amount, currency, mode) {
+  if (mode === "inquiry") return "隨喜服務";
   if (amount == null) return "金額待告知";
   return (currency === "MYR" ? "RM " : "NT$") + Number(amount).toLocaleString("en-US");
 }
@@ -74,7 +75,7 @@ export function notifyNewBooking(c, b) {
       ["IG", "@" + b.instagram],
       ["Email", b.email],
       ["居住地", REGION[b.region]],
-      ["應付金額", money(b.amount, b.currency)],
+      ["金額", money(b.amount, b.currency, b.priceMode)],
       ["年齡", b.age],
       ["性別", b.gender],
       ["療癒原因", [...(b.reasons || []), ...(b.otherReason ? [b.otherReason] : [])].join("、")],
@@ -98,7 +99,7 @@ export function notifyPaymentReported(c, b, report) {
       ["時段", when(b)],
       ["姓名", b.name],
       ["IG", "@" + b.instagram],
-      ["應付金額", money(b.amount, b.currency)],
+      ["金額", money(b.amount, b.currency, b.priceMode)],
       ["匯款日期", report.paidDate],
       ["帳號末五碼", report.last5],
       ["匯款人", report.payerName],

@@ -15,8 +15,8 @@
       return money(item) || "價格請私訊詢問";
     }
     if (item.priceMode === "coming") return "價格即將公布";
-    if (item.priceMode === "inquiry") return "價格請私訊詢問";
-    return money(item) || "價格請私訊詢問";
+    if (item.priceMode === "inquiry") return "隨喜服務";
+    return money(item) || "價格即將公布";
   };
 
   function el(tag, cls, text) {

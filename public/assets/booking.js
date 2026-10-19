@@ -187,7 +187,7 @@
     summaryRows($("summary"), [
       ["療癒項目", state.service ? state.service.name : "尚未選擇"],
       ["時段", state.slot ? prettyDate(state.slot.date, state.slot.weekday) + " " + state.slot.start + "–" + state.slot.end : "尚未選擇"],
-      ["費用", state.service ? (priceFor(state.service, reg) || (state.service.priceMode === "fixed" && !reg ? "選擇居住地後顯示" : "阿綸會另外告知金額")) : ""],
+      ["費用", state.service ? (state.service.priceMode === "inquiry" ? "隨喜服務，金額依你的心意" : (priceFor(state.service, reg) || (state.service.priceMode === "fixed" && !reg ? "選擇居住地後顯示" : "阿綸會另外告知金額"))) : ""],
       ["進行方式", "IG 視訊遠距"],
     ]);
   }
@@ -265,7 +265,9 @@
     $("reportForm").hidden = b.status !== "pending_payment";
     if (showPay && b.payment) {
       $("payTitle").textContent = b.payment.label;
-      $("payAmount").textContent = money(b.amount, b.currency) ? "應付金額 " + money(b.amount, b.currency) : "金額將由阿綸透過 IG 私訊告知";
+      $("payAmount").textContent = b.priceMode === "inquiry"
+        ? "隨喜服務，金額依你的心意"
+        : money(b.amount, b.currency) ? "應付金額 " + money(b.amount, b.currency) : "金額將由阿綸透過 IG 私訊告知";
       var dl = $("payLines");
       dl.innerHTML = "";
       b.payment.lines.forEach(function (line) {

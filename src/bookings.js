@@ -97,6 +97,7 @@ function publicView(b) {
     region: b.region,
     amount: b.amount,
     currency: b.currency,
+    priceMode: b.priceMode || null,
     payment: PAYMENT[b.region],
     paymentReport: b.paymentReport || null,
   };
@@ -184,6 +185,7 @@ export function mountBookings(app) {
         region,
         currency: PAYMENT[region].currency,
         amount,
+        priceMode: service.priceMode || "coming",
         name, email, instagram, age, gender, reasons, otherReason, note,
         extra,
         ip: ip(c),

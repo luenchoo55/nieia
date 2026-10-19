@@ -26,7 +26,8 @@
     if (text != null) e.textContent = text;
     return e;
   }
-  function money(amount, currency) {
+  function money(amount, currency, mode) {
+    if (mode === "inquiry") return "隨喜";
     if (amount == null) return "金額待告知";
     return (currency === "MYR" ? "RM " : "NT$") + Number(amount).toLocaleString("en-US");
   }
@@ -86,7 +87,7 @@
 
     var main = el("p", "bc-main");
     main.appendChild(el("strong", null, b.name));
-    main.appendChild(document.createTextNode("　" + b.serviceName + "　" + money(b.amount, b.currency)));
+    main.appendChild(document.createTextNode("　" + b.serviceName + "　" + money(b.amount, b.currency, b.priceMode)));
     c.appendChild(main);
 
     if (b.paymentReport) {

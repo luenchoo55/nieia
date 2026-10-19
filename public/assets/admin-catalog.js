@@ -25,7 +25,7 @@
         { key: "desc", label: "介紹", type: "textarea", max: 300 },
         { key: "category", label: "分類", type: "select", options: [["energy", "能量療癒"], ["blessing", "祝福儀式"], ["consult", "諮詢與溝通"]] },
         { key: "duration", label: "療程長度（分鐘）", type: "number", min: 15, max: 480, hint: "選填" },
-        { key: "priceMode", label: "價格顯示", type: "select", options: [["coming", "價格即將公布"], ["fixed", "固定價格"], ["inquiry", "價格請私訊詢問"]] },
+        { key: "priceMode", label: "價格顯示", type: "select", options: [["coming", "價格即將公布"], ["fixed", "固定價格"], ["inquiry", "隨喜服務"]] },
         { key: "priceTwd", label: "台幣價格（NT$）", type: "number", min: 0, max: 1000000, showIf: function (v) { return v.priceMode === "fixed"; } },
         { key: "priceMyr", label: "馬幣價格（RM）", type: "number", min: 0, max: 100000, showIf: function (v) { return v.priceMode === "fixed"; }, hint: "沒填就不顯示馬幣價格" },
         { key: "extra", label: "預約時額外詢問", type: "select", options: [["none", "不需要"], ["magnified", "是否習修過擴大療癒"], ["departed", "亡者全名（引渡之光）"], ["soulplan", "出生日期與姓名拼音（靈魂藍圖）"], ["animal", "毛孩資料（動物溝通）"]] },

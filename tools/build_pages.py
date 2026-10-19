@@ -236,7 +236,7 @@ services = f'''{appbar("療癒服務", "六種療癒方式，皆以 IG 視訊遠
 page('services.html', '療癒服務｜阿綸涅亞 NIEIA', 'services', services, ['/assets/glyphs.js', '/assets/catalog.js'])
 
 # ---------------- oracle ----------------
-oracle = f'''{appbar("宇宙訊息", "靜下來，深呼吸一次，想著此刻心裡的問題，再輕觸卡片。68 張來自光的訊息，會有一張剛好屬於你。", centered=True)}
+oracle = f'''{appbar("宇宙訊息", "靜下來，深呼吸一次，想著此刻心裡的問題，再輕觸卡片。會有一則來自光的訊息，剛好屬於你。", centered=True)}
 
   <section class="deck" aria-label="抽卡">
     <div class="card" id="card" role="button" tabindex="0" aria-live="polite" aria-label="輕觸抽一張宇宙訊息">
@@ -247,7 +247,6 @@ oracle = f'''{appbar("宇宙訊息", "靜下來，深呼吸一次，想著此刻
         <div class="face face-back">
           <h3 id="cardTitle">一切安好</h3>
           <p id="cardMessage">別擔心，一切都在神聖的安排之中。</p>
-          <div class="count" id="cardCount"></div>
         </div>
       </div>
     </div>

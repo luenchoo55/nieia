@@ -11,7 +11,6 @@
   var drawBtn = document.getElementById("drawBtn");
   var tEl = document.getElementById("cardTitle");
   var mEl = document.getElementById("cardMessage");
-  var cEl = document.getElementById("cardCount");
   var last = -1;
 
   function draw() {
@@ -21,7 +20,6 @@
     var reveal = function () {
       tEl.textContent = cards[i][0];
       mEl.textContent = cards[i][1];
-      cEl.textContent = (i + 1) + " / " + cards.length;
       card.classList.add("flipped");
       card.setAttribute("aria-label", "宇宙訊息：" + cards[i][0] + "。" + cards[i][1]);
       drawBtn.textContent = "再抽一張";

@@ -349,7 +349,8 @@ a.row:hover .go { background: #3a3163; }
 /* ---------- 首頁抽牌 ---------- */
 .hint-text { color: var(--ink-soft); font-size: var(--step--1); margin-top: -.4rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.spread { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+/* 只有 3 張牌，限制寬度避免在電腦上撐得太大 */
+.spread { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 540px; margin-inline: auto; width: 100%; }
 .mini-card {
   position: relative; aspect-ratio: 5 / 7; max-width: 100%; padding: 0; border: 0; background: transparent;
   perspective: 900px; cursor: pointer; border-radius: 16px;

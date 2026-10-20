@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>線上簽到｜阿綸涅亞 NIEIA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/icons/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#9698E7">
+<meta name="apple-mobile-web-app-title" content="NIEIA">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=LXGW+WenKai+TC:wght@400;700&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="aura" aria-hidden="true"></div>
+<canvas id="holoA" aria-hidden="true"></canvas>
+<div class="holoB" id="holoB" aria-hidden="true" hidden></div>
+<div class="grain" aria-hidden="true"></div>
+
+<main class="app">
+  <header class="appbar">
+    <a class="back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>首頁</a>
+    <h1>線上簽到</h1>
+    <p class="sub">上課當天點開這一頁，輸入報名時填寫的姓名或 Email，就完成這一堂的簽到。</p>
+  </header>
+
+  <p class="muted" id="cLoading">正在讀取課程資訊…</p>
+
+  <section class="feature glass" id="cError" hidden aria-labelledby="cErrorTitle">
+    <div class="orb"><svg viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M28 86V44a22 22 0 0 1 44 0v42" /><path d="M36 86V46a14 14 0 0 1 28 0v40" fill="rgba(255,255,255,.55)" stroke-opacity=".6"/><path d="M18 86h64"/><path d="M50 14l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="#fff" stroke="none"/></svg></div>
+    <h2 id="cErrorTitle">找不到這堂課的簽到</h2>
+    <p id="cErrorMsg">請確認連結是否完整，或私訊 IG @nieia4928 請阿綸協助簽到。</p>
+    <div class="actions"><a class="btn btn-primary" href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">IG 私訊阿綸</a></div>
+  </section>
+
+  <section class="checkin glass" id="cView" hidden aria-labelledby="cTitle">
+    <p class="c-session" id="cSession"></p>
+    <h2 id="cTitle"></h2>
+    <p class="c-en" id="cTitleEn" hidden></p>
+
+    <form id="cForm" novalidate>
+      <p class="muted" id="cClosed" hidden></p>
+      <label class="field" for="cName"><span>報名時填寫的姓名或 Email</span><input id="cName" maxlength="60" autocomplete="name" required></label>
+      <label class="hp" aria-hidden="true">請勿填寫<input id="cWebsite" tabindex="-1" autocomplete="off"></label>
+      <p class="form-msg" id="cMsg" role="alert"></p>
+      <button class="btn btn-primary btn-block" id="cBtn" type="submit">簽到</button>
+    </form>
+
+    <div class="c-done" id="cDone" hidden aria-live="polite">
+      <div class="c-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h3 id="cDoneTitle"></h3>
+      <p class="muted" id="cDoneText"></p>
+    </div>
+
+    <div class="actions" id="cRoomBox" hidden><a class="btn btn-ghost" id="cRoom" href="#" target="_blank" rel="noopener">進入線上教室</a></div>
+  </section>
+
+  <footer class="foot">
+    <div class="links">
+      <a href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">Instagram @nieia4928</a>
+      <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
+    </div>
+    <p>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
+  </footer>
+</main>
+
+<nav class="tabbar" aria-label="主要選單">
+  <a href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>首頁</span></a>
+  <a href="/services"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-4 0-8-3-8-7 3 0 5 1 6 3-1-4 0-8 2-11 2 3 3 7 2 11 1-2 3-3 6-3 0 4-4 7-8 7z"/></svg><span>服務</span></a>
+  <a href="/oracle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 16l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg><span>訊息</span></a>
+  <a href="/workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5V19c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5z"/><path d="M12 6v13.5"/></svg><span>工作坊</span></a>
+  <a href="/about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg><span>關於</span></a>
+</nav>
+<script src="/assets/holo.js"></script>
+<script src="/assets/site.js"></script>
+<script src="/assets/checkin.js"></script>
+</body>
+</html>

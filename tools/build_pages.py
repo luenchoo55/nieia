@@ -572,6 +572,41 @@ market = f'''{appbar("擺攤排隊", "在攤位現場取號，輪到你時這個
   </div>'''
 page('market.html', '擺攤排隊｜阿綸涅亞 NIEIA', '', market, ['/assets/market.js'])
 
+# ---------------- 線上簽到 ----------------
+checkin = f'''{appbar("線上簽到", "上課當天點開這一頁，輸入報名時填寫的姓名或 Email，就完成這一堂的簽到。")}
+
+  <p class="muted" id="cLoading">正在讀取課程資訊…</p>
+
+  <section class="feature glass" id="cError" hidden aria-labelledby="cErrorTitle">
+    <div class="orb">{G["door"]}</div>
+    <h2 id="cErrorTitle">找不到這堂課的簽到</h2>
+    <p id="cErrorMsg">請確認連結是否完整，或私訊 IG @nieia4928 請阿綸協助簽到。</p>
+    <div class="actions"><a class="btn btn-primary" href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">IG 私訊阿綸</a></div>
+  </section>
+
+  <section class="checkin glass" id="cView" hidden aria-labelledby="cTitle">
+    <p class="c-session" id="cSession"></p>
+    <h2 id="cTitle"></h2>
+    <p class="c-en" id="cTitleEn" hidden></p>
+
+    <form id="cForm" novalidate>
+      <p class="muted" id="cClosed" hidden></p>
+      <label class="field" for="cName"><span>報名時填寫的姓名或 Email</span><input id="cName" maxlength="60" autocomplete="name" required></label>
+      <label class="hp" aria-hidden="true">請勿填寫<input id="cWebsite" tabindex="-1" autocomplete="off"></label>
+      <p class="form-msg" id="cMsg" role="alert"></p>
+      <button class="btn btn-primary btn-block" id="cBtn" type="submit">簽到</button>
+    </form>
+
+    <div class="c-done" id="cDone" hidden aria-live="polite">
+      <div class="c-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <h3 id="cDoneTitle"></h3>
+      <p class="muted" id="cDoneText"></p>
+    </div>
+
+    <div class="actions" id="cRoomBox" hidden><a class="btn btn-ghost" id="cRoom" href="#" target="_blank" rel="noopener">進入線上教室</a></div>
+  </section>'''
+page('checkin.html', '線上簽到｜阿綸涅亞 NIEIA', '', checkin, ['/assets/checkin.js'])
+
 # ---------------- 404 ----------------
 nf = f'''  <section class="feature glass" aria-labelledby="nf-title" style="margin-top:2rem">
     <div class="orb">{G["door"]}</div>

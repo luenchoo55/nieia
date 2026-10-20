@@ -16,6 +16,14 @@
   },
   "vars": {
     "DB_NAME": "nieia"
+  },
+  // 預覽版（main 以外的分支）：用另一個資料庫名稱，測試時不會動到正式的預約與學員資料。
+  // 預覽版的 MONGODB_URI、ADMIN_PASSWORD 需要另外用「wrangler preview secret」設定，沒設定時預覽版連不上資料庫，但不影響正式網站。
+  "previews": {
+    "vars": {
+      "DB_NAME": "nieia_preview"
+    },
+    "placement": { "mode": "smart" }
   }
   // MONGODB_URI 是機密，不寫在這裡。
   // 請在 Cloudflare 後台的 Settings → Variables and Secrets 以 Secret 類型新增。

@@ -706,7 +706,7 @@
     if (!b) return;
     drawMode = b.getAttribute("data-mode");
     this.querySelectorAll("[data-mode]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
-    document.querySelectorAll("#panel-workshops [data-for]").forEach(function (f) { f.hidden = f.getAttribute("data-for") !== drawMode; });
+    document.querySelectorAll(".draw [data-for]").forEach(function (f) { f.hidden = f.getAttribute("data-for") !== drawMode; });
     resetDraw();
   });
   $("drawPool").addEventListener("change", resetDraw);
@@ -975,8 +975,8 @@
   }
   $("certSearch").addEventListener("submit", function (e) { e.preventDefault(); loadCerts(); });
 
-  // ---------- 進入分頁 ----------
-  $("tab-workshops").addEventListener("click", function () {
+  // ---------- 確認登入後載入 ----------
+  document.addEventListener("nieia:dash", function () {
     if (!loaded) { loadList(); loadCerts(); }
   });
 })();

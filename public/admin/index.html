@@ -30,7 +30,7 @@
       <h1>後台</h1>
       <button class="btn btn-ghost btn-small" id="logoutBtn" type="button" hidden>登出</button>
     </div>
-    <p class="sub" id="subtitle">只有阿綸可以進入，用來管理預約、時段、療癒項目與商品。</p>
+    <p class="sub" id="subtitle">只有阿綸可以進入，用來管理預約、時段、療癒項目、商品與工作坊。</p>
   </header>
 
   <p class="status-line" id="loading">正在確認登入狀態…</p>
@@ -59,6 +59,10 @@
 
   <!-- 時段管理 -->
   <div id="dashView" hidden>
+    <a class="glass admin-link" href="/admin/workshops">
+      <span class="admin-link-text"><strong>工作坊管理</strong><span>學員名單、點名、抽籤、大合照與結業證書</span></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
     <div class="seg admin-tabs" role="tablist" aria-label="後台功能" data-tabs>
       <button type="button" role="tab" id="tab-bookings" aria-controls="panel-bookings" aria-selected="true">預約與時段</button>
       <button type="button" role="tab" id="tab-market" aria-controls="panel-market" aria-selected="false" tabindex="-1">擺攤</button>

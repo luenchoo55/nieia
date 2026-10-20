@@ -610,3 +610,14 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .row.not-bookable .go { background: rgba(70, 60, 120, .35); }
 .detail-backdrop { background: rgba(54, 47, 82, .42); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 .detail-sheet { background: rgba(251, 248, 251, .97); }
+
+/* ---------- 線上簽到 ---------- */
+.checkin { padding: 1.6rem 1.3rem; display: grid; gap: 1rem; }
+.checkin .c-session { font-size: var(--step--1); color: var(--button); letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.checkin h2 { font-family: var(--display); font-size: var(--step-2); letter-spacing: .1em; line-height: 1.4; }
+.checkin .c-en { font-family: var(--latin); color: var(--ink-soft); margin-top: -.6rem; }
+.checkin form { display: grid; gap: 1rem; }
+.c-done { display: grid; justify-items: center; text-align: center; gap: .5rem; padding: .6rem 0; }
+.c-check { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; color: var(--button-ink); background: var(--button); box-shadow: 0 16px 30px -18px rgba(74, 63, 120, .8); }
+.c-check svg { width: 32px; height: 32px; }
+.c-done h3 { font-size: var(--step-1); letter-spacing: .08em; }

@@ -1,0 +1,515 @@
+import { ObjectId } from "mongodb";
+import { withDb, ensureIndexes } from "./db.js";
+import { requireAdmin, sameOrigin } from "./auth.js";
+
+// 工作坊：場次、學員名單、出席、結業證書、大合照、線上簽到。
+// 學員資料直接存在工作坊文件裡（一場通常不超過幾十人）；
+// 證書另存一份快照，之後修改場次資料也不會改到已經發出的證書，除非重新產生。
+
+const TYPES = ["spirit", "craft", "other"];
+const FORMATS = ["onsite", "online"];
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const MAX_ATTENDEES = 200;
+const MAX_SESSIONS = 12;
+const MAX_PHOTO_BYTES = 900 * 1024; // 後台會先壓縮，正常約 200–400 KB
+const CHECKIN_PER_HOUR = 30; // 同一個網路位址一小時內最多簽到 30 次
+
+const bad = (c, message, status = 400) => c.json({ ok: false, message }, status);
+const str = (v, max) => (v == null ? "" : String(v).trim().slice(0, max));
+
+// 去掉容易看錯的 0/O、1/I/L
+function randomKey(len) {
+  const abc = "23456789abcdefghjkmnpqrstuvwxyz";
+  const bytes = crypto.getRandomValues(new Uint8Array(len));
+  return Array.from(bytes, (b) => abc[b % abc.length]).join("");
+}
+function ip(c) {
+  return c.req.header("cf-connecting-ip") || "local";
+}
+// 台灣／馬來西亞時間（UTC+8）的今天
+function todayLocal() {
+  return new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+}
+function oid(v) {
+  return ObjectId.isValid(v) ? new ObjectId(v) : null;
+}
+// 比對姓名時忽略空白、大小寫與全形半形差異
+function norm(s) {
+  return String(s || "").normalize("NFKC").replace(/\s+/g, "").toLowerCase();
+}
+
+// ---------- 欄位整理 ----------
+function cleanSessions(input, old = []) {
+  const errors = [];
+  if (!Array.isArray(input) || !input.length) return { errors: ["請至少新增一堂課的日期。"], sessions: [] };
+  if (input.length > MAX_SESSIONS) return { errors: [`最多 ${MAX_SESSIONS} 堂課。`], sessions: [] };
+  const keep = new Map(old.map((s) => [s.key, s]));
+  const sessions = input.map((s, i) => {
+    const date = str(s?.date, 10);
+    const start = str(s?.start, 5);
+    const end = str(s?.end, 5);
+    if (!DATE_RE.test(date)) errors.push(`第 ${i + 1} 堂請選擇日期。`);
+    if (start && !TIME_RE.test(start)) errors.push(`第 ${i + 1} 堂的開始時間格式不正確。`);
+    if (end && !TIME_RE.test(end)) errors.push(`第 ${i + 1} 堂的結束時間格式不正確。`);
+    if (start && end && end <= start) errors.push(`第 ${i + 1} 堂的結束時間要晚於開始時間。`);
+    // 保留原本的簽到代碼，已經寄出的簽到連結才不會失效
+    const key = keep.has(s?.key) ? s.key : randomKey(10);
+    return { key, date, start, end };
+  });
+  sessions.sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+  return { errors, sessions };
+}
+
+function cleanTeachers(input) {
+  const list = Array.isArray(input) ? input : [];
+  const teachers = list
+    .map((t) => ({ name: str(t?.name, 30), nameEn: str(t?.nameEn, 60) }))
+    .filter((t) => t.name)
+    .slice(0, 4);
+  return { teachers, errors: teachers.length ? [] : ["請填寫至少一位授課老師。"] };
+}
+
+function cleanWorkshop(body, old) {
+  const errors = [];
+  const out = {
+    title: str(body.title, 40),
+    titleEn: str(body.titleEn, 80),
+    type: TYPES.includes(body.type) ? body.type : "spirit",
+    format: FORMATS.includes(body.format) ? body.format : "onsite",
+    location: str(body.location, 120),
+    roomUrl: str(body.roomUrl, 300),
+    workName: str(body.workName, 40),
+    workNameEn: str(body.workNameEn, 80),
+    note: str(body.note, 500),
+  };
+  if (!out.title) errors.push("請填寫工作坊名稱。");
+  if (out.roomUrl && !/^https:\/\/[^\s]+$/i.test(out.roomUrl)) errors.push("線上教室連結要是 https:// 開頭的網址。");
+
+  const hours = Number(body.hours);
+  if (!Number.isFinite(hours) || hours <= 0 || hours > 200) errors.push("請填寫總時數（例如 16）。");
+  else out.hours = Math.round(hours * 2) / 2; // 以半小時為單位
+
+  const s = cleanSessions(body.sessions, old?.sessions || []);
+  errors.push(...s.errors);
+  out.sessions = s.sessions;
+
+  const t = cleanTeachers(body.teachers);
+  errors.push(...t.errors);
+  out.teachers = t.teachers;
+  return { data: out, errors };
+}
+
+function cleanPerson(p) {
+  return {
+    name: str(p?.name, 30),
+    nameEn: str(p?.nameEn, 60),
+    email: str(p?.email, 120).toLowerCase(),
+  };
+}
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// ---------- 給前端的樣子 ----------
+function workshopSummary(w) {
+  const attendees = w.attendees || [];
+  return {
+    id: w._id.toString(),
+    title: w.title,
+    type: w.type,
+    format: w.format,
+    sessions: w.sessions,
+    hours: w.hours,
+    attendeeCount: attendees.length,
+    certCount: attendees.filter((a) => a.certCode).length,
+    hasPhoto: Boolean(w.photoKey),
+  };
+}
+
+function workshopView(w) {
+  const { _id, ...rest } = w;
+  return { ...rest, id: _id.toString(), attendees: (w.attendees || []).map((a) => ({ ...a })) };
+}
+
+function certView(cert, photoKey) {
+  return {
+    code: cert.code,
+    no: cert.no,
+    name: cert.name,
+    nameEn: cert.nameEn,
+    title: cert.title,
+    titleEn: cert.titleEn,
+    type: cert.type,
+    format: cert.format,
+    dates: cert.dates,
+    hours: cert.hours,
+    teachers: cert.teachers,
+    work: cert.work,
+    workEn: cert.workEn,
+    issuedAt: cert.issuedAt,
+    photo: photoKey ? `/api/photos/${photoKey}` : null,
+  };
+}
+
+// 年份流水號：WS-2026-0001
+async function nextCertNo(db, year) {
+  const r = await db.collection("counters").findOneAndUpdate(
+    { _id: `cert:${year}` },
+    { $inc: { seq: 1 } },
+    { upsert: true, returnDocument: "after" }
+  );
+  const doc = r && r.value !== undefined ? r.value : r; // 舊版驅動程式回傳 { value }
+  return `WS-${year}-${String(doc.seq).padStart(4, "0")}`;
+}
+
+function snapshot(w, a) {
+  const dates = w.sessions.map((s) => s.date);
+  return {
+    name: a.name,
+    nameEn: a.nameEn || "",
+    title: w.title,
+    titleEn: w.titleEn || "",
+    type: w.type,
+    format: w.format,
+    dates: { first: dates[0], last: dates[dates.length - 1] },
+    hours: w.hours,
+    teachers: w.teachers,
+    work: w.type === "craft" ? (a.work || w.workName || "") : "",
+    workEn: w.type === "craft" ? (a.workEn || w.workNameEn || "") : "",
+  };
+}
+
+export function mountWorkshops(app) {
+  // ================= 後台 =================
+  app.use("/api/admin/workshops", requireAdmin);
+  app.use("/api/admin/workshops/*", requireAdmin);
+  app.use("/api/admin/certificates", requireAdmin);
+  app.use("/api/admin/certificates/*", requireAdmin);
+
+  async function readBody(c) {
+    try { return await c.req.json(); } catch { return null; }
+  }
+
+  app.get("/api/admin/workshops", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      await ensureIndexes(db);
+      const docs = await db.collection("workshops")
+        .find({}, { projection: { "attendees.attended": 0 } })
+        .sort({ firstDate: -1 })
+        .limit(300)
+        .toArray();
+      return c.json({ ok: true, items: docs.map(workshopSummary) });
+    })
+  );
+
+  app.post("/api/admin/workshops", async (c) => {
+    const body = await readBody(c);
+    if (!body) return bad(c, "資料格式不正確。");
+    const { data, errors } = cleanWorkshop(body);
+    if (errors.length) return bad(c, errors.join(" "));
+    return withDb(c.env, c.executionCtx, async (db) => {
+      await ensureIndexes(db);
+      const doc = { ...data, firstDate: data.sessions[0].date, attendees: [], photoKey: null, createdAt: new Date(), updatedAt: new Date() };
+      const r = await db.collection("workshops").insertOne(doc);
+      return c.json({ ok: true, item: workshopView({ ...doc, _id: r.insertedId }) });
+    });
+  });
+
+  async function loadWorkshop(c, db) {
+    const id = oid(c.req.param("id"));
+    if (!id) return null;
+    return db.collection("workshops").findOne({ _id: id });
+  }
+
+  app.get("/api/admin/workshops/:id", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const w = await loadWorkshop(c, db);
+      if (!w) return bad(c, "找不到這場工作坊，可能已經刪除了。", 404);
+      return c.json({ ok: true, item: workshopView(w) });
+    })
+  );
+
+  app.patch("/api/admin/workshops/:id", async (c) => {
+    const body = await readBody(c);
+    if (!body) return bad(c, "資料格式不正確。");
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const w = await loadWorkshop(c, db);
+      if (!w) return bad(c, "找不到這場工作坊，可能已經刪除了。", 404);
+      const { data, errors } = cleanWorkshop(body, w);
+      if (errors.length) return bad(c, errors.join(" "));
+      // 刪掉的堂數，連同學員在那一堂的出席紀錄一起移除
+      const keys = new Set(data.sessions.map((s) => s.key));
+      const attendees = (w.attendees || []).map((a) => {
+        const attended = {};
+        for (const [k, v] of Object.entries(a.attended || {})) if (keys.has(k)) attended[k] = v;
+        return { ...a, attended };
+      });
+      const set = { ...data, firstDate: data.sessions[0].date, attendees, updatedAt: new Date() };
+      await db.collection("workshops").updateOne({ _id: w._id }, { $set: set });
+      return c.json({ ok: true, item: workshopView({ ...w, ...set }) });
+    });
+  });
+
+  app.delete("/api/admin/workshops/:id", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const w = await loadWorkshop(c, db);
+      if (!w) return c.json({ ok: true });
+      if ((w.attendees || []).some((a) => a.certCode)) {
+        return bad(c, "這場工作坊已經發出證書，為了讓學員的證書連結繼續有效，不能刪除。", 409);
+      }
+      await db.collection("workshops").deleteOne({ _id: w._id });
+      if (w.photoKey) await db.collection("photos").deleteOne({ _id: w.photoKey });
+      return c.json({ ok: true });
+    })
+  );
+
+  // ---------- 學員名單 ----------
+  app.post("/api/admin/workshops/:id/attendees", async (c) => {
+    const body = await readBody(c);
+    const people = Array.isArray(body?.people) ? body.people.map(cleanPerson).filter((p) => p.name) : [];
+    if (!people.length) return bad(c, "請至少填寫一位學員的姓名。");
+    const badEmail = people.find((p) => p.email && !EMAIL_RE.test(p.email));
+    if (badEmail) return bad(c, `${badEmail.name} 的 Email 格式不正確。`);
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const w = await loadWorkshop(c, db);
+      if (!w) return bad(c, "找不到這場工作坊，可能已經刪除了。", 404);
+      const list = w.attendees || [];
+      const seen = new Set(list.map((a) => norm(a.name)));
+      const added = [];
+      const skipped = [];
+      for (const p of people) {
+        if (seen.has(norm(p.name))) { skipped.push(p.name); continue; }
+        seen.add(norm(p.name));
+        added.push({ id: randomKey(8), ...p, work: "", workEn: "", attended: {}, certCode: null, certNo: null, addedAt: new Date() });
+      }
+      if (list.length + added.length > MAX_ATTENDEES) return bad(c, `一場工作坊最多 ${MAX_ATTENDEES} 位學員。`);
+      const attendees = list.concat(added);
+      await db.collection("workshops").updateOne({ _id: w._id }, { $set: { attendees, updatedAt: new Date() } });
+      return c.json({ ok: true, added: added.length, skipped, item: workshopView({ ...w, attendees }) });
+    });
+  });
+
+  app.patch("/api/admin/workshops/:id/attendees/:aid", async (c) => {
+    const body = await readBody(c);
+    if (!body) return bad(c, "資料格式不正確。");
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const w = await loadWorkshop(c, db);
+      if (!w) return bad(c, "找不到這場工作坊，可能已經刪除了。", 404);
+      const attendees = w.attendees || [];
+      const a = attendees.find((x) => x.id === c.req.param("aid"));
+      if (!a) return bad(c, "找不到這位學員。", 404);
+
+      if ("name" in body || "nameEn" in body || "email" in body) {
+        const p = cleanPerson({ name: body.name ?? a.name, nameEn: body.nameEn ?? a.nameEn, email: body.email ?? a.email });
+        if (!p.name) return bad(c, "請填寫學員姓名。");
+        if (p.email && !EMAIL_RE.test(p.email)) return bad(c, "Email 格式不正確。");
+        if (attendees.some((x) => x !== a && norm(x.name) === norm(p.name))) return bad(c, "名單上已經有同名的學員。", 409);
+        Object.assign(a, p);
+      }
+      if ("work" in body) a.work = str(body.work, 40);
+      if ("workEn" in body) a.workEn = str(body.workEn, 80);
+      if (body.attended && typeof body.attended === "object") {
+        const keys = new Set(w.sessions.map((s) => s.key));
+        a.attended = { ...(a.attended || {}) };
+        for (const [k, v] of Object.entries(body.attended)) {
+          if (!keys.has(k)) continue;
+          if (v) a.attended[k] = a.attended[k] || { at: new Date(), by: "admin" };
+          else delete a.attended[k];
+        }
+      }
+      // 只改這一位學員，避免覆蓋同時間其他學員的線上簽到
+      await db.collection("workshops").updateOne(
+        { _id: w._id, "attendees.id": a.id },
+        { $set: { "attendees.$": a, updatedAt: new Date() } }
+      );
+      return c.json({ ok: true, attendee: a });
+    });
+  });
+
+  app.delete("/api/admin/workshops/:id/attendees/:aid", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const w = await loadWorkshop(c, db);
+      if (!w) return bad(c, "找不到這場工作坊，可能已經刪除了。", 404);
+      const a = (w.attendees || []).find((x) => x.id === c.req.param("aid"));
+      if (!a) return c.json({ ok: true });
+      if (a.certCode) return bad(c, "這位學員已經拿到證書，不能從名單移除。", 409);
+      const attendees = w.attendees.filter((x) => x !== a);
+      await db.collection("workshops").updateOne({ _id: w._id }, { $set: { attendees, updatedAt: new Date() } });
+      return c.json({ ok: true });
+    })
+  );
+
+  // ---------- 大合照 ----------
+  app.put("/api/admin/workshops/:id/photo", async (c) => {
+    const body = await readBody(c);
+    const m = /^data:(image\/(?:jpeg|webp|png));base64,([A-Za-z0-9+/=]+)$/.exec(body?.dataUrl || "");
+    if (!m) return bad(c, "請選擇 JPG、PNG 或 WebP 圖片。");
+    const bytes = Uint8Array.from(atob(m[2]), (ch) => ch.charCodeAt(0));
+    if (bytes.length > MAX_PHOTO_BYTES) return bad(c, "照片太大了，請換一張或裁小一點再上傳。", 413);
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const w = await loadWorkshop(c, db);
+      if (!w) return bad(c, "找不到這場工作坊，可能已經刪除了。", 404);
+      const key = randomKey(16);
+      await db.collection("photos").insertOne({ _id: key, workshopId: w._id, type: m[1], data: bytes, createdAt: new Date() });
+      await db.collection("workshops").updateOne({ _id: w._id }, { $set: { photoKey: key, updatedAt: new Date() } });
+      if (w.photoKey) await db.collection("photos").deleteOne({ _id: w.photoKey });
+      // 已發出的證書一起換成新照片
+      await db.collection("certificates").updateMany({ workshopId: w._id }, { $set: { photoKey: key } });
+      return c.json({ ok: true, photoKey: key });
+    });
+  });
+
+  app.delete("/api/admin/workshops/:id/photo", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const w = await loadWorkshop(c, db);
+      if (!w) return bad(c, "找不到這場工作坊，可能已經刪除了。", 404);
+      if (w.photoKey) await db.collection("photos").deleteOne({ _id: w.photoKey });
+      await db.collection("workshops").updateOne({ _id: w._id }, { $set: { photoKey: null, updatedAt: new Date() } });
+      await db.collection("certificates").updateMany({ workshopId: w._id }, { $set: { photoKey: null } });
+      return c.json({ ok: true });
+    })
+  );
+
+  // ---------- 發證書 ----------
+  // 已經有證書的學員會用最新資料重新產生（編號與連結不變）
+  app.post("/api/admin/workshops/:id/certificates", async (c) => {
+    const body = await readBody(c);
+    const ids = Array.isArray(body?.attendeeIds) ? body.attendeeIds.map(String) : [];
+    if (!ids.length) return bad(c, "請選擇要發證書的學員。");
+    return withDb(c.env, c.executionCtx, async (db) => {
+      await ensureIndexes(db);
+      const w = await loadWorkshop(c, db);
+      if (!w) return bad(c, "找不到這場工作坊，可能已經刪除了。", 404);
+      const attendees = w.attendees || [];
+      const certs = db.collection("certificates");
+      const year = w.sessions[w.sessions.length - 1].date.slice(0, 4);
+      const issued = [];
+      for (const a of attendees) {
+        if (!ids.includes(a.id)) continue;
+        const snap = snapshot(w, a);
+        if (a.certCode) {
+          await certs.updateOne({ code: a.certCode }, { $set: { ...snap, photoKey: w.photoKey || null, updatedAt: new Date() } });
+        } else {
+          a.certCode = randomKey(12);
+          a.certNo = await nextCertNo(db, year);
+          await certs.insertOne({
+            code: a.certCode, no: a.certNo, workshopId: w._id, attendeeId: a.id,
+            ...snap, photoKey: w.photoKey || null, issuedAt: new Date(), updatedAt: new Date(),
+          });
+        }
+        issued.push({ id: a.id, certCode: a.certCode, certNo: a.certNo });
+      }
+      await db.collection("workshops").updateOne({ _id: w._id }, { $set: { attendees, updatedAt: new Date() } });
+      return c.json({ ok: true, issued, item: workshopView({ ...w, attendees }) });
+    });
+  });
+
+  // ---------- 證書登記查詢 ----------
+  app.get("/api/admin/certificates", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const q = str(c.req.query("q"), 40);
+      const filter = {};
+      if (q) {
+        const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const re = { $regex: safe, $options: "i" };
+        filter.$or = [{ no: re }, { name: re }, { nameEn: re }, { title: re }, { "teachers.name": re }];
+      }
+      const docs = await db.collection("certificates").find(filter).sort({ issuedAt: -1 }).limit(200).toArray();
+      return c.json({
+        ok: true,
+        items: docs.map((d) => ({
+          code: d.code, no: d.no, name: d.name, nameEn: d.nameEn, title: d.title,
+          dates: d.dates, hours: d.hours, teachers: d.teachers, format: d.format,
+          workshopId: d.workshopId?.toString(), issuedAt: d.issuedAt,
+        })),
+      });
+    })
+  );
+
+  // ================= 學員 =================
+  // 證書頁：只有拿到連結（含隨機代碼）的人看得到
+  app.get("/api/certs/:code", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const code = str(c.req.param("code"), 20);
+      const cert = code ? await db.collection("certificates").findOne({ code }) : null;
+      if (!cert) return bad(c, "找不到這張證書，請確認連結是否完整。", 404);
+      return c.json({ ok: true, cert: certView(cert, cert.photoKey) });
+    })
+  );
+
+  app.get("/api/photos/:key", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const key = str(c.req.param("key"), 20);
+      const p = key ? await db.collection("photos").findOne({ _id: key }) : null;
+      if (!p) return c.body(null, 404);
+      const bytes = p.data?.buffer ? new Uint8Array(p.data.buffer) : p.data;
+      // 換照片時代碼會跟著換，所以可以放心讓瀏覽器長期留存
+      return c.body(bytes, 200, {
+        "Content-Type": p.type,
+        "Cache-Control": "public, max-age=31536000, immutable",
+      });
+    })
+  );
+
+  // ---------- 線上簽到 ----------
+  async function findSession(db, key) {
+    if (!/^[a-z2-9]{10}$/.test(key)) return {};
+    const w = await db.collection("workshops").findOne({ "sessions.key": key });
+    if (!w) return {};
+    const index = w.sessions.findIndex((s) => s.key === key);
+    return { w, s: w.sessions[index], index };
+  }
+
+  function sessionInfo(w, s, index) {
+    return {
+      title: w.title,
+      titleEn: w.titleEn,
+      format: w.format,
+      roomUrl: w.roomUrl || "",
+      session: { date: s.date, start: s.start, end: s.end, index: index + 1, total: w.sessions.length },
+      open: s.date === todayLocal(),
+    };
+  }
+
+  app.get("/api/checkin/:key", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const { w, s, index } = await findSession(db, c.req.param("key"));
+      if (!w) return bad(c, "找不到這堂課的簽到，請確認連結是否完整。", 404);
+      return c.json({ ok: true, ...sessionInfo(w, s, index) });
+    })
+  );
+
+  app.post("/api/checkin/:key", async (c) => {
+    if (!sameOrigin(c)) return bad(c, "請從簽到頁送出。", 403);
+    const body = await readBody(c);
+    if (!body) return bad(c, "資料格式不正確。");
+    if (body.website) return c.json({ ok: true }); // 機器人陷阱欄位
+    const who = norm(str(body.name, 60));
+    if (!who) return bad(c, "請填寫報名時的姓名或 Email。");
+
+    return withDb(c.env, c.executionCtx, async (db) => {
+      await ensureIndexes(db);
+      const tries = db.collection("checkinAttempts");
+      const recent = await tries.countDocuments({ ip: ip(c), at: { $gte: new Date(Date.now() - 3600e3) } });
+      if (recent >= CHECKIN_PER_HOUR) return bad(c, "短時間內嘗試太多次，請稍後再試，或私訊阿綸協助簽到。", 429);
+      await tries.insertOne({ ip: ip(c), at: new Date() });
+
+      const { w, s, index } = await findSession(db, c.req.param("key"));
+      if (!w) return bad(c, "找不到這堂課的簽到，請確認連結是否完整。", 404);
+      if (s.date !== todayLocal()) return bad(c, `簽到只在上課當天（${s.date}）開放。`, 409);
+
+      const attendees = w.attendees || [];
+      const a = attendees.find((x) => norm(x.name) === who || norm(x.nameEn) === who || (x.email && norm(x.email) === who));
+      if (!a) return bad(c, "名單上找不到這個名字。請輸入報名時填寫的姓名或 Email，或私訊阿綸協助簽到。", 404);
+
+      const already = Boolean(a.attended?.[s.key]);
+      if (!already) {
+        // 只改這一位學員這一堂的出席，避免多人同時簽到時互相覆蓋
+        await db.collection("workshops").updateOne(
+          { _id: w._id, "attendees.id": a.id },
+          { $set: { [`attendees.$.attended.${s.key}`]: { at: new Date(), by: "self" } } }
+        );
+      }
+      return c.json({ ok: true, already, name: a.name, ...sessionInfo(w, s, index) });
+    });
+  });
+}

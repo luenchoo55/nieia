@@ -71,6 +71,7 @@
     api("/api/admin/me").then(function (r) {
       if (r.configured === false) return show("setupView");
       if (!r.ok) { $("loading").textContent = r.message || "暫時無法連線，請重新整理。"; return; }
+      if (r.loggedIn && new URLSearchParams(location.search).get("next") === "workshops") { location.replace("/admin/workshops"); return; }
       if (r.loggedIn) { show("dashView"); loadSlots(); document.dispatchEvent(new Event("nieia:dash")); }
       else { show("loginView"); $("password").focus(); }
     });
@@ -94,6 +95,8 @@
     api("/api/admin/login", { method: "POST", body: { password: pw } }).then(function (r) {
       busy($("loginBtn"), false, "登入");
       if (r.ok) {
+        // 從工作坊頁面過來登入的，登入後直接回到工作坊
+        if (new URLSearchParams(location.search).get("next") === "workshops") { location.href = "/admin/workshops"; return; }
         $("password").value = "";
         show("dashView");
         loadSlots();

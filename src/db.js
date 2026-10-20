@@ -35,6 +35,14 @@ export async function ensureIndexes(db) {
     db.collection("bookings").createIndex({ startAt: 1 }),
     db.collection("bookings").createIndex({ ip: 1, createdAt: 1 }),
     db.collection("tickets").createIndex({ sessionId: 1, status: 1, number: 1 }),
+    db.collection("workshops").createIndex({ firstDate: -1 }),
+    db.collection("workshops").createIndex({ "sessions.key": 1 }),
+    db.collection("certificates").createIndex({ code: 1 }, { unique: true }),
+    db.collection("certificates").createIndex({ no: 1 }, { unique: true }),
+    db.collection("certificates").createIndex({ workshopId: 1 }),
+    db.collection("certificates").createIndex({ issuedAt: -1 }),
+    db.collection("checkinAttempts").createIndex({ at: 1 }, { expireAfterSeconds: 3600 }),
+    db.collection("checkinAttempts").createIndex({ ip: 1, at: 1 }),
   ]);
   indexesReady = true;
 }

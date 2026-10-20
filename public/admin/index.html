@@ -30,7 +30,7 @@
       <h1>後台</h1>
       <button class="btn btn-ghost btn-small" id="logoutBtn" type="button" hidden>登出</button>
     </div>
-    <p class="sub" id="subtitle">只有阿綸可以進入，用來管理預約、時段、療癒項目與商品。</p>
+    <p class="sub" id="subtitle">只有阿綸可以進入，用來管理預約、時段、療癒項目、商品與工作坊。</p>
   </header>
 
   <p class="status-line" id="loading">正在確認登入狀態…</p>
@@ -64,6 +64,7 @@
       <button type="button" role="tab" id="tab-market" aria-controls="panel-market" aria-selected="false" tabindex="-1">擺攤</button>
       <button type="button" role="tab" id="tab-services" aria-controls="panel-services" aria-selected="false" tabindex="-1">療癒項目</button>
       <button type="button" role="tab" id="tab-products" aria-controls="panel-products" aria-selected="false" tabindex="-1">商品</button>
+      <button type="button" role="tab" id="tab-workshops" aria-controls="panel-workshops" aria-selected="false" tabindex="-1">工作坊</button>
     </div>
 
     <div class="panel-stack" id="panel-bookings" role="tabpanel" aria-labelledby="tab-bookings">
@@ -202,6 +203,107 @@
       <div data-editor="products"></div>
       <div class="rows" data-list="products" aria-live="polite"></div>
     </div>
+
+    <div class="panel-stack" id="panel-workshops" role="tabpanel" aria-labelledby="tab-workshops" hidden>
+      <!-- 所有工作坊 -->
+      <div class="panel-stack" id="wsHome">
+        <div class="block-head"><h2>工作坊</h2><button class="btn btn-primary btn-small" type="button" id="wsNew">新增工作坊</button></div>
+        <p class="hint">每一場工作坊可以管理學員名單、點名、抽籤、大合照，課程結束後發結業證書給學員。</p>
+        <div id="wsEditorHost"></div>
+        <div class="rows" id="wsList" aria-live="polite"></div>
+
+        <section class="glass form-card" aria-labelledby="cert-reg-title">
+          <div class="block-head"><h2 id="cert-reg-title">證書登記</h2><span class="count" id="certCount"></span></div>
+          <form class="copy-row" id="certSearch" role="search">
+            <label class="hp" for="certQ">搜尋證書</label>
+            <input id="certQ" type="search" maxlength="40" placeholder="輸入證書編號、學員姓名、課程或老師">
+            <button class="btn btn-ghost" type="submit">搜尋</button>
+          </form>
+          <div class="cert-list" id="certList" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <!-- 單一場工作坊 -->
+      <div class="panel-stack" id="wsDetail" hidden>
+        <button class="ws-back" type="button" id="wsBack"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>所有工作坊</button>
+        <section class="glass form-card ws-head" aria-labelledby="wsTitle">
+          <div class="block-head"><h2 id="wsTitle"></h2><button class="btn btn-ghost btn-small" type="button" id="wsEdit">編輯資料</button></div>
+          <p class="ws-en" id="wsTitleEn"></p>
+          <div class="pills" id="wsPills"></div>
+          <dl class="summary" id="wsFacts"></dl>
+        </section>
+        <div id="wsDetailEditorHost"></div>
+
+        <section class="glass form-card" aria-labelledby="ws-roster-title">
+          <div class="block-head"><h2 id="ws-roster-title">學員名單與點名</h2><span class="count" id="wsRosterCount"></span></div>
+          <div class="roster-wrap"><table class="roster" id="wsRoster"></table></div>
+          <details class="ws-add" id="wsAddBox">
+            <summary>新增學員</summary>
+            <form id="wsAddForm" novalidate>
+              <label class="field" for="wsAddText">
+                <span>一行一位，依序填「姓名, 英文姓名, Email」，英文姓名與 Email 可以留空。也可以直接從 Excel 或 Google 試算表複製貼上。</span>
+                <textarea id="wsAddText" rows="5" placeholder="林小晴, Lin Hsiao-Ching, qing@example.com&#10;陳以安"></textarea>
+              </label>
+              <p class="preview" id="wsAddPreview" aria-live="polite"></p>
+              <p class="form-msg" id="wsAddMsg" role="alert"></p>
+              <button class="btn btn-primary" id="wsAddBtn" type="submit">加入名單</button>
+            </form>
+          </details>
+        </section>
+
+        <section class="glass form-card" aria-labelledby="ws-checkin-title">
+          <h2 id="ws-checkin-title">簽到與課前通知</h2>
+          <p class="hint" id="wsCheckinHint"></p>
+          <div class="session-list" id="wsSessions"></div>
+        </section>
+
+        <section class="glass form-card draw" aria-labelledby="ws-draw-title">
+          <h2 id="ws-draw-title">抽籤</h2>
+          <div class="chips" role="group" aria-label="抽籤方式" id="drawMode">
+            <button class="chip" type="button" data-mode="pick" aria-pressed="true">抽人</button>
+            <button class="chip" type="button" data-mode="order" aria-pressed="false">分享順序</button>
+            <button class="chip" type="button" data-mode="group" aria-pressed="false">分組配對</button>
+            <button class="chip" type="button" data-mode="assign" aria-pressed="false">抽座位或材料</button>
+          </div>
+          <div class="field-grid">
+            <label class="field" for="drawPool"><span>從誰之中抽</span><select id="drawPool"></select></label>
+            <label class="field" for="drawCount" data-for="pick"><span>一次抽幾位</span><input id="drawCount" type="number" inputmode="numeric" min="1" max="50" value="1"></label>
+            <label class="field" for="drawSize" data-for="group" hidden><span>每組幾人</span><input id="drawSize" type="number" inputmode="numeric" min="2" max="20" value="2"></label>
+            <label class="field check" for="drawNoRepeat" data-for="pick"><input id="drawNoRepeat" type="checkbox" checked>抽過的人不再抽</label>
+            <label class="field wide" for="drawOptions" data-for="assign" hidden><span>選項，一行一個（例如座位號碼、材料顏色）。選項比人少時會重複使用。</span><textarea id="drawOptions" rows="4" placeholder="靠窗 1 號&#10;靠窗 2 號&#10;中間 3 號"></textarea></label>
+          </div>
+          <div class="draw-stage" id="drawStage" tabindex="-1" aria-live="polite">
+            <p class="draw-empty">按「抽籤」開始，結果會顯示在這裡，可以全螢幕分享給大家看。</p>
+          </div>
+          <div class="editor-actions">
+            <button class="btn btn-primary" type="button" id="drawGo">抽籤</button>
+            <button class="btn btn-ghost" type="button" id="drawFull">全螢幕</button>
+            <button class="btn btn-ghost" type="button" id="drawReset">重新開始</button>
+          </div>
+        </section>
+
+        <section class="glass form-card" aria-labelledby="ws-photo-title">
+          <h2 id="ws-photo-title">大合照</h2>
+          <p class="hint">每場一張，會顯示在學員的證書頁。上傳時會自動縮小，原始照片請另外備份到 Google 雲端硬碟。</p>
+          <figure class="ws-photo" id="wsPhoto" hidden><img id="wsPhotoImg" alt="這場工作坊的大合照"></figure>
+          <div class="editor-actions">
+            <label class="btn btn-ghost file-btn" for="wsPhotoInput"><span id="wsPhotoLabel">選擇照片</span><input id="wsPhotoInput" type="file" accept="image/jpeg,image/png,image/webp"></label>
+            <button class="btn btn-ghost danger-btn" type="button" id="wsPhotoDel" hidden>移除照片</button>
+          </div>
+          <p class="form-msg" id="wsPhotoMsg" role="alert"></p>
+        </section>
+
+        <section class="glass form-card" aria-labelledby="ws-cert-title">
+          <div class="block-head"><h2 id="ws-cert-title">結業證書</h2><span class="count" id="wsCertCount"></span></div>
+          <p class="hint">全部堂數都出席的學員可以一次發證書。證書編號與連結發出後不會改變；修改了學員或課程資料，按「更新已發出的證書」就會套用到證書上。</p>
+          <div class="editor-actions">
+            <button class="btn btn-primary" type="button" id="wsIssueAll">為全勤學員發證書</button>
+            <button class="btn btn-ghost" type="button" id="wsReissue" hidden>更新已發出的證書</button>
+          </div>
+          <div class="cert-list" id="wsCerts"></div>
+        </section>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -215,5 +317,6 @@
 <script src="/assets/admin-bookings.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="/assets/admin-market.js"></script>
+<script src="/assets/admin-workshops.js"></script>
 </body>
 </html>

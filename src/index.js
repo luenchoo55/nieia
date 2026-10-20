@@ -5,6 +5,7 @@ import { mountSlots } from "./slots.js";
 import { mountCatalog } from "./catalog.js";
 import { mountBookings } from "./bookings.js";
 import { mountMarket } from "./market.js";
+import { mountWorkshops } from "./workshops.js";
 
 // strict: false 讓 /api/health 和 /api/health/ 都能使用
 const app = new Hono({ strict: false });
@@ -12,7 +13,8 @@ const app = new Hono({ strict: false });
 // 後台與 API 的回應不讓瀏覽器或搜尋引擎留存
 app.use("/api/*", async (c, next) => {
   await next();
-  c.header("Cache-Control", "no-store");
+  // 工作坊大合照的網址換照片就會換，可以讓瀏覽器留存；其他一律不留存
+  if (!(c.req.path.startsWith("/api/photos/") && c.res.status === 200)) c.header("Cache-Control", "no-store");
   c.header("X-Robots-Tag", "noindex");
 });
 
@@ -43,6 +45,7 @@ mountSlots(app);
 mountCatalog(app);
 mountBookings(app);
 mountMarket(app);
+mountWorkshops(app);
 
 app.notFound((c) =>
   c.json({ ok: false, message: "找不到這個 API。", path: new URL(c.req.url).pathname }, 404)

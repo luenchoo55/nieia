@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>結業證書｜阿綸涅亞 NIEIA</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="same-origin">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#EAE7E0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;900&family=Noto+Sans+TC:wght@400;500&family=Cormorant+Garamond:ital,wght@1,400;1,500&display=swap">
+<link rel="stylesheet" href="/assets/cert.css">
+</head>
+<body>
+<main class="cp">
+  <header class="cp-top">
+    <a class="cp-brand" href="/">阿綸涅亞 <span>NIEIA</span></a>
+    <span class="cp-kicker">結業證書<i>Certificate of Completion</i></span>
+  </header>
+
+  <p class="cp-status" id="cpStatus">正在載入證書…</p>
+
+  <section class="cp-error" id="cpError" hidden aria-labelledby="cpErrorTitle">
+    <h1 id="cpErrorTitle">找不到這張證書</h1>
+    <p id="cpErrorMsg">請確認連結是否完整。如果是從信件點開的，可以試著複製整段網址貼到瀏覽器。仍然打不開的話，請私訊 IG @nieia4928。</p>
+    <a class="cp-btn" href="/">回到阿綸涅亞 NIEIA</a>
+  </section>
+
+  <article class="cp-body" id="cpCert" hidden>
+    <figure class="cp-sheet">
+      <canvas id="cvMain" width="1123" height="794" role="img"></canvas>
+    </figure>
+    <div class="cp-actions">
+      <button class="cp-btn primary" type="button" id="dlMain">下載證書圖片</button>
+      <button class="cp-btn" type="button" id="shareMain" hidden>分享</button>
+    </div>
+
+    <div class="cp-grid">
+      <section class="cp-info" aria-labelledby="cpName">
+        <p class="cp-label">證書持有人</p>
+        <h1 id="cpName"></h1>
+        <p class="cp-en" id="cpNameEn"></p>
+        <dl class="cp-facts" id="cpFacts"></dl>
+        <p class="cp-verify" id="cpVerify"></p>
+      </section>
+
+      <section class="cp-story" aria-labelledby="cpStoryTitle">
+        <h2 id="cpStoryTitle">IG 限時動態版本</h2>
+        <p>直式 9:16，存下來就能直接發限時動態，記得標記 @nieia4928。</p>
+        <canvas id="cvStory" width="540" height="960" role="img"></canvas>
+        <div class="cp-actions">
+          <button class="cp-btn primary" type="button" id="dlStory">下載限動圖片</button>
+          <button class="cp-btn" type="button" id="shareStory" hidden>分享到 IG</button>
+        </div>
+      </section>
+    </div>
+
+    <figure class="cp-photo" id="cpPhoto" hidden>
+      <img id="cpPhotoImg" alt="">
+      <figcaption id="cpPhotoCap"></figcaption>
+    </figure>
+  </article>
+
+  <footer class="cp-foot">
+    <a href="/">阿綸涅亞 NIEIA</a>
+    <a href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">Instagram @nieia4928</a>
+  </footer>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="/assets/cert.js"></script>
+</body>
+</html>

@@ -2,28 +2,9 @@ import { ObjectId } from "mongodb";
 import { withDb, ensureIndexes } from "./db.js";
 import { requireAdmin, sameOrigin } from "./auth.js";
 import { notifyNewBooking, notifyPaymentReported } from "./notify.js";
+import { REGIONS, getPayment, publicPayment } from "./payment.js";
 
-// ---------- 匯款資訊（只在預約成功後提供給該位客人） ----------
-const PAYMENT = {
-  TW: {
-    label: "台灣匯款",
-    currency: "TWD",
-    lines: [
-      ["銀行", "玉山銀行（代碼 808）"],
-      ["帳號", "0417968137184"],
-      ["戶名", "朱〇綸"],
-    ],
-  },
-  MY: {
-    label: "馬來西亞匯款",
-    currency: "MYR",
-    lines: [
-      ["銀行", "Hong Leong Bank"],
-      ["帳號", "20100081235"],
-      ["戶名", "CHOO WEI LUEN"],
-    ],
-  },
-};
+// 匯款資訊在後台「匯款方式」設定（src/payment.js），只在預約成功後提供給該位客人
 
 const MIN_NOTICE_HOURS = 12; // 至少要在療程開始前 12 小時預約
 const MAX_PER_HOUR = 5; // 同一個網路位址一小時內最多送出 5 筆
@@ -85,7 +66,7 @@ function cleanExtra(kind, input) {
   return { out, errors };
 }
 
-function publicView(b) {
+function publicView(b, payment) {
   return {
     ref: b.ref,
     status: b.status,
@@ -99,7 +80,7 @@ function publicView(b) {
     currency: b.currency,
     priceMode: b.priceMode || null,
     mode: b.mode || "remote",
-    payment: PAYMENT[b.region],
+    payment: publicPayment(payment, b.region),
     paymentReport: b.paymentReport || null,
   };
 }
@@ -192,7 +173,7 @@ export function mountBookings(app) {
         end: slot.end,
         startAt: slot.startAt,
         region,
-        currency: PAYMENT[region].currency,
+        currency: REGIONS[region].currency,
         amount,
         priceMode: service.priceMode || "coming",
         mode,
@@ -210,7 +191,7 @@ export function mountBookings(app) {
         throw err;
       }
       notifyNewBooking(c, { ...booking, weekday: weekday(booking.date) });
-      return c.json({ ok: true, token: booking.token, booking: publicView(booking) });
+      return c.json({ ok: true, token: booking.token, booking: publicView(booking, await getPayment(db)) });
     });
   });
 
@@ -228,7 +209,7 @@ export function mountBookings(app) {
     withDb(c.env, c.executionCtx, async (db) => {
       const b = await findOwn(c, db);
       if (!b) return bad(c, "找不到這筆預約，請確認網址是否完整。", 404);
-      return c.json({ ok: true, booking: publicView(b) });
+      return c.json({ ok: true, booking: publicView(b, await getPayment(db)) });
     })
   );
 
@@ -254,7 +235,7 @@ export function mountBookings(app) {
         { $set: { paymentReport, status: "payment_reported", updatedAt: new Date() } }
       );
       notifyPaymentReported(c, { ...b, weekday: weekday(b.date) }, paymentReport);
-      return c.json({ ok: true, booking: publicView({ ...b, paymentReport, status: "payment_reported" }) });
+      return c.json({ ok: true, booking: publicView({ ...b, paymentReport, status: "payment_reported" }, await getPayment(db)) });
     });
   });
 

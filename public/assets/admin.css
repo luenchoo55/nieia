@@ -367,3 +367,13 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .ws-prices { margin-top: .2rem; grid-template-columns: repeat(2, minmax(0, 1fr)); } /* 一排新生、一排複訓 */
 .ws-head .head-acts { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
 .ws-head .head-acts [hidden] { display: none; }
+
+/* 匯款方式 */
+.pay-admin { display: grid; gap: 1rem; }
+#payRegions { display: grid; gap: 1.6rem; }
+.pay-region { display: grid; gap: .8rem; }
+.pay-region > h3 { font-size: var(--step-0); letter-spacing: .08em; }
+.pay-region > .btn { justify-self: start; }
+.pay-card { border: 0; margin: 0; padding: 1rem 1.1rem; display: grid; gap: .8rem; min-width: 0; }
+.pay-card legend { float: left; width: 100%; padding: 0; margin-bottom: .2rem; font-weight: 600; color: var(--ink); }
+.pay-card .editor-actions { gap: .4rem; }

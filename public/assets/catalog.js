@@ -82,6 +82,44 @@
   // 工作坊頁的課程介紹也用同一套分段規則
   window.nieiaRichText = richText;
 
+  // ---------- 匯款方式（預約療癒與工作坊報名共用） ----------
+  function copyText(text, btn) {
+    var done = function () { btn.textContent = "已複製"; setTimeout(function () { btn.textContent = "複製"; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () {});
+  }
+  window.nieiaPayment = function (payment) {
+    var box = el("div", "pay-methods");
+    (payment && payment.methods || []).forEach(function (m) {
+      var sec = el("section", "pay-method");
+      sec.appendChild(el("h3", null, m.name));
+      var dl = el("dl", "pay-lines");
+      m.lines.forEach(function (line) {
+        var wrap = el("div", line[0] ? null : "plain");
+        if (line[0]) wrap.appendChild(el("dt", null, line[0]));
+        var dd = el("dd");
+        dd.appendChild(el("span", null, line[1]));
+        // 帳號（或一長串數字）可以一鍵複製
+        if (/帳號|帳戶|account/i.test(line[0]) || /^[\d\s-]{6,}$/.test(line[1])) {
+          var copy = el("button", "mini-copy", "複製");
+          copy.type = "button";
+          copy.addEventListener("click", function () { copyText(line[1].replace(/[\s-]/g, ""), copy); });
+          dd.appendChild(copy);
+        }
+        wrap.appendChild(dd);
+        dl.appendChild(wrap);
+      });
+      sec.appendChild(dl);
+      if (m.link) {
+        var a = el("a", "btn btn-ghost pay-link", m.link.label);
+        a.href = m.link.url; a.target = "_blank"; a.rel = "noopener";
+        sec.appendChild(a);
+      }
+      box.appendChild(sec);
+    });
+    if (!box.children.length) box.appendChild(el("p", "muted", "匯款方式會由阿綸私訊告訴你。"));
+    return box;
+  };
+
   var sheet = null, lastFocus = null;
   function closeDetail() {
     if (!sheet) return;

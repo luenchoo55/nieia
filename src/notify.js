@@ -136,6 +136,7 @@ export function notifyWorkshopSignup(c, w, a) {
       ["Email", a.email],
       ["IG", a.instagram ? "@" + a.instagram : ""],
       ["報名身分", a.status === "retake" ? "複訓" : "新生"],
+      ["居住地", REGION[a.region]],
       ["費用", workshopPrice(w.prices?.[a.status === "retake" ? "retake" : "new"])],
       ["想說的話", a.note],
       ["目前人數", `${(w.attendees || []).length + 1}${w.capacity ? " / " + w.capacity : ""} 位`],

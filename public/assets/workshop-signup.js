@@ -72,6 +72,42 @@
     return CURS.filter(function (c) { return p && p[c[0]] != null; }).map(function (c) { return amount(c, p[c[0]]); }).join("／");
   }
 
+  // ---------- 我的報名（記在這台裝置，換裝置就用專屬網址） ----------
+  var MINE = "nieia-ws-signups";
+  function mineAll() {
+    try { return JSON.parse(localStorage.getItem(MINE)) || {}; } catch (e) { return {}; }
+  }
+  function mineOf(id) { return mineAll()[id] || null; }
+  function remember(r) {
+    var all = mineAll();
+    all[r.workshopId] = { a: r.attendeeId, t: r.token };
+    try { localStorage.setItem(MINE, JSON.stringify(all)); } catch (e) { /* 無痕模式 */ }
+  }
+  function forget(id) {
+    var all = mineAll();
+    delete all[id];
+    try { localStorage.setItem(MINE, JSON.stringify(all)); } catch (e) { /* 無痕模式 */ }
+  }
+  function mineUrl(r) {
+    return location.origin + "/workshops?ws=" + r.workshopId + "&a=" + r.attendeeId + "&t=" + r.token;
+  }
+  function loadMine(id, m) {
+    return fetch("/api/workshops/" + encodeURIComponent(id) + "/signup/" + encodeURIComponent(m.a) + "?t=" + encodeURIComponent(m.t))
+      .then(function (res) { return res.json().then(function (d) { d.status404 = res.status === 404; return d; }); })
+      .catch(function () { return { ok: false, message: "連不上網站，請確認網路後再試。" }; });
+  }
+  // 打開「我的報名」：先開彈窗，再讀資料
+  function openMine(w, m, from) {
+    var s = openSheet(w, "我的報名", from);
+    s.body.appendChild(el("p", "muted", "讀取中…"));
+    loadMine(w.id, m).then(function (r) {
+      if (r.ok) { done(s.body, w, r, true); return; }
+      if (r.status404) forget(w.id);
+      s.body.innerHTML = "";
+      s.body.appendChild(el("p", "form-msg", r.message || "讀取失敗，請再試一次。"));
+    });
+  }
+
   // ---------- 列表 ----------
   function card(w) {
     var c = el("article", "ws-card glass");
@@ -106,6 +142,14 @@
     return c;
   }
   function signupButton(w, from) {
+    var m = mineOf(w.id);
+    if (m) {
+      var mine = el("button", "btn btn-primary", "查看我的報名");
+      mine.type = "button";
+      mine.setAttribute("aria-haspopup", "dialog");
+      mine.addEventListener("click", function () { openMine(w, m, from || mine); });
+      return mine;
+    }
     var btn = el("button", "btn " + (w.state === "open" ? "btn-primary" : "btn-ghost"), w.state === "open" ? "我要報名" : STATE[w.state]);
     btn.type = "button";
     btn.disabled = w.state !== "open";
@@ -114,11 +158,33 @@
     return btn;
   }
 
-  fetch("/api/workshops").then(function (r) { return r.json(); }).then(function (data) {
-    if (!data.ok || !data.items || !data.items.length) return;
+  var items = [];
+  function refreshCards() {
     host.innerHTML = "";
-    data.items.forEach(function (w) { host.appendChild(card(w)); });
+    items.forEach(function (w) { host.appendChild(card(w)); });
+  }
+  // 專屬網址：/workshops?ws=場次&a=學員&t=代碼，換裝置也能打開
+  function openFromUrl() {
+    var q = new URLSearchParams(location.search);
+    var id = q.get("ws"), m = { a: q.get("a"), t: q.get("t") };
+    if (!id || !m.a || !m.t) return;
+    var w = items.filter(function (x) { return x.id === id; })[0];
+    if (w) { remember({ workshopId: id, attendeeId: m.a, token: m.t }); refreshCards(); openMine(w, m); return; }
+    // 已經不在列表上的場次（例如已結束）：用報名資料裡的名稱與日期
+    loadMine(id, m).then(function (r) {
+      if (!r.ok) return;
+      var s = openSheet({ id: id, title: r.title, sessions: r.sessions }, "我的報名");
+      done(s.body, null, r, true);
+    });
+  }
+
+  fetch("/api/workshops").then(function (r) { return r.json(); }).then(function (data) {
+    if (!data.ok || !data.items || !data.items.length) { openFromUrl(); return; }
+    host.innerHTML = "";
+    items = data.items;
+    refreshCards();
     box.hidden = false;
+    openFromUrl();
   }).catch(function () { /* 讀取失敗就不顯示 */ });
 
   // ---------- 報名彈窗 ----------
@@ -229,6 +295,21 @@
     grid.appendChild(input("wsfEmail", "Email", { type: "email", maxlength: "120", autocomplete: "email", inputmode: "email", required: "" }));
     grid.appendChild(input("wsfIg", "IG 帳號（選填）", { maxlength: "31", autocomplete: "off", autocapitalize: "off", placeholder: "例如 nieia4928" }));
     // 有複訓價格才讓客人選身分，旁邊直接顯示對應的費用
+    // 居住地：決定匯款方式與應付的幣別
+    var region = "";
+    var rs = el("fieldset", "field wide");
+    rs.appendChild(el("legend", null, "居住地（送出後會顯示對應的匯款方式）"));
+    var rwrap = el("div", "pills-choice");
+    [["TW", "台灣"], ["MY", "馬來西亞"]].forEach(function (o) {
+      var l = el("label");
+      var r = el("input"); r.type = "radio"; r.name = "wsfRegion"; r.value = o[0];
+      r.addEventListener("change", function () { region = o[0]; });
+      l.appendChild(r); l.appendChild(el("span", null, o[1]));
+      rwrap.appendChild(l);
+    });
+    rs.appendChild(rwrap);
+    grid.appendChild(rs);
+
     var status = "new";
     if (hasRetake(w)) {
       var fs = el("fieldset", "field wide");
@@ -253,7 +334,7 @@
     var hpIn = el("input"); hpIn.id = "wsfWebsite"; hpIn.tabIndex = -1; hpIn.autocomplete = "off";
     hp.appendChild(hpIn);
     form.appendChild(hp);
-    form.appendChild(el("p", "muted", "送出後阿綸會用 Email 或 IG 和你聯絡，確認名額與匯款方式。課程需提前訂購教材，請於課前兩週完成匯款。"));
+    form.appendChild(el("p", "muted", "送出後會顯示應付金額與匯款方式。課程需提前訂購教材，請於課前兩週完成匯款。"));
     var msg = el("p", "form-msg");
     msg.setAttribute("role", "alert");
     form.appendChild(msg);
@@ -267,9 +348,10 @@
       var v = function (id) { return document.getElementById(id).value.trim(); };
       var payload = {
         name: v("wsfName"), nameEn: v("wsfNameEn"), email: v("wsfEmail"),
-        instagram: v("wsfIg"), note: v("wsfNote"), website: v("wsfWebsite"), status: status,
+        instagram: v("wsfIg"), note: v("wsfNote"), website: v("wsfWebsite"), status: status, region: region,
       };
       if (!payload.name) { msg.textContent = "請填寫姓名。"; document.getElementById("wsfName").focus(); return; }
+      if (!region) { msg.textContent = "請選擇居住地。"; rwrap.querySelector("input").focus(); return; }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) { msg.textContent = "請填寫正確的 Email。"; document.getElementById("wsfEmail").focus(); return; }
       msg.textContent = "";
       send.disabled = true;
@@ -282,14 +364,17 @@
         send.disabled = false;
         send.textContent = "送出報名";
         if (!r.ok) { msg.textContent = r.message || "報名失敗，請再試一次，或 IG 私訊 @nieia4928。"; return; }
-        done(body, payload.name);
+        remember(r);
+        done(body, w, r);
+        refreshCards();
       });
     });
 
     document.getElementById("wsfName").focus({ preventScroll: true });
   }
 
-  function done(body, name) {
+  // again：之後再打開（「查看我的報名」或專屬網址），不是剛送出
+  function done(body, w, r, again) {
     body.innerHTML = "";
     var d = el("div", "c-done");
     d.setAttribute("aria-live", "polite");
@@ -297,13 +382,49 @@
     check.setAttribute("aria-hidden", "true");
     check.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
     d.appendChild(check);
-    d.appendChild(el("h3", null, name + "，報名已送出"));
-    d.appendChild(el("p", "muted", "阿綸會在 1 至 2 天內用 Email 或 IG 和你聯絡。等不到回覆的話，可以直接 IG 私訊 @nieia4928。"));
+    d.appendChild(el("h3", null, again ? r.name + "，這是你的報名" : r.name + "，報名已送出"));
+    d.appendChild(el("p", "muted", "請在課前兩週完成匯款，匯款後 IG 私訊 @nieia4928 告訴阿綸，方便核對。"));
+    body.appendChild(d);
+
+    // 應付金額與匯款方式（只在報名成功後顯示）
+    if (r.payment) {
+      var pay = el("section", "pay ws-pay");
+      pay.appendChild(el("h2", null, r.payment.label));
+      var cur = r.payment.currency === "MYR" ? CURS[1] : CURS[0];
+      pay.appendChild(el("p", "amount", r.amount != null
+        ? "應付金額 " + amount(cur, r.amount) + "（" + (r.status === "retake" ? "複訓" : "新生") + "）"
+        : "金額將由阿綸告訴你"));
+      pay.appendChild(window.nieiaPayment ? window.nieiaPayment(r.payment) : el("p", "muted", "匯款方式會由阿綸私訊告訴你。"));
+      body.appendChild(pay);
+    }
+
+    // 專屬網址：換手機或清掉瀏覽器資料也能再打開
+    var keep = el("section", "ws-keep");
+    keep.appendChild(el("h3", null, "保存這個網址"));
+    keep.appendChild(el("p", "muted", "之後可以用這個網址再查看應付金額與匯款方式。在這台裝置回到工作坊頁，按「查看我的報名」也可以。"));
+    var row = el("div", "copy-row");
+    var url = el("input");
+    url.readOnly = true; url.value = mineUrl(r); url.setAttribute("aria-label", "我的報名專屬網址");
+    url.addEventListener("focus", function () { url.select(); });
+    var cp = el("button", "btn btn-ghost", "複製");
+    cp.type = "button";
+    cp.addEventListener("click", function () {
+      var ok2 = function () { cp.textContent = "已複製"; setTimeout(function () { cp.textContent = "複製"; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url.value).then(ok2, function () { url.select(); });
+      else url.select();
+    });
+    row.appendChild(url);
+    row.appendChild(cp);
+    keep.appendChild(row);
+    body.appendChild(keep);
+
     var ok = el("button", "btn btn-ghost", "好的");
     ok.type = "button";
     ok.addEventListener("click", close);
-    d.appendChild(ok);
-    body.appendChild(d);
-    ok.focus();
+    var end = el("div", "actions ws-done-acts");
+    end.appendChild(ok);
+    body.appendChild(end);
+    body.scrollTop = 0;
+    ok.focus({ preventScroll: true });
   }
 })();

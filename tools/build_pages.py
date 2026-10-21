@@ -503,7 +503,7 @@ booking = f'''{appbar("預約療癒", "選擇療癒項目與時段，填寫資�
     <section class="pay glass" id="payCard" aria-labelledby="payTitle">
       <h2 id="payTitle">匯款資訊</h2>
       <p class="amount" id="payAmount"></p>
-      <dl class="pay-lines" id="payLines"></dl>
+      <div id="payLines"></div>
       <p class="muted">匯款完成後，請在下方回報，方便阿綸核對。</p>
     </section>
     <form class="pay glass" id="reportForm" novalidate aria-labelledby="reportTitle">

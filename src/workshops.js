@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { withDb, ensureIndexes } from "./db.js";
 import { requireAdmin, sameOrigin } from "./auth.js";
 import { notifyWorkshopSignup } from "./notify.js";
+import { REGIONS, getPayment, publicPayment } from "./payment.js";
 
 // 工作坊：場次、學員名單、出席、結業證書、大合照、線上簽到。
 // 學員資料直接存在工作坊文件裡（一場通常不超過幾十人）；
@@ -170,6 +171,22 @@ function certView(cert, photoKey) {
     teachers: cert.teachers,
     issuedAt: cert.issuedAt,
     photo: photoKey ? `/api/photos/${photoKey}` : null,
+  };
+}
+
+// 學員自己的報名資料：應付金額（依身分與居住地）與匯款方式，報名成功與之後用專屬網址查看都用這個
+function signupView(w, a, payment) {
+  const region = a.region || "TW";
+  return {
+    workshopId: w._id.toString(),
+    attendeeId: a.id,
+    token: a.token,
+    title: w.title,
+    sessions: w.sessions.map((s) => ({ date: s.date, start: s.start, end: s.end })),
+    name: a.name,
+    status: a.status || "new",
+    amount: w.prices?.[a.status || "new"]?.[region === "TW" ? "twd" : "myr"] ?? null,
+    payment: publicPayment(payment, region),
   };
 }
 
@@ -513,6 +530,8 @@ export function mountWorkshops(app) {
     if (!p.name) return bad(c, "請填寫姓名。");
     if (!EMAIL_RE.test(p.email)) return bad(c, "請填寫正確的 Email，阿綸會用它和你聯絡。");
     if (instagram && !/^[A-Za-z0-9._]{1,30}$/.test(instagram)) return bad(c, "IG 帳號只能有英文、數字、底線和句點。");
+    const region = REGIONS[body.region] ? body.region : null;
+    if (!region) return bad(c, "請選擇你住在台灣或馬來西亞，才能告訴你對應的匯款方式。");
 
     return withDb(c.env, c.executionCtx, async (db) => {
       await ensureIndexes(db);
@@ -532,16 +551,29 @@ export function mountWorkshops(app) {
       }
       const a = {
         id: randomKey(8), ...p, instagram, note, source: "web",
+        token: randomKey(16), // 學員之後用專屬網址查看自己的報名與匯款資訊
         // 有設定複訓價格的場次才讓客人選身分
         status: hasRetake(w) && body.status === "retake" ? "retake" : "new",
+        region,
         attended: {}, certCode: null, certNo: null, addedAt: new Date(),
       };
       // 用 $push 加在最後，避免和其他人同時報名或後台修改時互相覆蓋
       await db.collection("workshops").updateOne({ _id: w._id }, { $push: { attendees: a }, $set: { updatedAt: new Date() } });
       notifyWorkshopSignup(c, w, a);
-      return c.json({ ok: true, name: a.name });
+      return c.json({ ok: true, ...signupView(w, a, await getPayment(db)) });
     });
   });
+
+  // 學員用報名後拿到的專屬網址，再次查看自己的報名與匯款資訊
+  app.get("/api/workshops/:id/signup/:aid", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const t = str(c.req.query("t"), 40);
+      const w = await loadWorkshop(c, db);
+      const a = w && t && (w.attendees || []).find((x) => x.id === c.req.param("aid") && x.token === t);
+      if (!a) return bad(c, "找不到這筆報名，請確認網址是否完整，或 IG 私訊 @nieia4928。", 404);
+      return c.json({ ok: true, ...signupView(w, a, await getPayment(db)) });
+    })
+  );
 
   // 前台查詢證書：證書編號＋姓名（中文或英文）都對，才給證書連結
   app.post("/api/certs/lookup", async (c) => {

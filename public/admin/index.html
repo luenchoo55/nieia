@@ -68,6 +68,7 @@
       <button type="button" role="tab" id="tab-market" aria-controls="panel-market" aria-selected="false" tabindex="-1">擺攤</button>
       <button type="button" role="tab" id="tab-services" aria-controls="panel-services" aria-selected="false" tabindex="-1">療癒項目</button>
       <button type="button" role="tab" id="tab-products" aria-controls="panel-products" aria-selected="false" tabindex="-1">商品</button>
+      <button type="button" role="tab" id="tab-payment" aria-controls="panel-payment" aria-selected="false" tabindex="-1">匯款方式</button>
     </div>
 
     <div class="panel-stack" id="panel-bookings" role="tabpanel" aria-labelledby="tab-bookings">
@@ -206,6 +207,16 @@
       <div data-editor="products"></div>
       <div class="rows" data-list="products" aria-live="polite"></div>
     </div>
+
+    <div class="panel-stack" id="panel-payment" role="tabpanel" aria-labelledby="tab-payment" hidden>
+      <div class="block-head"><h2>匯款方式</h2></div>
+      <p class="hint">客人送出「預約療癒」或「工作坊報名」之後，會看到他居住地區的匯款方式。內容一行一項，寫成「帳號：0417968137184」這種格式，帳號旁邊會出現「複製」按鈕。關掉「顯示給客人」就先不顯示（例如還沒開放的 TNG）。</p>
+      <form class="pay-admin" id="payForm" novalidate>
+        <div id="payRegions"><p class="empty glass">載入中…</p></div>
+        <p class="form-msg" id="payMsg" role="alert"></p>
+        <div class="editor-actions"><button class="btn btn-primary" type="submit" id="paySave">儲存匯款方式</button></div>
+      </form>
+    </div>
   </div>
 </main>
 
@@ -219,5 +230,6 @@
 <script src="/assets/admin-bookings.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="/assets/admin-market.js"></script>
+<script src="/assets/admin-payment.js"></script>
 </body>
 </html>

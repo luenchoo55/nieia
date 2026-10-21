@@ -522,7 +522,7 @@
       var sub = [a.nameEn, a.email, a.instagram && "IG @" + a.instagram].filter(Boolean).join("・");
       if (sub) th.appendChild(el("span", null, sub));
       if (a.note) th.appendChild(el("span", null, "想說的話：" + a.note));
-      if (a.source === "web") th.appendChild(el("span", "pill booked", "網站報名・" + (a.status === "retake" ? "複訓" : "新生")));
+      if (a.source === "web") th.appendChild(el("span", "pill booked", "網站報名・" + (a.status === "retake" ? "複訓" : "新生") + (a.region ? "・" + (a.region === "MY" ? "馬來西亞" : "台灣") : "")));
       if (a.certNo) th.appendChild(el("span", "pill open", a.certNo));
       tr.appendChild(th);
       w.sessions.forEach(function (s, i) {

@@ -291,22 +291,9 @@
       $("payAmount").textContent = b.priceMode === "inquiry"
         ? "隨喜服務，金額依你的心意"
         : money(b.amount, b.currency) ? "應付金額 " + money(b.amount, b.currency) : "金額將由阿綸透過 IG 私訊告知";
-      var dl = $("payLines");
-      dl.innerHTML = "";
-      b.payment.lines.forEach(function (line) {
-        var wrap = el("div");
-        wrap.appendChild(el("dt", null, line[0]));
-        var dd = el("dd");
-        dd.appendChild(el("span", null, line[1]));
-        if (line[0] === "帳號") {
-          var copy = el("button", "mini-copy", "複製");
-          copy.type = "button";
-          copy.addEventListener("click", function () { copyText(line[1], copy); });
-          dd.appendChild(copy);
-        }
-        wrap.appendChild(dd);
-        dl.appendChild(wrap);
-      });
+      var box = $("payLines");
+      box.innerHTML = "";
+      box.appendChild(window.nieiaPayment(b.payment));
     }
 
     var note = $("reportedNote");

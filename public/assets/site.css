@@ -662,3 +662,18 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .ws-sessions .ws-no { color: var(--ink-soft); min-width: 3.6em; }
 .ws-sessions .ws-day { color: var(--ink); }
 .ws-sessions .ws-time { color: var(--button); margin-left: auto; }
+
+/* ---------- 匯款方式（預約療癒、工作坊報名） ---------- */
+.pay-methods { display: grid; gap: 1rem; }
+.pay-method { display: grid; gap: .3rem; padding: .9rem 1rem; border-radius: var(--r-sm); background: rgba(255, 255, 255, .45); border: 1px solid var(--line); }
+.pay-method h3 { font-size: var(--step-0); letter-spacing: .06em; }
+.pay-method .pay-lines > div { grid-template-columns: 4.5em minmax(0, 1fr); }
+.pay-method .pay-lines > div:last-child { border-bottom: 0; }
+.pay-method .pay-lines > div.plain { grid-template-columns: minmax(0, 1fr); }
+.pay-method .pay-lines dd span { overflow-wrap: anywhere; }
+.pay-link { justify-self: start; margin-top: .3rem; }
+.ws-pay { padding: 1rem 0 0; margin-top: 1rem; border-top: 1px solid var(--line); }
+.ws-done-acts { justify-content: center; margin-top: 1rem; }
+.ws-keep { display: grid; gap: .5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.ws-keep h3 { font-size: var(--step-0); letter-spacing: .06em; }
+.ws-keep .copy-row input { min-width: 0; flex: 1; }

@@ -127,30 +127,81 @@
     }
     var today = todayLocal();
     // 結束時名單是空的：課程沒有開成，詢問要不要重新發佈
-    list.filter(function (w) { return notHeld(w, w.attendeeCount); }).forEach(function (w) {
+    // 按「以後再說」的場次不再提醒（列表上仍標示「沒有開成」，打開那一場也能重新發佈）
+    var later = laterIds();
+    list.filter(function (w) { return notHeld(w, w.attendeeCount) && later.indexOf(w.id) < 0; }).forEach(function (w) {
       var ask = el("div", "ws-ask glass");
       ask.setAttribute("role", "status");
       ask.appendChild(el("p", null, "「" + w.title + "」（" + shortDate(w.sessions[0].date) + "）結束時沒有學員，課程可能沒有開成。要改日期重新發佈嗎？"));
-      ask.appendChild(button("重新發佈", "btn btn-primary btn-small", function () { openWorkshop(w.id, true); }));
+      var acts = el("div", "ws-ask-acts");
+      acts.appendChild(button("以後再說", "btn btn-ghost btn-small", function () {
+        try { localStorage.setItem(LATER_KEY, JSON.stringify(later.concat(w.id))); } catch (e) { /* 無痕模式 */ }
+        ask.remove();
+      }));
+      acts.appendChild(button("重新發佈", "btn btn-primary btn-small", function () { openWorkshop(w.id, true); }));
+      ask.appendChild(acts);
       host.appendChild(ask);
     });
-    list.forEach(function (w) {
-      var last = w.sessions[w.sessions.length - 1].date;
-      var row = el("button", "ws-row glass");
-      row.type = "button";
-      var when = el("div", "ws-when");
-      when.appendChild(el("span", "ws-d", shortDate(w.sessions[0].date)));
-      when.appendChild(el("span", "ws-w", w.sessions.length > 1 ? "共 " + w.sessions.length + " 堂" : "週" + weekdayOf(w.sessions[0].date)));
-      var text = el("div", "text");
-      text.appendChild(el("h3", null, w.title));
-      text.appendChild(el("p", "meta", [TYPE[w.type], FORMAT[w.format], hoursText(w.hours), "學員 " + w.attendeeCount + " 位", w.certCount ? "已發證書 " + w.certCount + " 張" : ""].filter(Boolean).join("・")));
-      var state = notHeld(w, w.attendeeCount) ? ["沒有開成", "warn"] : last < today ? ["已結束", "closed"] : w.sessions[0].date <= today ? ["進行中", "booked"] : ["即將開始", "open"];
-      row.appendChild(when);
-      row.appendChild(text);
-      row.appendChild(el("span", "pill " + state[1], state[0]));
-      row.addEventListener("click", function () { openWorkshop(w.id); });
-      host.appendChild(row);
+    // 已結束（有開成）的收在下面，可以收起／展開；沒有開成的留在上面提醒重新發佈
+    var ended = list.filter(function (w) { return w.sessions[w.sessions.length - 1].date < today && !notHeld(w, w.attendeeCount); });
+    list.filter(function (w) { return ended.indexOf(w) < 0; }).forEach(function (w) { host.appendChild(listRow(w, today)); });
+    if (ended.length) {
+      var box = el("details", "ws-ended");
+      box.open = endedOpen();
+      box.addEventListener("toggle", function () { try { localStorage.setItem(ENDED_KEY, box.open ? "1" : "0"); } catch (e) { /* 無痕模式 */ } });
+      box.appendChild(endedSummary(ended));
+      var rows = el("div", "rows");
+      ended.forEach(function (w) { rows.appendChild(listRow(w, today)); });
+      box.appendChild(rows);
+      host.appendChild(box);
+    }
+  }
+
+  // 收起時像一疊收好的卡片：小圓球寫月份、場數與證書數；展開後變成「收起已結束」
+  function endedSummary(ended) {
+    var sum = el("summary", "ws-stack glass");
+    var orbs = el("span", "ws-stack-orbs");
+    orbs.setAttribute("aria-hidden", "true");
+    ended.slice(0, 4).forEach(function (w) {
+      var d = w.sessions[0].date;
+      orbs.appendChild(el("span", "ws-mini-orb", Number(d.slice(5, 7)) + "月"));
     });
+    if (ended.length > 4) orbs.appendChild(el("span", "ws-mini-orb more", "+" + (ended.length - 4)));
+    sum.appendChild(orbs);
+    var certs = ended.reduce(function (n, w) { return n + (w.certCount || 0); }, 0);
+    var text = el("span", "ws-stack-text");
+    text.appendChild(el("strong", null, "已結束的工作坊"));
+    text.appendChild(el("small", null, ended.length + " 場" + (certs ? "・已發證書 " + certs + " 張" : "")));
+    sum.appendChild(text);
+    sum.appendChild(el("span", "ws-stack-less", "收起已結束"));
+    var go = el("span", "ws-stack-go");
+    go.setAttribute("aria-hidden", "true");
+    go.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+    sum.appendChild(go);
+    return sum;
+  }
+
+  var LATER_KEY = "nieia-ws-republish-later";
+  function laterIds() { try { return JSON.parse(localStorage.getItem(LATER_KEY)) || []; } catch (e) { return []; } }
+  var ENDED_KEY = "nieia-ws-ended-open";
+  function endedOpen() { try { return localStorage.getItem(ENDED_KEY) === "1"; } catch (e) { return false; } }
+
+  function listRow(w, today) {
+    var last = w.sessions[w.sessions.length - 1].date;
+    var row = el("button", "ws-row glass");
+    row.type = "button";
+    var when = el("div", "ws-when");
+    when.appendChild(el("span", "ws-d", shortDate(w.sessions[0].date)));
+    when.appendChild(el("span", "ws-w", w.sessions.length > 1 ? "共 " + w.sessions.length + " 堂" : "週" + weekdayOf(w.sessions[0].date)));
+    var text = el("div", "text");
+    text.appendChild(el("h3", null, w.title));
+    text.appendChild(el("p", "meta", [TYPE[w.type], FORMAT[w.format], hoursText(w.hours), "學員 " + w.attendeeCount + " 位", w.certCount ? "已發證書 " + w.certCount + " 張" : ""].filter(Boolean).join("・")));
+    var state = notHeld(w, w.attendeeCount) ? ["沒有開成", "warn"] : last < today ? ["已結束", "closed"] : w.sessions[0].date <= today ? ["進行中", "booked"] : ["即將開始", "open"];
+    row.appendChild(when);
+    row.appendChild(text);
+    row.appendChild(el("span", "pill " + state[1], state[0]));
+    row.addEventListener("click", function () { lastRow = row; openWorkshop(w.id); });
+    return row;
   }
 
   // ---------- 新增／編輯表單 ----------
@@ -401,22 +452,35 @@
   $("wsNew").addEventListener("click", function () { openEditor(null, $("wsEditorHost")); });
 
   // ================= 單一場工作坊 =================
+  // 單一場工作坊開在彈窗裡，關掉就回到列表原本的位置
+  // 彈窗放到最外層，才不會被頁面其他區塊的版面影響或蓋住
+  document.body.appendChild($("wsModal"));
+  var lastRow = null;
   function showHome() {
     current = null;
-    $("wsDetail").hidden = true;
-    $("wsHome").hidden = false;
+    $("wsModal").hidden = true;
+    document.documentElement.classList.remove("no-scroll");
+    if (lastRow && document.body.contains(lastRow)) lastRow.focus({ preventScroll: true });
   }
-  $("wsBack").addEventListener("click", function () { closeEditors(); showHome(); renderList(); });
+  function closeDetail() { closeEditors(); showHome(); renderList(); }
+  $("wsBack").addEventListener("click", closeDetail);
+  $("wsModal").addEventListener("click", function (e) { if (e.target === this) closeDetail(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape" || $("wsModal").hidden || document.fullscreenElement) return;
+    closeDetail();
+  });
 
   function openWorkshop(id, republish) {
     closeEditors();
+    if (document.activeElement && document.activeElement.classList.contains("ws-row")) lastRow = document.activeElement;
     A.api("/api/admin/workshops/" + id).then(function (r) {
       if (!guard(r)) return;
       current = r.item;
       resetDraw();
       showDetail();
+      $("wsPanel").scrollTop = 0;
+      $("wsBack").focus({ preventScroll: true });
       if (republish) openRepublish();
-      else window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
   function openRepublish() {
@@ -426,8 +490,8 @@
 
   function showDetail() {
     if (!current) return;
-    $("wsHome").hidden = true;
-    $("wsDetail").hidden = false;
+    $("wsModal").hidden = false;
+    document.documentElement.classList.add("no-scroll");
     renderHead();
     renderRoster();
     renderSessions();

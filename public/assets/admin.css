@@ -377,3 +377,67 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .pay-card { border: 0; margin: 0; padding: 1rem 1.1rem; display: grid; gap: .8rem; min-width: 0; }
 .pay-card legend { float: left; width: 100%; padding: 0; margin-bottom: .2rem; font-weight: 600; color: var(--ink); }
 .pay-card .editor-actions { gap: .4rem; }
+
+/* 已結束的工作坊：收起／展開 */
+.ws-ended { display: grid; position: relative; isolation: isolate; margin-bottom: 18px; }
+.ws-ended[open] { margin-bottom: 0; }
+/* 收起時：後面疊兩層卡片邊緣，像一疊收好的工作坊 */
+.ws-ended:not([open])::before, .ws-ended:not([open])::after {
+  content: ""; position: absolute; left: 14px; right: 14px; top: 9px; bottom: -9px; z-index: 0;
+  border-radius: var(--r-md); background: rgba(255, 255, 255, .42); border: 1px solid rgba(255, 255, 255, .7);
+  box-shadow: 0 10px 24px -18px rgba(74, 63, 120, .45);
+}
+.ws-ended:not([open])::after { left: 28px; right: 28px; top: 18px; bottom: -18px; background: rgba(255, 255, 255, .28); z-index: -1; }
+.ws-stack {
+  position: relative; z-index: 1; cursor: pointer; list-style: none;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px;
+  padding: 14px 14px 14px 16px; border-radius: var(--r-md); color: var(--ink);
+  transition: border-color .2s ease, transform .2s ease;
+}
+.ws-stack::-webkit-details-marker { display: none; }
+.ws-stack:hover { border-color: var(--button); }
+.ws-stack:focus-visible { outline: 2px solid var(--button); outline-offset: 2px; }
+.ws-stack-orbs { display: flex; padding-left: 10px; }
+.ws-mini-orb {
+  width: 40px; height: 40px; margin-left: -10px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 11px; letter-spacing: .02em; color: var(--ink); border: 2px solid rgba(255, 255, 255, .9);
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,.95) 0 12%, rgba(255,255,255,0) 36%),
+    conic-gradient(from 20deg, #e9d6ff, #ffd9ef, #d4f3ff, #e0ffef, #fff1cf, #e9d6ff);
+  box-shadow: inset -4px -5px 10px rgba(74, 63, 120, .16), 0 6px 12px -8px rgba(74, 63, 120, .5);
+}
+.ws-mini-orb.more { background: var(--tint); color: var(--button); font-weight: 600; }
+.ws-stack-text { display: grid; gap: .1rem; min-width: 0; }
+.ws-stack-text strong { font-family: var(--display); font-weight: 500; font-size: var(--step-0); letter-spacing: .1em; }
+.ws-stack-text small { font-size: var(--step--2); color: var(--ink-soft); letter-spacing: .06em; }
+.ws-stack-less { display: none; }
+.ws-stack-go {
+  width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--button); color: var(--button-ink); transition: transform .25s ease;
+}
+.ws-stack-go svg { width: 18px; height: 18px; }
+/* 展開後：收成一顆置中的小膠囊「收起已結束」 */
+.ws-ended[open] > .ws-stack {
+  justify-self: center; grid-template-columns: auto auto; gap: 8px;
+  padding: 6px 6px 6px 16px; border-radius: 999px; margin: 6px 0 4px;
+}
+.ws-ended[open] .ws-stack-orbs, .ws-ended[open] .ws-stack-text { display: none; }
+.ws-ended[open] .ws-stack-less { display: inline; font-size: var(--step--1); color: var(--ink-soft); letter-spacing: .08em; }
+.ws-ended[open] .ws-stack-go { width: 30px; height: 30px; transform: rotate(180deg); }
+.ws-ended > .rows { margin-top: .6rem; }
+@media (max-width: 420px) { .ws-mini-orb:nth-child(n+4) { display: none; } }
+@media (prefers-reduced-motion: reduce) { .ws-stack, .ws-stack-go { transition: none; } }
+
+/* 單一場工作坊彈窗 */
+html.no-scroll, html.no-scroll body { overflow: hidden; }
+.ws-modal { position: fixed; inset: 0; z-index: 40; display: grid; justify-items: center; align-items: start; background: rgba(54, 47, 82, .42); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: max(16px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
+.ws-modal[hidden] { display: none; }
+.ws-modal-panel { width: min(100%, 880px); max-height: 100%; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; border-radius: var(--r-lg, 24px); background: rgba(246, 242, 250, .97); box-shadow: 0 30px 60px -30px rgba(54, 47, 82, .6); padding: 0 clamp(12px, 3vw, 24px) 24px; }
+.ws-modal-bar { position: sticky; top: 0; z-index: 2; display: flex; justify-content: flex-end; padding: 12px 0 8px; background: linear-gradient(rgba(246, 242, 250, .97) 70%, rgba(246, 242, 250, 0)); }
+.ws-modal-bar .ws-back { min-height: 40px; padding: 0 .9rem; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, .8); }
+.toast { z-index: 60; } /* 要蓋在工作坊彈窗上面 */
+.panel-stack { grid-template-columns: minmax(0, 1fr); } /* 欄寬不超過螢幕，裡面的搜尋框等元件會跟著縮小，手機上不會左右捲動 */
+/* 響應式：卡片內的欄寬不超過卡片；「輸入框＋按鈕」列的輸入框不用預設寬度，填滿剩下的空間（320px 手機也不會撐寬頁面） */
+.form-card, .block { grid-template-columns: minmax(0, 1fr); }
+.copy-row > input { width: 0; flex: 1 1 auto; }
+.ws-ask-acts { display: flex; flex-wrap: wrap; gap: .5rem; margin-left: auto; }

@@ -677,3 +677,4 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .ws-keep { display: grid; gap: .5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .ws-keep h3 { font-size: var(--step-0); letter-spacing: .06em; }
 .ws-keep .copy-row input { min-width: 0; flex: 1; }
+.copy-row > input { width: 0; flex: 1 1 auto; min-width: 0; } /* 窄手機上不撐寬頁面 */

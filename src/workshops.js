@@ -176,7 +176,7 @@ function certView(cert, photoKey) {
 
 // 學員自己的報名資料：應付金額（依身分與居住地）與匯款方式，報名成功與之後用專屬網址查看都用這個
 function signupView(w, a, payment) {
-  const region = a.region || "TW";
+  const region = a.region || null;
   return {
     workshopId: w._id.toString(),
     attendeeId: a.id,
@@ -185,8 +185,8 @@ function signupView(w, a, payment) {
     sessions: w.sessions.map((s) => ({ date: s.date, start: s.start, end: s.end })),
     name: a.name,
     status: a.status || "new",
-    amount: w.prices?.[a.status || "new"]?.[region === "TW" ? "twd" : "myr"] ?? null,
-    payment: publicPayment(payment, region),
+    amount: region ? w.prices?.[a.status || "new"]?.[region === "TW" ? "twd" : "myr"] ?? null : null,
+    payment: region ? publicPayment(payment, region) : null,
   };
 }
 
@@ -530,8 +530,8 @@ export function mountWorkshops(app) {
     if (!p.name) return bad(c, "請填寫姓名。");
     if (!EMAIL_RE.test(p.email)) return bad(c, "請填寫正確的 Email，阿綸會用它和你聯絡。");
     if (instagram && !/^[A-Za-z0-9._]{1,30}$/.test(instagram)) return bad(c, "IG 帳號只能有英文、數字、底線和句點。");
+    // 新版頁面一定會送居住地；更新前就打開的舊頁面沒有這一題，照樣收下報名，匯款方式改由阿綸私訊告知
     const region = REGIONS[body.region] ? body.region : null;
-    if (!region) return bad(c, "請選擇你住在台灣或馬來西亞，才能告訴你對應的匯款方式。");
 
     return withDb(c.env, c.executionCtx, async (db) => {
       await ensureIndexes(db);

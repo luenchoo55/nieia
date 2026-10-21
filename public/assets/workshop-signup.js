@@ -396,6 +396,9 @@
         : "金額將由阿綸告訴你"));
       pay.appendChild(window.nieiaPayment ? window.nieiaPayment(r.payment) : el("p", "muted", "匯款方式會由阿綸私訊告訴你。"));
       body.appendChild(pay);
+    } else {
+      // 更新前報名、沒有填居住地的學員
+      body.appendChild(el("p", "muted ws-pay", "應付金額與匯款方式會由阿綸用 Email 或 IG 私訊告訴你。"));
     }
 
     // 專屬網址：換手機或清掉瀏覽器資料也能再打開

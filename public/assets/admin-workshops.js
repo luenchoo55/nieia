@@ -84,6 +84,20 @@
   }
 
   // ================= 所有工作坊 =================
+  function notHeld(w, count) {
+    return count === 0 && w.sessions[w.sessions.length - 1].date < todayLocal();
+  }
+  // 重新發佈：日期整體往後挪到一週後開始（保留每堂之間的間隔），並重新開放前台報名
+  function republishDraft(w) {
+    var copy = JSON.parse(JSON.stringify(w));
+    var from = new Date(w.sessions[0].date + "T00:00:00Z");
+    var to = new Date(addDays(todayLocal(), 7) + "T00:00:00Z");
+    var shift = Math.round((to - from) / 86400000);
+    copy.sessions.forEach(function (s) { s.date = addDays(s.date, shift); });
+    copy.signupOpen = true;
+    return copy;
+  }
+
   function loadList() {
     if (!list.length) { $("wsList").innerHTML = ""; $("wsList").appendChild(el("p", "empty glass", "載入中…")); }
     A.api("/api/admin/workshops").then(function (r) {
@@ -102,6 +116,14 @@
       return;
     }
     var today = todayLocal();
+    // 結束時名單是空的：課程沒有開成，詢問要不要重新發佈
+    list.filter(function (w) { return notHeld(w, w.attendeeCount); }).forEach(function (w) {
+      var ask = el("div", "ws-ask glass");
+      ask.setAttribute("role", "status");
+      ask.appendChild(el("p", null, "「" + w.title + "」（" + shortDate(w.sessions[0].date) + "）結束時沒有學員，課程可能沒有開成。要改日期重新發佈嗎？"));
+      ask.appendChild(button("重新發佈", "btn btn-primary btn-small", function () { openWorkshop(w.id, true); }));
+      host.appendChild(ask);
+    });
     list.forEach(function (w) {
       var last = w.sessions[w.sessions.length - 1].date;
       var row = el("button", "ws-row glass");
@@ -112,7 +134,7 @@
       var text = el("div", "text");
       text.appendChild(el("h3", null, w.title));
       text.appendChild(el("p", "meta", [TYPE[w.type], FORMAT[w.format], hoursText(w.hours), "學員 " + w.attendeeCount + " 位", w.certCount ? "已發證書 " + w.certCount + " 張" : ""].filter(Boolean).join("・")));
-      var state = last < today ? ["已結束", "closed"] : w.sessions[0].date <= today ? ["進行中", "booked"] : ["即將開始", "open"];
+      var state = notHeld(w, w.attendeeCount) ? ["沒有開成", "warn"] : last < today ? ["已結束", "closed"] : w.sessions[0].date <= today ? ["進行中", "booked"] : ["即將開始", "open"];
       row.appendChild(when);
       row.appendChild(text);
       row.appendChild(el("span", "pill " + state[1], state[0]));
@@ -158,13 +180,16 @@
     return s;
   }
 
-  function openEditor(w, host) {
+  // draft：重新發佈時預先改好日期的資料
+  function openEditor(w, host, draft) {
     closeEditors();
     var isNew = !w;
-    var data = JSON.parse(JSON.stringify(w || blankWorkshop()));
+    var data = JSON.parse(JSON.stringify(draft || w || blankWorkshop()));
+    var heading = isNew ? "新增工作坊" : draft ? "重新發佈工作坊" : "編輯工作坊資料";
     var card = el("section", "glass form-card editor ws-editor");
-    card.setAttribute("aria-label", isNew ? "新增工作坊" : "編輯工作坊");
-    card.appendChild(el("h2", null, isNew ? "新增工作坊" : "編輯工作坊資料"));
+    card.setAttribute("aria-label", heading);
+    card.appendChild(el("h2", null, heading));
+    if (draft) card.appendChild(el("p", "hint", "日期已經往後挪到一週後開始，也重新開放前台報名。確認新的上課日期後按「重新發佈」，這場就會再出現在網站的工作坊頁。"));
     var form = el("form");
     form.noValidate = true;
 
@@ -288,7 +313,7 @@
     msg.setAttribute("role", "alert");
     form.appendChild(msg);
     var bar = el("div", "editor-actions");
-    var save = el("button", "btn btn-primary", isNew ? "建立工作坊" : "儲存");
+    var save = el("button", "btn btn-primary", isNew ? "建立工作坊" : draft ? "重新發佈" : "儲存");
     save.type = "submit";
     bar.appendChild(save);
     bar.appendChild(button("取消", "btn btn-ghost", closeEditors));
@@ -324,7 +349,7 @@
         save.disabled = false;
         if (r.status === 401) return A.checkSession();
         if (!r.ok) { msg.textContent = r.message || "儲存失敗，請再試一次。"; return; }
-        A.toast(isNew ? "已建立工作坊" : "已儲存");
+        A.toast(isNew ? "已建立工作坊" : draft ? "已重新發佈，前台的工作坊頁會再顯示這一場" : "已儲存");
         closeEditors();
         current = r.item;
         loadList();
@@ -352,15 +377,20 @@
   }
   $("wsBack").addEventListener("click", function () { closeEditors(); showHome(); renderList(); });
 
-  function openWorkshop(id) {
+  function openWorkshop(id, republish) {
     closeEditors();
     A.api("/api/admin/workshops/" + id).then(function (r) {
       if (!guard(r)) return;
       current = r.item;
       resetDraw();
       showDetail();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (republish) openRepublish();
+      else window.scrollTo({ top: 0, behavior: "smooth" });
     });
+  }
+  function openRepublish() {
+    openEditor(current, $("wsDetailEditorHost"), republishDraft(current));
+    $("wsDetailEditorHost").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function showDetail() {
@@ -376,12 +406,14 @@
   }
 
   $("wsEdit").addEventListener("click", function () { openEditor(current, $("wsDetailEditorHost")); });
+  $("wsRepublish").addEventListener("click", openRepublish);
 
   function renderHead() {
     var w = current;
     $("wsTitle").textContent = w.title;
     $("wsTitleEn").textContent = w.titleEn || "";
     $("wsTitleEn").hidden = !w.titleEn;
+    $("wsAsk").hidden = !notHeld(w, (w.attendees || []).length);
     var pills = $("wsPills");
     pills.innerHTML = "";
     pills.appendChild(el("span", "pill booked", TYPE[w.type]));

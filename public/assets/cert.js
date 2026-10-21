@@ -245,9 +245,7 @@
     drawQr(ctx, x1 - stamp, bottom - stamp, stamp);
 
     // 中段：依內容高度平均分配上下間距
-    var craft = cert.type === "craft";
-    var figW = craft ? 216 : 0, figH = 162;
-    var textW = craft ? width - figW - 32 : width;
+    var textW = width;
 
     // A：證書名稱、姓名、聲明
     var nameSize = fit(ctx, cert.name, 600, 64, 34, SERIF, textW, 0.12);
@@ -256,7 +254,6 @@
     var enW = cert.nameEn ? measure(ctx, cert.nameEn, 0) : 0;
     var enInline = cert.nameEn && nameW + 24 + enW <= textW;
     var hA = 40 + 18 + nameSize * 1.15 + (cert.nameEn && !enInline ? 34 : 0) + 14 + 24 + 26;
-    if (craft) hA = Math.max(hA, figH + 44);
 
     // B：工作坊名稱
     var titleSize = fit(ctx, cert.title, 600, 30, 18, SERIF, width, 0.08);
@@ -282,17 +279,9 @@
       else { fit(ctx, cert.nameEn, 400, 28, 16, LATIN, textW, 0, true); after = ny + 34; text(ctx, cert.nameEn, x0, after); }
     }
     setFont(ctx, 400, 14, SANS);
-    text(ctx, craft ? "完成本工作坊全部課程與作品，特此證明。" : "完成本工作坊全部課程，特此證明。", x0, after + 14 + 18, { color: C.soft });
+    text(ctx, "完成本工作坊全部課程，特此證明。", x0, after + 14 + 18, { color: C.soft });
     setFont(ctx, 400, 17, LATIN, true);
-    text(ctx, craft ? "has completed the workshop and the piece below." : "has completed the following workshop in full.", x0, after + 14 + 18 + 26, { color: C.soft });
-    if (craft) {
-      var fx = x1 - figW, fy = y + 4;
-      drawPhoto(ctx, fx, fy, figW, figH);
-      setFont(ctx, 400, 12, SANS);
-      var wl = text(ctx, "完成作品", fx, fy + figH + 18, { spacing: 12 * 0.12, color: C.soft });
-      if (cert.work) { fit(ctx, cert.work, 400, 12, 10, SANS, figW - wl - 10, 0.12); text(ctx, cert.work, fx + wl + 10, fy + figH + 18, { spacing: 1.4, color: C.soft }); }
-      if (cert.workEn) { fit(ctx, cert.workEn, 400, 15, 11, LATIN, figW, 0, true); text(ctx, cert.workEn, fx, fy + figH + 38, { color: C.soft }); }
-    }
+    text(ctx, "has completed the following workshop in full.", x0, after + 14 + 18 + 26, { color: C.soft });
     y += hA + space;
 
     // 畫 B
@@ -448,7 +437,6 @@
     fact("時數", hoursNum(cert.hours) + " 小時", hoursEn(cert.hours));
     fact("形式", f[0], f[1]);
     fact("授課老師", cert.teachers.map(function (t) { return t.name; }).join("、"), cert.teachers.map(function (t) { return t.nameEn; }).filter(Boolean).join(" & "));
-    if (cert.work) fact("完成作品", cert.work, cert.workEn);
     fact("主辦單位", ORG + " " + ORG_EN);
     fact("證書編號", "No. " + cert.no, "", "no");
     var issued = new Date(cert.issuedAt);
@@ -474,8 +462,8 @@
   // ---------- 載入 ----------
   function loadFonts() {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
-    var chars = [cert.name, cert.title, cert.work, ORG, "結業修畢完成本工作坊全部課程與作品特此證明授課老師主辦單位日期時數形式線上實體課程小時", season(cert.dates.last), cert.teachers.map(function (t) { return t.name; }).join("")].join("");
-    var latin = [cert.nameEn, cert.titleEn, cert.workEn, "Certificate of Completion No. 0123456789 hours Online Course In person", cert.teachers.map(function (t) { return t.nameEn; }).join(" ")].join(" ");
+    var chars = [cert.name, cert.title, ORG, "結業修畢完成本工作坊全部課程特此證明授課老師主辦單位日期時數形式線上實體課程小時", season(cert.dates.last), cert.teachers.map(function (t) { return t.name; }).join("")].join("");
+    var latin = [cert.nameEn, cert.titleEn, "Certificate of Completion No. 0123456789 hours Online Course In person", cert.teachers.map(function (t) { return t.nameEn; }).join(" ")].join(" ");
     var loads = [
       document.fonts.load('900 100px "Noto Serif TC"', chars),
       document.fonts.load('600 40px "Noto Serif TC"', chars),
@@ -502,7 +490,35 @@
     if (message) $("cpErrorMsg").textContent = message;
   }
 
+  // 沒有證書代碼：顯示查詢表單（證書編號＋姓名）
+  function lookup() {
+    $("cpStatus").hidden = true;
+    $("cpLookup").hidden = false;
+    var msg = $("lkMsg"), btn = $("lkBtn");
+    $("lkForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var no = $("lkNo").value.trim(), name = $("lkName").value.trim();
+      if (!no) { msg.textContent = "請填寫證書編號。"; $("lkNo").focus(); return; }
+      if (!name) { msg.textContent = "請填寫證書上的姓名。"; $("lkName").focus(); return; }
+      msg.textContent = "";
+      btn.disabled = true;
+      btn.textContent = "查詢中…";
+      fetch("/api/certs/lookup", {
+        method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin",
+        body: JSON.stringify({ no: no, name: name, website: $("lkWebsite").value }),
+      }).then(function (res) { return res.json().catch(function () { return {}; }); }, function () {
+        return { ok: false, message: "連不上網站，請確認網路後再試。" };
+      }).then(function (r) {
+        if (r.ok && r.code) { location.href = "/cert?c=" + encodeURIComponent(r.code); return; }
+        btn.disabled = false;
+        btn.textContent = "查詢證書";
+        msg.textContent = r.message || "查詢失敗，請再試一次。";
+      });
+    });
+  }
+
   var code = new URLSearchParams(location.search).get("c") || "";
+  if (!code) { lookup(); return; }
   if (!/^[a-z2-9]{12}$/.test(code)) { fail(); return; }
 
   fetch("/api/certs/" + encodeURIComponent(code)).then(function (res) {

@@ -113,3 +113,25 @@ export function notifyPaymentReported(c, b, report) {
   );
   c.executionCtx.waitUntil(send(c.env, `已回報匯款：${b.name}｜末五碼 ${report.last5}`, html, b.email).catch((e) => console.error(e)));
 }
+
+// 前台工作坊報名
+export function notifyWorkshopSignup(c, w, a) {
+  const adminUrl = new URL("/admin/workshops", c.req.url).toString();
+  const dates = w.sessions.map((s) => s.date + (s.start ? ` ${s.start}${s.end ? "–" + s.end : ""}` : "")).join("、");
+  const html = layout(
+    "有新的工作坊報名",
+    "學員已經加進這場工作坊的名單。請和學員聯絡，確認名額與匯款方式。直接按「回覆」就會寄給學員。",
+    [
+      ["工作坊", w.title],
+      ["日期", dates],
+      ["姓名", a.name],
+      ["英文姓名", a.nameEn],
+      ["Email", a.email],
+      ["IG", a.instagram ? "@" + a.instagram : ""],
+      ["想說的話", a.note],
+      ["目前人數", `${(w.attendees || []).length + 1}${w.capacity ? " / " + w.capacity : ""} 位`],
+    ],
+    adminUrl
+  );
+  c.executionCtx.waitUntil(send(c.env, `工作坊報名：${w.title}｜${a.name}`, html, a.email).catch((e) => console.error(e)));
+}

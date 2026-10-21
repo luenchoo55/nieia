@@ -621,3 +621,24 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .c-check { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; color: var(--button-ink); background: var(--button); box-shadow: 0 16px 30px -18px rgba(74, 63, 120, .8); }
 .c-check svg { width: 32px; height: 32px; }
 .c-done h3 { font-size: var(--step-1); letter-spacing: .08em; }
+
+/* ---------- 工作坊頁：近期開課與報名 ---------- */
+.ws-live { display: grid; gap: .8rem; }
+.ws-live > h2 { font-size: var(--step-1); letter-spacing: .1em; }
+.ws-live-list { display: grid; gap: 1rem; }
+.ws-card { padding: 1.2rem 1.3rem; display: grid; gap: .5rem; }
+.ws-card h3 { font-size: var(--step-1); letter-spacing: .08em; line-height: 1.45; }
+.ws-card .en { font-family: var(--latin); color: var(--ink-soft); font-size: var(--step--1); margin-top: -.3rem; }
+.ws-top { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .8rem; }
+.ws-when { font-size: var(--step--1); color: var(--button); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.ws-state { display: inline-flex; align-items: center; gap: .35rem; font-size: var(--step--2); letter-spacing: .08em; padding: .15rem .65rem; border-radius: 999px; border: 1px solid currentColor; }
+.ws-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.ws-state.is-open { color: #2F7A5B; }
+.ws-state.is-full { color: #B23A5C; }
+.ws-state.is-started { color: var(--ink-soft); }
+.ws-intro, .ws-where { font-size: var(--step--1); color: var(--ink-soft); line-height: 1.75; }
+.ws-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; margin-top: .4rem; padding-top: .8rem; border-top: 1px solid var(--line); }
+.ws-price { font-weight: 500; font-variant-numeric: tabular-nums; }
+.ws-foot .btn:disabled { opacity: .6; cursor: not-allowed; }
+.ws-sheet-head { grid-template-columns: minmax(0, 1fr); }
+.ws-form { display: grid; gap: 1rem; }

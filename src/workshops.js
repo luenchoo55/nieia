@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { withDb, ensureIndexes } from "./db.js";
 import { requireAdmin, sameOrigin } from "./auth.js";
+import { notifyWorkshopSignup } from "./notify.js";
 
 // 工作坊：場次、學員名單、出席、結業證書、大合照、線上簽到。
 // 學員資料直接存在工作坊文件裡（一場通常不超過幾十人）；
@@ -14,6 +15,8 @@ const MAX_ATTENDEES = 200;
 const MAX_SESSIONS = 12;
 const MAX_PHOTO_BYTES = 900 * 1024; // 後台會先壓縮，正常約 200–400 KB
 const CHECKIN_PER_HOUR = 30; // 同一個網路位址一小時內最多簽到 30 次
+const SIGNUP_PER_HOUR = 5; // 同一個網路位址一小時內最多報名 5 次
+const LOOKUP_PER_HOUR = 20; // 同一個網路位址一小時內最多查詢證書 20 次
 
 const bad = (c, message, status = 400) => c.json({ ok: false, message }, status);
 const str = (v, max) => (v == null ? "" : String(v).trim().slice(0, max));
@@ -79,11 +82,17 @@ function cleanWorkshop(body, old) {
     format: FORMATS.includes(body.format) ? body.format : "onsite",
     location: str(body.location, 120),
     roomUrl: str(body.roomUrl, 300),
-    workName: str(body.workName, 40),
-    workNameEn: str(body.workNameEn, 80),
     note: str(body.note, 500),
+    // 前台報名：沒結束的場次會列在工作坊頁，關掉就不顯示
+    signupOpen: body.signupOpen !== false,
+    intro: str(body.intro, 300),
+    price: str(body.price, 80),
   };
   if (!out.title) errors.push("請填寫工作坊名稱。");
+
+  const cap = body.capacity === "" || body.capacity == null ? 0 : Number(body.capacity);
+  if (!Number.isInteger(cap) || cap < 0 || cap > MAX_ATTENDEES) errors.push(`名額請填 1 到 ${MAX_ATTENDEES} 的整數，不限名額就留空。`);
+  else out.capacity = cap; // 0 = 不限
   if (out.roomUrl && !/^https:\/\/[^\s]+$/i.test(out.roomUrl)) errors.push("線上教室連結要是 https:// 開頭的網址。");
 
   const hours = Number(body.hours);
@@ -143,10 +152,31 @@ function certView(cert, photoKey) {
     dates: cert.dates,
     hours: cert.hours,
     teachers: cert.teachers,
-    work: cert.work,
-    workEn: cert.workEn,
     issuedAt: cert.issuedAt,
     photo: photoKey ? `/api/photos/${photoKey}` : null,
+  };
+}
+
+// 前台工作坊頁：只給客人需要的資訊（不含簽到代碼、教室連結和名單）
+function signupState(w, today) {
+  if (today >= w.sessions[0].date) return "started";
+  if (w.capacity && (w.attendees || []).length >= w.capacity) return "full";
+  return "open";
+}
+function publicWorkshop(w, today) {
+  return {
+    id: w._id.toString(),
+    title: w.title,
+    titleEn: w.titleEn || "",
+    type: w.type,
+    format: w.format,
+    location: w.format === "onsite" ? w.location || "" : "",
+    sessions: w.sessions.map((s) => ({ date: s.date, start: s.start, end: s.end })),
+    hours: w.hours,
+    teachers: w.teachers.map((t) => t.name),
+    intro: w.intro || "",
+    price: w.price || "",
+    state: signupState(w, today),
   };
 }
 
@@ -173,8 +203,6 @@ function snapshot(w, a) {
     dates: { first: dates[0], last: dates[dates.length - 1] },
     hours: w.hours,
     teachers: w.teachers,
-    work: w.type === "craft" ? (a.work || w.workName || "") : "",
-    workEn: w.type === "craft" ? (a.workEn || w.workNameEn || "") : "",
   };
 }
 
@@ -279,7 +307,7 @@ export function mountWorkshops(app) {
       for (const p of people) {
         if (seen.has(norm(p.name))) { skipped.push(p.name); continue; }
         seen.add(norm(p.name));
-        added.push({ id: randomKey(8), ...p, work: "", workEn: "", attended: {}, certCode: null, certNo: null, addedAt: new Date() });
+        added.push({ id: randomKey(8), ...p, attended: {}, certCode: null, certNo: null, addedAt: new Date() });
       }
       if (list.length + added.length > MAX_ATTENDEES) return bad(c, `一場工作坊最多 ${MAX_ATTENDEES} 位學員。`);
       const attendees = list.concat(added);
@@ -305,8 +333,7 @@ export function mountWorkshops(app) {
         if (attendees.some((x) => x !== a && norm(x.name) === norm(p.name))) return bad(c, "名單上已經有同名的學員。", 409);
         Object.assign(a, p);
       }
-      if ("work" in body) a.work = str(body.work, 40);
-      if ("workEn" in body) a.workEn = str(body.workEn, 80);
+      if (body.certSent && a.certCode) a.certSentAt = new Date();
       if (body.attended && typeof body.attended === "object") {
         const keys = new Set(w.sessions.map((s) => s.key));
         a.attended = { ...(a.attended || {}) };
@@ -426,6 +453,85 @@ export function mountWorkshops(app) {
   );
 
   // ================= 學員 =================
+  // ---------- 前台：近期工作坊與報名 ----------
+  app.get("/api/workshops", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const today = todayLocal();
+      // 還有任何一堂在今天或之後，就算還沒結束
+      const docs = await db.collection("workshops")
+        .find({ signupOpen: { $ne: false }, "sessions.date": { $gte: today } }, { projection: { "attendees.id": 1, title: 1, titleEn: 1, type: 1, format: 1, location: 1, sessions: 1, hours: 1, teachers: 1, intro: 1, price: 1, capacity: 1 } })
+        .sort({ firstDate: 1 })
+        .limit(30)
+        .toArray();
+      return c.json({ ok: true, items: docs.map((w) => publicWorkshop(w, today)) });
+    })
+  );
+
+  app.post("/api/workshops/:id/signup", async (c) => {
+    if (!sameOrigin(c)) return bad(c, "請從工作坊頁報名。", 403);
+    const body = await readBody(c);
+    if (!body) return bad(c, "資料格式不正確。");
+    if (body.website) return c.json({ ok: true }); // 機器人陷阱欄位
+    const p = cleanPerson(body);
+    const instagram = str(body.instagram, 40).replace(/^@+/, "");
+    const note = str(body.note, 300);
+    if (!p.name) return bad(c, "請填寫姓名。");
+    if (!EMAIL_RE.test(p.email)) return bad(c, "請填寫正確的 Email，阿綸會用它和你聯絡。");
+    if (instagram && !/^[A-Za-z0-9._]{1,30}$/.test(instagram)) return bad(c, "IG 帳號只能有英文、數字、底線和句點。");
+
+    return withDb(c.env, c.executionCtx, async (db) => {
+      await ensureIndexes(db);
+      const tries = db.collection("signupAttempts");
+      const recent = await tries.countDocuments({ ip: ip(c), at: { $gte: new Date(Date.now() - 3600e3) } });
+      if (recent >= SIGNUP_PER_HOUR) return bad(c, "短時間內報名太多次，請稍後再試，或 IG 私訊 @nieia4928。", 429);
+      await tries.insertOne({ ip: ip(c), at: new Date() });
+
+      const w = await loadWorkshop(c, db);
+      if (!w || w.signupOpen === false) return bad(c, "找不到這場工作坊，可能已經關閉報名了。", 404);
+      const state = signupState(w, todayLocal());
+      if (state === "started") return bad(c, "這場工作坊已經開始上課，不能再報名了。", 409);
+      if (state === "full") return bad(c, "這場工作坊已經額滿了，可以 IG 私訊阿綸詢問下一場。", 409);
+      const list = w.attendees || [];
+      if (list.some((a) => norm(a.name) === norm(p.name) || (a.email && a.email === p.email))) {
+        return bad(c, "你已經報名過這場工作坊了，阿綸會再和你聯絡。", 409);
+      }
+      const a = {
+        id: randomKey(8), ...p, instagram, note, source: "web",
+        attended: {}, certCode: null, certNo: null, addedAt: new Date(),
+      };
+      // 用 $push 加在最後，避免和其他人同時報名或後台修改時互相覆蓋
+      await db.collection("workshops").updateOne({ _id: w._id }, { $push: { attendees: a }, $set: { updatedAt: new Date() } });
+      notifyWorkshopSignup(c, w, a);
+      return c.json({ ok: true, name: a.name });
+    });
+  });
+
+  // 前台查詢證書：證書編號＋姓名（中文或英文）都對，才給證書連結
+  app.post("/api/certs/lookup", async (c) => {
+    if (!sameOrigin(c)) return bad(c, "請從證書查詢頁送出。", 403);
+    const body = await readBody(c);
+    if (!body) return bad(c, "資料格式不正確。");
+    if (body.website) return bad(c, "查不到這張證書。", 404); // 機器人陷阱欄位
+    const no = str(body.no, 20).toUpperCase().replace(/\s+/g, "").replace(/^NO\.?/, "");
+    const who = norm(str(body.name, 60));
+    if (!/^WS-\d{4}-\d{4,}$/.test(no)) return bad(c, "證書編號的格式是 WS-2026-0001，請確認後再試。");
+    if (!who) return bad(c, "請填寫證書上的姓名。");
+
+    return withDb(c.env, c.executionCtx, async (db) => {
+      await ensureIndexes(db);
+      const tries = db.collection("certLookups");
+      const recent = await tries.countDocuments({ ip: ip(c), at: { $gte: new Date(Date.now() - 3600e3) } });
+      if (recent >= LOOKUP_PER_HOUR) return bad(c, "短時間內查詢太多次，請稍後再試，或 IG 私訊 @nieia4928。", 429);
+      await tries.insertOne({ ip: ip(c), at: new Date() });
+
+      const cert = await db.collection("certificates").findOne({ no }, { projection: { code: 1, name: 1, nameEn: 1 } });
+      if (!cert || (norm(cert.name) !== who && norm(cert.nameEn) !== who)) {
+        return bad(c, "查不到這張證書。請確認證書編號和姓名與證書上的一樣，或私訊 IG @nieia4928。", 404);
+      }
+      return c.json({ ok: true, code: cert.code });
+    });
+  });
+
   // 證書頁：只有拿到連結（含隨機代碼）的人看得到
   app.get("/api/certs/:code", (c) =>
     withDb(c.env, c.executionCtx, async (db) => {

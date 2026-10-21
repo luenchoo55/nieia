@@ -127,7 +127,8 @@
     return {
       title: "", titleEn: "", type: "spirit", format: "onsite", location: "", roomUrl: "", hours: 16,
       sessions: [{ date: d, start: "10:00", end: "18:00" }, { date: addDays(d, 1), start: "10:00", end: "18:00" }],
-      teachers: [{ name: "阿綸", nameEn: "" }], workName: "", workNameEn: "",
+      teachers: [{ name: "阿綸", nameEn: "" }],
+      signupOpen: true, intro: "", price: "", capacity: 0,
     };
   }
 
@@ -175,8 +176,6 @@
     var fHours = input("wfHours", data.hours, { type: "number", inputmode: "decimal", min: "0.5", max: "200", step: "0.5" });
     var fLocation = input("wfLocation", data.location, { maxlength: 120, placeholder: "例如 台北市大安區（會寫在課前通知信裡）" });
     var fRoom = input("wfRoom", data.roomUrl, { maxlength: 300, placeholder: "https://…（視訊平台的教室連結）", inputmode: "url" });
-    var fWork = input("wfWork", data.workName, { maxlength: 40, placeholder: "例如 手捏陶杯" });
-    var fWorkEn = input("wfWorkEn", data.workNameEn, { maxlength: 80, placeholder: "例如 Hand-pinched ceramic cup" });
 
     grid.appendChild(field("工作坊名稱（印在證書上）", fTitle, "wide"));
     grid.appendChild(field("英文名稱（印在證書上，選填）", fTitleEn, "wide"));
@@ -185,22 +184,16 @@
     grid.appendChild(field("總時數（印在證書上）", fHours));
     var locField = field("上課地點", fLocation, "wide");
     var roomField = field("線上教室連結（平台確定後再填也可以）", fRoom, "wide");
-    var workField = field("作品名稱（手工課，可在名單裡個別修改）", fWork);
-    var workEnField = field("作品英文名稱", fWorkEn);
     grid.appendChild(locField);
     grid.appendChild(roomField);
-    grid.appendChild(workField);
-    grid.appendChild(workEnField);
     form.appendChild(grid);
 
     function syncKinds() {
       var online = fFormat.value === "online";
       locField.hidden = online;
       roomField.hidden = !online;
-      workField.hidden = workEnField.hidden = fType.value !== "craft";
     }
     fFormat.addEventListener("change", syncKinds);
-    fType.addEventListener("change", syncKinds);
     syncKinds();
 
     // 堂數
@@ -268,6 +261,29 @@
     tBox.appendChild(addT);
     form.appendChild(tBox);
 
+    // 前台報名
+    var pBox = el("fieldset", "field wide ws-sub");
+    pBox.appendChild(el("legend", null, "前台報名（課程結束前會列在網站的工作坊頁，客人可以直接報名）"));
+    var pGrid = el("div", "field-grid");
+    var fOpen = el("input");
+    fOpen.type = "checkbox"; fOpen.id = "wfOpen"; fOpen.checked = data.signupOpen !== false;
+    var openField = el("label", "field check");
+    openField.htmlFor = "wfOpen";
+    openField.appendChild(fOpen);
+    openField.appendChild(el("span", null, "顯示在前台並開放報名"));
+    var fPrice = input("wfPrice", data.price, { maxlength: 80, placeholder: "例如 NT$16,800／RM 2,100" });
+    var fCap = input("wfCap", data.capacity || "", { type: "number", inputmode: "numeric", min: "1", max: "200", step: "1", placeholder: "不限就留空" });
+    var fIntro = el("textarea");
+    fIntro.id = "wfIntro"; fIntro.rows = 3; fIntro.maxLength = 300; fIntro.value = data.intro || "";
+    fIntro.placeholder = "一兩句話介紹這場工作坊，會顯示在前台";
+    pGrid.appendChild(openField);
+    pGrid.appendChild(field("費用（前台顯示）", fPrice));
+    pGrid.appendChild(field("名額", fCap));
+    pGrid.appendChild(field("前台介紹（選填）", fIntro, "wide"));
+    pBox.appendChild(pGrid);
+    pBox.appendChild(el("p", "hint-text", "實體課的上課地點也會顯示在前台；線上教室連結不會公開。"));
+    form.appendChild(pBox);
+
     var msg = el("p", "form-msg");
     msg.setAttribute("role", "alert");
     form.appendChild(msg);
@@ -298,8 +314,8 @@
       var body = {
         title: fTitle.value, titleEn: fTitleEn.value, type: fType.value, format: fFormat.value,
         hours: fHours.value, location: fLocation.value, roomUrl: fRoom.value.trim(),
-        workName: fWork.value, workNameEn: fWorkEn.value,
         sessions: data.sessions, teachers: data.teachers,
+        signupOpen: fOpen.checked, price: fPrice.value, capacity: fCap.value.trim(), intro: fIntro.value,
       };
       if (!body.title.trim()) { msg.textContent = "請填寫工作坊名稱。"; fTitle.focus(); return; }
       msg.textContent = "";
@@ -391,7 +407,8 @@
         fact("線上教室", a);
       } else fact("線上教室", "還沒填連結（平台確定後到「編輯資料」補上）");
     } else fact("地點", w.location);
-    if (w.type === "craft") fact("作品", [w.workName, w.workNameEn].filter(Boolean).join(" / "));
+    fact("前台報名", w.signupOpen === false ? "不顯示在前台" : "開放中" + (w.capacity ? "（名額 " + w.capacity + " 位）" : "（不限名額）"));
+    fact("費用", w.price);
   }
 
   // ---------- 名單與點名 ----------
@@ -404,7 +421,7 @@
     $("wsRosterCount").textContent = people.length ? "共 " + people.length + " 位，全勤 " + full + " 位" : "";
     $("wsAddBox").open = !people.length;
     if (!people.length) {
-      t.appendChild(el("caption", "empty", "名單還是空的。打開下方「新增學員」，貼上報名名單。"));
+      t.appendChild(el("caption", "empty", "名單還是空的。在下方「新增學員」一位一位輸入，或一次貼上整份名單。"));
       return;
     }
     t.appendChild(el("caption", "hp", "學員名單與每一堂的出席"));
@@ -432,9 +449,10 @@
       var th = el("th", "who");
       th.scope = "row";
       th.appendChild(el("strong", null, a.name));
-      var sub = [a.nameEn, a.email].filter(Boolean).join("・");
+      var sub = [a.nameEn, a.email, a.instagram && "IG @" + a.instagram].filter(Boolean).join("・");
       if (sub) th.appendChild(el("span", null, sub));
-      if (w.type === "craft" && (a.work || w.workName)) th.appendChild(el("span", "work", "作品：" + (a.work || w.workName)));
+      if (a.note) th.appendChild(el("span", null, "想說的話：" + a.note));
+      if (a.source === "web") th.appendChild(el("span", "pill booked", "網站報名"));
       if (a.certNo) th.appendChild(el("span", "pill open", a.certNo));
       tr.appendChild(th);
       w.sessions.forEach(function (s, i) {
@@ -489,13 +507,6 @@
     form.appendChild(field("姓名", n));
     form.appendChild(field("英文姓名", ne));
     form.appendChild(field("Email", em));
-    var wk, wke;
-    if (w.type === "craft") {
-      wk = input("wpWork", a.work, { maxlength: 40, placeholder: w.workName || "例如 手捏陶杯" });
-      wke = input("wpWorkEn", a.workEn, { maxlength: 80, placeholder: w.workNameEn || "" });
-      form.appendChild(field("作品名稱（留空用場次設定）", wk));
-      form.appendChild(field("作品英文名稱", wke));
-    }
     var msg = el("p", "form-msg wide");
     msg.setAttribute("role", "alert");
     form.appendChild(msg);
@@ -508,7 +519,6 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var body = { name: n.value, nameEn: ne.value, email: em.value };
-      if (wk) { body.work = wk.value; body.workEn = wke.value; }
       save.disabled = true;
       A.api("/api/admin/workshops/" + w.id + "/attendees/" + a.id, { method: "PATCH", body: body }).then(function (r) {
         save.disabled = false;
@@ -557,28 +567,49 @@
     var ps = parsePeople(this.value);
     $("wsAddPreview").textContent = ps.length ? "將加入 " + ps.length + " 位：" + ps.map(function (p) { return p.name + (p.email ? "（有 Email）" : ""); }).join("、") : "";
   });
-  $("wsAddForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    var people = parsePeople($("wsAddText").value);
-    var msg = $("wsAddMsg");
-    if (!people.length) { msg.textContent = "請至少填寫一位學員的姓名。"; return; }
-    msg.textContent = "";
-    var btn = $("wsAddBtn");
+  function addPeople(people, btn, msg, onDone) {
     btn.disabled = true;
     A.api("/api/admin/workshops/" + current.id + "/attendees", { method: "POST", body: { people: people } }).then(function (r) {
       btn.disabled = false;
       if (r.status === 401) return A.checkSession();
       if (!r.ok) { msg.textContent = r.message || "加入失敗，請再試一次。"; return; }
       current = r.item;
-      $("wsAddText").value = "";
-      $("wsAddPreview").textContent = "";
       if (r.skipped && r.skipped.length) msg.textContent = "名單上已經有：" + r.skipped.join("、") + "，沒有重複加入。";
-      A.toast("已加入 " + r.added + " 位學員");
+      if (r.added) A.toast(people.length === 1 ? "已加入 " + people[0].name : "已加入 " + r.added + " 位學員");
       renderRoster();
       renderSessions();
       renderDrawPool();
       renderCerts();
       loadList();
+      onDone(r);
+    });
+  }
+
+  // 單個輸入：加完清空欄位、游標回到姓名，方便連續輸入下一位
+  $("wsOneForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var p = { name: $("wsOneName").value.trim(), nameEn: $("wsOneNameEn").value.trim(), email: $("wsOneEmail").value.trim() };
+    var msg = $("wsOneMsg");
+    if (!p.name) { msg.textContent = "請填寫學員姓名。"; $("wsOneName").focus(); return; }
+    if (p.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) { msg.textContent = "Email 格式不正確。"; $("wsOneEmail").focus(); return; }
+    msg.textContent = "";
+    addPeople([p], $("wsOneBtn"), msg, function (r) {
+      if (!r.added) return;
+      $("wsOneName").value = $("wsOneNameEn").value = $("wsOneEmail").value = "";
+      $("wsAddBox").open = true;
+      $("wsOneName").focus();
+    });
+  });
+
+  $("wsAddForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var people = parsePeople($("wsAddText").value);
+    var msg = $("wsAddMsg");
+    if (!people.length) { msg.textContent = "請至少填寫一位學員的姓名。"; return; }
+    msg.textContent = "";
+    addPeople(people, $("wsAddBtn"), msg, function () {
+      $("wsAddText").value = "";
+      $("wsAddPreview").textContent = "";
     });
   });
 
@@ -761,21 +792,6 @@
           b.appendChild(card);
         });
       });
-    } else {
-      var options = $("drawOptions").value.split(/\r?\n/).map(function (x) { return x.trim(); }).filter(Boolean);
-      if (!options.length) { A.toast("請先填寫選項，一行一個"); $("drawOptions").focus(); return; }
-      var deck = [];
-      while (deck.length < people.length) deck = deck.concat(shuffle(options));
-      var who = shuffle(people);
-      showResult("每人抽到的結果", function (b) {
-        b.classList.add("groups");
-        who.forEach(function (a, k) {
-          var card = el("div", "draw-group");
-          card.appendChild(el("span", "g-no", a.name));
-          card.appendChild(el("span", "g-names", deck[k]));
-          b.appendChild(card);
-        });
-      });
     }
   });
 
@@ -878,6 +894,7 @@
       loadList();
       loadCerts();
       A.toast(doneText.replace("{n}", r.issued.length));
+      $("wsCerts").scrollIntoView({ behavior: "smooth", block: "nearest" });
     });
   }
 
@@ -891,6 +908,12 @@
     all.textContent = ready.length ? "為全勤學員發證書（" + ready.length + " 位）" : "為全勤學員發證書";
     all.disabled = !ready.length;
     $("wsReissue").hidden = !issued.length;
+    // 按鈕不能按時說明原因
+    var why = "";
+    if (!people.length) why = "名單還是空的，先在上方「新增學員」加入學員。";
+    else if (!ready.length && issued.length < people.length) why = "目前沒有全勤的學員。先在名單裡點名，或在下方學員旁按「仍要發證書」。";
+    $("wsCertWhy").textContent = why;
+    $("wsCertWhy").hidden = !why;
 
     var host = $("wsCerts");
     host.innerHTML = "";
@@ -901,6 +924,7 @@
       info.appendChild(el("strong", null, a.name));
       if (a.certCode) {
         info.appendChild(el("span", "cert-no", a.certNo));
+        info.appendChild(el("span", "cert-meta", a.email ? (a.certSentAt ? "已寄 Email（" + shortDate(String(a.certSentAt).slice(0, 10)) + "）・" : "") + a.email : "還沒有 Email"));
       } else {
         var done = w.sessions.filter(function (s) { return a.attended && a.attended[s.key]; }).length;
         info.appendChild(el("span", "cert-no muted-no", fullAttendance(w, a) ? "全勤，可以發證書" : "出席 " + done + " / " + w.sessions.length + " 堂"));
@@ -911,16 +935,19 @@
         var open = el("a", "mail-btn", "查看證書");
         open.href = "/cert?c=" + a.certCode; open.target = "_blank"; open.rel = "noopener";
         acts.appendChild(open);
+        if (a.email) {
+          var m = certLetter(w, a);
+          var send = el("a", "mail-btn" + (a.certSentAt ? "" : " is-primary"), a.certSentAt ? "再寄一次" : "寄 Email");
+          send.href = gmail({ to: a.email, su: m.subject, body: m.body });
+          send.target = "_blank"; send.rel = "noopener";
+          send.addEventListener("click", function () { markSent(a); });
+          acts.appendChild(send);
+        } else {
+          acts.appendChild(button("補上 Email", "mini", function () { askEmail(a, row); }));
+        }
         var cp = button("複製連結", "mini");
         cp.addEventListener("click", function () { copy(certUrl(a.certCode), cp, "複製連結"); });
         acts.appendChild(cp);
-        if (a.email) {
-          var m = certLetter(w, a);
-          var send = el("a", "mail-btn", "用 Gmail 寄給學員");
-          send.href = gmail({ to: a.email, su: m.subject, body: m.body });
-          send.target = "_blank"; send.rel = "noopener";
-          acts.appendChild(send);
-        }
       } else {
         var one = button(fullAttendance(w, a) ? "發證書" : "仍要發證書", "mini");
         one.addEventListener("click", function () { issue([a.id], one, "已發出證書"); });
@@ -929,6 +956,46 @@
       row.appendChild(acts);
       host.appendChild(row);
     });
+  }
+
+  // 打開 Gmail 寄信時順便記下來，下次就知道誰已經寄過
+  function markSent(a) {
+    A.api("/api/admin/workshops/" + current.id + "/attendees/" + a.id, { method: "PATCH", body: { certSent: true } }).then(function (r) {
+      if (!r.ok) return;
+      a.certSentAt = r.attendee.certSentAt;
+      renderCerts();
+    });
+  }
+
+  function askEmail(a, row) {
+    var form = el("form", "cert-email");
+    form.noValidate = true;
+    var i = input("wsCertEmail-" + a.id, "", { type: "email", inputmode: "email", maxlength: "120", placeholder: a.name + " 的 Email" });
+    i.setAttribute("aria-label", a.name + " 的 Email");
+    form.appendChild(i);
+    var save = el("button", "mini", "儲存");
+    save.type = "submit";
+    form.appendChild(save);
+    form.appendChild(button("取消", "mini", function () { renderCerts(); }));
+    var msg = el("p", "form-msg");
+    msg.setAttribute("role", "alert");
+    form.appendChild(msg);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var email = i.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = "Email 格式不正確。"; i.focus(); return; }
+      save.disabled = true;
+      A.api("/api/admin/workshops/" + current.id + "/attendees/" + a.id, { method: "PATCH", body: { email: email } }).then(function (r) {
+        save.disabled = false;
+        if (!guard(r)) return;
+        a.email = r.attendee.email;
+        renderRoster();
+        renderSessions();
+        renderCerts();
+      });
+    });
+    row.appendChild(form);
+    i.focus();
   }
 
   $("wsIssueAll").addEventListener("click", function () {

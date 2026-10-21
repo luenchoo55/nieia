@@ -72,15 +72,27 @@
         <div class="roster-wrap"><table class="roster" id="wsRoster"></table></div>
         <details class="ws-add" id="wsAddBox">
           <summary>新增學員</summary>
-          <form id="wsAddForm" novalidate>
-            <label class="field" for="wsAddText">
-              <span>一行一位，依序填「姓名, 英文姓名, Email」，英文姓名與 Email 可以留空。也可以直接從 Excel 或 Google 試算表複製貼上。</span>
-              <textarea id="wsAddText" rows="5" placeholder="林小晴, Lin Hsiao-Ching, qing@example.com&#10;陳以安"></textarea>
-            </label>
-            <p class="preview" id="wsAddPreview" aria-live="polite"></p>
-            <p class="form-msg" id="wsAddMsg" role="alert"></p>
-            <button class="btn btn-primary" id="wsAddBtn" type="submit">加入名單</button>
+          <form id="wsOneForm" novalidate>
+            <div class="field-grid">
+              <label class="field" for="wsOneName"><span>姓名</span><input id="wsOneName" maxlength="30" placeholder="例如 林小晴" autocomplete="off"></label>
+              <label class="field" for="wsOneNameEn"><span>英文姓名（印在證書上，選填）</span><input id="wsOneNameEn" maxlength="60" placeholder="例如 Lin Hsiao-Ching" autocomplete="off"></label>
+              <label class="field wide" for="wsOneEmail"><span>Email（寄證書用，選填）</span><input id="wsOneEmail" type="email" inputmode="email" maxlength="120" placeholder="例如 qing@example.com" autocomplete="off"></label>
+            </div>
+            <p class="form-msg" id="wsOneMsg" role="alert"></p>
+            <button class="btn btn-primary" id="wsOneBtn" type="submit">加入這位學員</button>
           </form>
+          <details class="ws-add ws-paste">
+            <summary>一次貼上多位</summary>
+            <form id="wsAddForm" novalidate>
+              <label class="field" for="wsAddText">
+                <span>一行一位，依序填「姓名, 英文姓名, Email」，英文姓名與 Email 可以留空。也可以直接從 Excel 或 Google 試算表複製貼上。</span>
+                <textarea id="wsAddText" rows="5" placeholder="林小晴, Lin Hsiao-Ching, qing@example.com&#10;陳以安"></textarea>
+              </label>
+              <p class="preview" id="wsAddPreview" aria-live="polite"></p>
+              <p class="form-msg" id="wsAddMsg" role="alert"></p>
+              <button class="btn btn-primary" id="wsAddBtn" type="submit">加入名單</button>
+            </form>
+          </details>
         </details>
       </section>
 
@@ -96,14 +108,12 @@
           <button class="chip" type="button" data-mode="pick" aria-pressed="true">抽人</button>
           <button class="chip" type="button" data-mode="order" aria-pressed="false">分享順序</button>
           <button class="chip" type="button" data-mode="group" aria-pressed="false">分組配對</button>
-          <button class="chip" type="button" data-mode="assign" aria-pressed="false">抽座位或材料</button>
         </div>
         <div class="field-grid">
           <label class="field" for="drawPool"><span>從誰之中抽</span><select id="drawPool"></select></label>
           <label class="field" for="drawCount" data-for="pick"><span>一次抽幾位</span><input id="drawCount" type="number" inputmode="numeric" min="1" max="50" value="1"></label>
           <label class="field" for="drawSize" data-for="group" hidden><span>每組幾人</span><input id="drawSize" type="number" inputmode="numeric" min="2" max="20" value="2"></label>
           <label class="field check" for="drawNoRepeat" data-for="pick"><input id="drawNoRepeat" type="checkbox" checked>抽過的人不再抽</label>
-          <label class="field wide" for="drawOptions" data-for="assign" hidden><span>選項，一行一個（例如座位號碼、材料顏色）。選項比人少時會重複使用。</span><textarea id="drawOptions" rows="4" placeholder="靠窗 1 號&#10;靠窗 2 號&#10;中間 3 號"></textarea></label>
         </div>
         <div class="draw-stage" id="drawStage" tabindex="-1" aria-live="polite">
           <p class="draw-empty">按「抽籤」開始，結果會顯示在這裡，可以全螢幕分享給大家看。</p>
@@ -128,7 +138,8 @@
 
       <section class="glass form-card" aria-labelledby="ws-cert-title">
         <div class="block-head"><h2 id="ws-cert-title">結業證書</h2><span class="count" id="wsCertCount"></span></div>
-        <p class="hint">全部堂數都出席的學員可以一次發證書。證書編號與連結發出後不會改變；修改了學員或課程資料，按「更新已發出的證書」就會套用到證書上。</p>
+        <p class="hint">全部堂數都出席的學員可以一次發證書。發出後每位學員旁邊會出現「查看證書」和「寄 Email」。證書編號與連結發出後不會改變；修改了學員或課程資料，按「更新已發出的證書」就會套用到證書上。</p>
+        <p class="hint cert-why" id="wsCertWhy"></p>
         <div class="editor-actions">
           <button class="btn btn-primary" type="button" id="wsIssueAll">為全勤學員發證書</button>
           <button class="btn btn-ghost" type="button" id="wsReissue" hidden>更新已發出的證書</button>

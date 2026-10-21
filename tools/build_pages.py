@@ -285,6 +285,11 @@ def ws_panel(pid, tabid, hidden, glyph, g, title, en, intro, facts, topics, pric
 
 workshops = f'''{appbar("工作坊", "兩天的完整教學，結束後就能為自己、家人、朋友與毛孩傳送能量。目前僅開放約課，額滿即止。")}
 
+  <section class="ws-live" id="wsLive" hidden aria-labelledby="wsLiveTitle">
+    <h2 id="wsLiveTitle">近期開課</h2>
+    <div class="ws-live-list" id="wsLiveList"></div>
+  </section>
+
   <div class="seg" role="tablist" aria-label="選擇課程" data-tabs>
     <button type="button" role="tab" id="tab-reiki" aria-controls="panel-reiki" aria-selected="true">臼井聖火靈氣</button>
     <button type="button" role="tab" id="tab-mh" aria-controls="panel-mh" aria-selected="false" tabindex="-1">擴大療癒</button>
@@ -302,6 +307,12 @@ workshops = f'''{appbar("工作坊", "兩天的完整教學，結束後就能為
   ["神聖授權冥想","連結靈性中心點","清理光的管道","療癒自己與他人","連結神經系統","平衡因果業力","為揚升作準備","遠距療癒","療癒地球","點化與授證"],
   [("新生","NT$13,000","RM 1,800"),("複訓","NT$9,800","RM 900")])}
 
+  <section class="notice glass ws-cert-entry" aria-labelledby="ws-cert">
+    <h2 id="ws-cert">查詢結業證書</h2>
+    <p>上過阿綸涅亞的工作坊，可以用證書編號和姓名查看、下載你的結業證書，也能用來確認證書真偽。</p>
+    <div class="actions"><a class="btn btn-ghost" href="/cert">查詢證書</a></div>
+  </section>
+
   <section class="notice glass" aria-labelledby="ws-notice">
     <h2 id="ws-notice">退費須知</h2>
     <ul>
@@ -311,7 +322,7 @@ workshops = f'''{appbar("工作坊", "兩天的完整教學，結束後就能為
       <li>課程需提前訂購教材，請於課前兩週完成匯款。</li>
     </ul>
   </section>'''
-page('workshops.html', '工作坊｜阿綸涅亞 NIEIA', 'workshops', workshops)
+page('workshops.html', '工作坊｜阿綸涅亞 NIEIA', 'workshops', workshops, ['/assets/workshop-signup.js'])
 
 # ---------------- about ----------------
 creds = [

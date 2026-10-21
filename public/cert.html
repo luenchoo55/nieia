@@ -27,7 +27,20 @@
   <section class="cp-error" id="cpError" hidden aria-labelledby="cpErrorTitle">
     <h1 id="cpErrorTitle">找不到這張證書</h1>
     <p id="cpErrorMsg">請確認連結是否完整。如果是從信件點開的，可以試著複製整段網址貼到瀏覽器。仍然打不開的話，請私訊 IG @nieia4928。</p>
-    <a class="cp-btn" href="/">回到阿綸涅亞 NIEIA</a>
+    <div class="cp-actions"><a class="cp-btn primary" href="/cert">用證書編號查詢</a><a class="cp-btn" href="/">回到阿綸涅亞 NIEIA</a></div>
+  </section>
+
+  <section class="cp-error cp-lookup" id="cpLookup" hidden aria-labelledby="cpLookupTitle">
+    <h1 id="cpLookupTitle">查詢結業證書</h1>
+    <p>輸入證書上的編號和姓名，就能查看、下載你的結業證書。也可以用來確認一張證書是否由阿綸涅亞 NIEIA 發出。</p>
+    <form id="lkForm" novalidate>
+      <label class="cp-field" for="lkNo"><span>證書編號</span><input id="lkNo" maxlength="20" placeholder="例如 WS-2026-0001" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+      <label class="cp-field" for="lkName"><span>姓名（中文或英文，與證書上相同）</span><input id="lkName" maxlength="60" autocomplete="name"></label>
+      <label class="cp-hp" aria-hidden="true">請勿填寫<input id="lkWebsite" tabindex="-1" autocomplete="off"></label>
+      <p class="cp-msg" id="lkMsg" role="alert"></p>
+      <button class="cp-btn primary" id="lkBtn" type="submit">查詢證書</button>
+    </form>
+    <p class="cp-note">證書編號寫在證書右上角（No. WS-…），也在阿綸寄給你的證書信裡。找不到編號的話，請私訊 IG @nieia4928。</p>
   </section>
 
   <article class="cp-body" id="cpCert" hidden>

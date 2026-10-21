@@ -86,3 +86,17 @@ h1, h2, p, dl, dd, figure { margin: 0; }
   .cp-story canvas { width: min(100%, 260px); }
   .cp-actions .cp-btn { flex: 1 1 auto; }
 }
+
+/* 查詢證書 */
+.cp-lookup form { display: grid; gap: 16px; width: 100%; max-width: 26em; }
+.cp-field { display: grid; gap: 6px; font-size: 13px; letter-spacing: .1em; color: var(--ink-soft); }
+.cp-field input {
+  min-height: 48px; padding: 0 14px; border: 1px solid var(--ink); border-radius: 0; background: rgba(255, 255, 255, .45);
+  font: inherit; font-size: 16px; letter-spacing: .04em; color: var(--ink);
+}
+.cp-field input:focus { outline: 2px solid var(--seal); outline-offset: 1px; }
+.cp-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.cp-msg { color: var(--seal); font-size: 14px; }
+.cp-msg:empty { display: none; }
+.cp-lookup .cp-btn { justify-self: start; }
+.cp-error .cp-note { font-size: 13px; color: var(--ink-mute); }

@@ -43,6 +43,10 @@ export async function ensureIndexes(db) {
     db.collection("certificates").createIndex({ issuedAt: -1 }),
     db.collection("checkinAttempts").createIndex({ at: 1 }, { expireAfterSeconds: 3600 }),
     db.collection("checkinAttempts").createIndex({ ip: 1, at: 1 }),
+    db.collection("signupAttempts").createIndex({ at: 1 }, { expireAfterSeconds: 3600 }),
+    db.collection("signupAttempts").createIndex({ ip: 1, at: 1 }),
+    db.collection("certLookups").createIndex({ at: 1 }, { expireAfterSeconds: 3600 }),
+    db.collection("certLookups").createIndex({ ip: 1, at: 1 }),
   ]);
   indexesReady = true;
 }

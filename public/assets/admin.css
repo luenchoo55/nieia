@@ -365,3 +365,5 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .ws-ask[hidden] { display: none; }
 .rows .ws-ask { margin-bottom: 4px; }
 .ws-prices { margin-top: .2rem; grid-template-columns: repeat(2, minmax(0, 1fr)); } /* 一排新生、一排複訓 */
+.ws-head .head-acts { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
+.ws-head .head-acts [hidden] { display: none; }

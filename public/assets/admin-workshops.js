@@ -195,11 +195,13 @@
     closeEditors();
     var isNew = !w;
     var data = JSON.parse(JSON.stringify(draft || w || blankWorkshop()));
-    var heading = isNew ? "新增工作坊" : draft ? "重新發佈工作坊" : "編輯工作坊資料";
+    var copying = isNew && draft; // 再開一場：用舊場次的設定新增一場
+    var heading = copying ? "再開一場" : isNew ? "新增工作坊" : draft ? "重新發佈工作坊" : "編輯工作坊資料";
     var card = el("section", "glass form-card editor ws-editor");
     card.setAttribute("aria-label", heading);
     card.appendChild(el("h2", null, heading));
-    if (draft) card.appendChild(el("p", "hint", "日期已經往後挪到一週後開始，也重新開放前台報名。確認新的上課日期後按「重新發佈」，這場就會再出現在網站的工作坊頁。"));
+    if (copying) card.appendChild(el("p", "hint", "已經複製「" + draft.title + "」的所有設定，日期往後挪到一週後開始。學員、點名、照片和證書不會帶過來，原本那一場也不會改變。確認新的上課日期後按「建立新的一場」。"));
+    else if (draft) card.appendChild(el("p", "hint", "日期已經往後挪到一週後開始，也重新開放前台報名。確認新的上課日期後按「重新發佈」，這場就會再出現在網站的工作坊頁。"));
     var form = el("form");
     form.noValidate = true;
 
@@ -338,7 +340,7 @@
     msg.setAttribute("role", "alert");
     form.appendChild(msg);
     var bar = el("div", "editor-actions");
-    var save = el("button", "btn btn-primary", isNew ? "建立工作坊" : draft ? "重新發佈" : "儲存");
+    var save = el("button", "btn btn-primary", copying ? "建立新的一場" : isNew ? "建立工作坊" : draft ? "重新發佈" : "儲存");
     save.type = "submit";
     bar.appendChild(save);
     bar.appendChild(button("取消", "btn btn-ghost", closeEditors));
@@ -378,7 +380,7 @@
         save.disabled = false;
         if (r.status === 401) return A.checkSession();
         if (!r.ok) { msg.textContent = r.message || "儲存失敗，請再試一次。"; return; }
-        A.toast(isNew ? "已建立工作坊" : draft ? "已重新發佈，前台的工作坊頁會再顯示這一場" : "已儲存");
+        A.toast(copying ? "已建立新的一場，前台的工作坊頁會顯示這一場" : isNew ? "已建立工作坊" : draft ? "已重新發佈，前台的工作坊頁會再顯示這一場" : "已儲存");
         closeEditors();
         current = r.item;
         loadList();
@@ -436,6 +438,11 @@
 
   $("wsEdit").addEventListener("click", function () { openEditor(current, $("wsDetailEditorHost")); });
   $("wsRepublish").addEventListener("click", openRepublish);
+  // 再開一場：複製設定新增一場（不帶學員、點名、照片、證書；簽到代碼由後端重新產生）
+  $("wsCopy").addEventListener("click", function () {
+    openEditor(null, $("wsDetailEditorHost"), republishDraft(current));
+    $("wsDetailEditorHost").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 
   function renderHead() {
     var w = current;
@@ -443,6 +450,7 @@
     $("wsTitleEn").textContent = w.titleEn || "";
     $("wsTitleEn").hidden = !w.titleEn;
     $("wsAsk").hidden = !notHeld(w, (w.attendees || []).length);
+    $("wsCopy").hidden = !(w.sessions[w.sessions.length - 1].date < todayLocal());
     var pills = $("wsPills");
     pills.innerHTML = "";
     pills.appendChild(el("span", "pill booked", TYPE[w.type]));

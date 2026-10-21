@@ -79,6 +79,9 @@
     return box;
   }
 
+  // 工作坊頁的課程介紹也用同一套分段規則
+  window.nieiaRichText = richText;
+
   var sheet = null, lastFocus = null;
   function closeDetail() {
     if (!sheet) return;

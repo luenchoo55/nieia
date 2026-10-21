@@ -364,3 +364,4 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .ws-ask p { margin: 0; flex: 1 1 16em; font-size: var(--step--1); color: var(--ink); line-height: 1.6; }
 .ws-ask[hidden] { display: none; }
 .rows .ws-ask { margin-bottom: 4px; }
+.ws-prices { margin-top: .2rem; grid-template-columns: repeat(2, minmax(0, 1fr)); } /* 一排新生、一排複訓 */

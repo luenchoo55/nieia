@@ -17,6 +17,10 @@ const MAX_PHOTO_BYTES = 900 * 1024; // 後台會先壓縮，正常約 200–400 
 const CHECKIN_PER_HOUR = 30; // 同一個網路位址一小時內最多簽到 30 次
 const SIGNUP_PER_HOUR = 5; // 同一個網路位址一小時內最多報名 5 次
 const LOOKUP_PER_HOUR = 20; // 同一個網路位址一小時內最多查詢證書 20 次
+const PRICE_KINDS = ["new", "retake"];
+const PRICE_LABEL = { new: "新生", retake: "複訓" };
+const CURRENCIES = ["twd", "myr"];
+const hasRetake = (w) => CURRENCIES.some((cur) => w.prices?.retake?.[cur] != null);
 
 const bad = (c, message, status = 400) => c.json({ ok: false, message }, status);
 const str = (v, max) => (v == null ? "" : String(v).trim().slice(0, max));
@@ -85,10 +89,22 @@ function cleanWorkshop(body, old) {
     note: str(body.note, 500),
     // 前台報名：沒結束的場次會列在工作坊頁，關掉就不顯示
     signupOpen: body.signupOpen !== false,
-    intro: str(body.intro, 300),
-    price: str(body.price, 80),
+    intro: str(body.intro, 5000),
   };
   if (!out.title) errors.push("請填寫工作坊名稱。");
+
+  // 費用：新生／複訓 × 台灣（NT$）／馬來西亞（RM），留空代表不顯示
+  out.prices = {};
+  for (const who of PRICE_KINDS) {
+    out.prices[who] = {};
+    for (const cur of CURRENCIES) {
+      const v = body.prices?.[who]?.[cur];
+      if (v === "" || v == null) { out.prices[who][cur] = null; continue; }
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < 0 || n > 9999999) { errors.push(`${PRICE_LABEL[who]}的${cur === "twd" ? "台灣" : "馬來西亞"}價格請填整數。`); continue; }
+      out.prices[who][cur] = n;
+    }
+  }
 
   const cap = body.capacity === "" || body.capacity == null ? 0 : Number(body.capacity);
   if (!Number.isInteger(cap) || cap < 0 || cap > MAX_ATTENDEES) errors.push(`名額請填 1 到 ${MAX_ATTENDEES} 的整數，不限名額就留空。`);
@@ -175,7 +191,7 @@ function publicWorkshop(w, today) {
     hours: w.hours,
     teachers: w.teachers.map((t) => t.name),
     intro: w.intro || "",
-    price: w.price || "",
+    prices: w.prices || null,
     state: signupState(w, today),
   };
 }
@@ -478,7 +494,7 @@ export function mountWorkshops(app) {
       const today = todayLocal();
       // 還有任何一堂在今天或之後，就算還沒結束
       const docs = await db.collection("workshops")
-        .find({ signupOpen: { $ne: false }, "sessions.date": { $gte: today } }, { projection: { "attendees.id": 1, title: 1, titleEn: 1, type: 1, format: 1, location: 1, sessions: 1, hours: 1, teachers: 1, intro: 1, price: 1, capacity: 1 } })
+        .find({ signupOpen: { $ne: false }, "sessions.date": { $gte: today } }, { projection: { "attendees.id": 1, title: 1, titleEn: 1, type: 1, format: 1, location: 1, sessions: 1, hours: 1, teachers: 1, intro: 1, prices: 1, capacity: 1 } })
         .sort({ firstDate: 1 })
         .limit(30)
         .toArray();
@@ -516,6 +532,8 @@ export function mountWorkshops(app) {
       }
       const a = {
         id: randomKey(8), ...p, instagram, note, source: "web",
+        // 有設定複訓價格的場次才讓客人選身分
+        status: hasRetake(w) && body.status === "retake" ? "retake" : "new",
         attended: {}, certCode: null, certNo: null, addedAt: new Date(),
       };
       // 用 $push 加在最後，避免和其他人同時報名或後台修改時互相覆蓋

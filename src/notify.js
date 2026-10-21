@@ -114,6 +114,13 @@ export function notifyPaymentReported(c, b, report) {
   c.executionCtx.waitUntil(send(c.env, `已回報匯款：${b.name}｜末五碼 ${report.last5}`, html, b.email).catch((e) => console.error(e)));
 }
 
+function workshopPrice(p) {
+  const parts = [];
+  if (p?.twd != null) parts.push("NT$" + p.twd.toLocaleString("en-US"));
+  if (p?.myr != null) parts.push("RM " + p.myr.toLocaleString("en-US"));
+  return parts.join("／");
+}
+
 // 前台工作坊報名
 export function notifyWorkshopSignup(c, w, a) {
   const adminUrl = new URL("/admin/workshops", c.req.url).toString();
@@ -128,6 +135,8 @@ export function notifyWorkshopSignup(c, w, a) {
       ["英文姓名", a.nameEn],
       ["Email", a.email],
       ["IG", a.instagram ? "@" + a.instagram : ""],
+      ["報名身分", a.status === "retake" ? "複訓" : "新生"],
+      ["費用", workshopPrice(w.prices?.[a.status === "retake" ? "retake" : "new"])],
       ["想說的話", a.note],
       ["目前人數", `${(w.attendees || []).length + 1}${w.capacity ? " / " + w.capacity : ""} 位`],
     ],

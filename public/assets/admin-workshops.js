@@ -46,6 +46,16 @@
     return a === b ? prettyDate(a) : prettyDate(a) + " 至 " + prettyDate(b);
   }
   function hoursText(h) { return (Number.isInteger(h) ? h : h.toFixed(1)) + " 小時"; }
+  function money(p) {
+    var parts = [];
+    if (p && p.twd != null) parts.push("NT$" + Number(p.twd).toLocaleString("en-US"));
+    if (p && p.myr != null) parts.push("RM " + Number(p.myr).toLocaleString("en-US"));
+    return parts.join("／");
+  }
+  function priceText(ps) {
+    if (!ps) return "";
+    return [["new", "新生"], ["retake", "複訓"]].map(function (k) { var m = money(ps[k[0]]); return m ? k[1] + " " + m : ""; }).filter(Boolean).join("\n");
+  }
   function teacherText(ts) { return (ts || []).map(function (t) { return t.name; }).join("、"); }
   function origin() { return location.origin; }
   function checkinUrl(s) { return origin() + "/checkin?k=" + s.key; }
@@ -150,7 +160,7 @@
       title: "", titleEn: "", type: "spirit", format: "onsite", location: "", roomUrl: "", hours: 16,
       sessions: [{ date: d, start: "10:00", end: "18:00" }, { date: addDays(d, 1), start: "10:00", end: "18:00" }],
       teachers: [{ name: "阿綸", nameEn: "" }],
-      signupOpen: true, intro: "", price: "", capacity: 0,
+      signupOpen: true, intro: "", prices: null, capacity: 0,
     };
   }
 
@@ -296,15 +306,30 @@
     openField.htmlFor = "wfOpen";
     openField.appendChild(fOpen);
     openField.appendChild(el("span", null, "顯示在前台並開放報名"));
-    var fPrice = input("wfPrice", data.price, { maxlength: 80, placeholder: "例如 NT$16,800／RM 2,100" });
+    // 費用：新生／複訓 × 台灣／馬來西亞，留空就不顯示
+    var prices = data.prices || {};
+    var priceInputs = {};
+    var priceGrid = el("div", "field-grid ws-prices");
+    [["new", "新生"], ["retake", "複訓"]].forEach(function (who) {
+      priceInputs[who[0]] = {};
+      [["twd", "台灣 NT$"], ["myr", "馬來西亞 RM"]].forEach(function (cur) {
+        var v = prices[who[0]] && prices[who[0]][cur[0]];
+        var i = input("wfP" + who[0] + cur[0], v == null ? "" : v, { type: "number", inputmode: "numeric", min: "0", step: "1", placeholder: "不顯示就留空" });
+        priceInputs[who[0]][cur[0]] = i;
+        priceGrid.appendChild(field(who[1] + "・" + cur[1], i));
+      });
+    });
     var fCap = input("wfCap", data.capacity || "", { type: "number", inputmode: "numeric", min: "1", max: "200", step: "1", placeholder: "不限就留空" });
     var fIntro = el("textarea");
-    fIntro.id = "wfIntro"; fIntro.rows = 3; fIntro.maxLength = 300; fIntro.value = data.intro || "";
-    fIntro.placeholder = "一兩句話介紹這場工作坊，會顯示在前台";
+    fIntro.id = "wfIntro"; fIntro.rows = 10; fIntro.maxLength = 5000; fIntro.value = data.intro || "";
+    fIntro.placeholder = "空一行就是新的段落\n\n# 課程內容\n- 靈氣的起源和歷史\n- 完整手位法\n\n**粗體**也可以用";
     pGrid.appendChild(openField);
-    pGrid.appendChild(field("費用（前台顯示）", fPrice));
     pGrid.appendChild(field("名額", fCap));
-    pGrid.appendChild(field("前台介紹（選填）", fIntro, "wide"));
+    var priceBox = el("div", "field wide");
+    priceBox.appendChild(el("span", null, "費用（前台顯示成價目表；有填複訓價格，報名時客人才能選「複訓」）"));
+    priceBox.appendChild(priceGrid);
+    pGrid.appendChild(priceBox);
+    pGrid.appendChild(field("課程介紹（選填，客人在前台按「課程介紹」才會打開；空一行分段，「# 」小標題，「- 」條列）", fIntro, "wide"));
     pBox.appendChild(pGrid);
     pBox.appendChild(el("p", "hint-text", "實體課的上課地點也會顯示在前台；線上教室連結不會公開。"));
     form.appendChild(pBox);
@@ -340,7 +365,11 @@
         title: fTitle.value, titleEn: fTitleEn.value, type: fType.value, format: fFormat.value,
         hours: fHours.value, location: fLocation.value, roomUrl: fRoom.value.trim(),
         sessions: data.sessions, teachers: data.teachers,
-        signupOpen: fOpen.checked, price: fPrice.value, capacity: fCap.value.trim(), intro: fIntro.value,
+        signupOpen: fOpen.checked, capacity: fCap.value.trim(), intro: fIntro.value,
+        prices: {
+          new: { twd: priceInputs.new.twd.value.trim(), myr: priceInputs.new.myr.value.trim() },
+          retake: { twd: priceInputs.retake.twd.value.trim(), myr: priceInputs.retake.myr.value.trim() },
+        },
       };
       if (!body.title.trim()) { msg.textContent = "請填寫工作坊名稱。"; fTitle.focus(); return; }
       msg.textContent = "";
@@ -441,7 +470,7 @@
     } else fact("地點", w.location);
     fact("證書代號", w.letter ? w.letter + "（證書編號 " + w.letter + "-" + w.sessions[w.sessions.length - 1].date.slice(0, 4) + "-001 起）" : "第一次發證書時自動決定（A、B、C…）");
     fact("前台報名", w.signupOpen === false ? "不顯示在前台" : "開放中" + (w.capacity ? "（名額 " + w.capacity + " 位）" : "（不限名額）"));
-    fact("費用", w.price);
+    fact("費用", priceText(w.prices));
   }
 
   // ---------- 名單與點名 ----------
@@ -485,7 +514,7 @@
       var sub = [a.nameEn, a.email, a.instagram && "IG @" + a.instagram].filter(Boolean).join("・");
       if (sub) th.appendChild(el("span", null, sub));
       if (a.note) th.appendChild(el("span", null, "想說的話：" + a.note));
-      if (a.source === "web") th.appendChild(el("span", "pill booked", "網站報名"));
+      if (a.source === "web") th.appendChild(el("span", "pill booked", "網站報名・" + (a.status === "retake" ? "複訓" : "新生")));
       if (a.certNo) th.appendChild(el("span", "pill open", a.certNo));
       tr.appendChild(th);
       w.sessions.forEach(function (s, i) {

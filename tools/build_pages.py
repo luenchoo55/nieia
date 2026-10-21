@@ -322,7 +322,7 @@ workshops = f'''{appbar("工作坊", "兩天的完整教學，結束後就能為
       <li>課程需提前訂購教材，請於課前兩週完成匯款。</li>
     </ul>
   </section>'''
-page('workshops.html', '工作坊｜阿綸涅亞 NIEIA', 'workshops', workshops, ['/assets/workshop-signup.js'])
+page('workshops.html', '工作坊｜阿綸涅亞 NIEIA', 'workshops', workshops, ['/assets/catalog.js', '/assets/workshop-signup.js'])
 
 # ---------------- about ----------------
 creds = [

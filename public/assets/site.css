@@ -642,3 +642,7 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .ws-foot .btn:disabled { opacity: .6; cursor: not-allowed; }
 .ws-sheet-head { grid-template-columns: minmax(0, 1fr); }
 .ws-form { display: grid; gap: 1rem; }
+
+/* 同一排的欄位：說明文字行數不同時，輸入框仍然對齊（文字貼齊輸入框上緣） */
+.field-grid > label.field:has(> :nth-child(2):last-child) { grid-template-rows: 1fr auto; align-content: stretch; }
+.field-grid > label.field:has(> :nth-child(2):last-child) > span { align-self: end; }

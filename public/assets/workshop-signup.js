@@ -187,6 +187,19 @@
     var s = openSheet(w, "課程介紹", from);
     var rich = window.nieiaRichText;
     if (w.intro) s.body.appendChild(rich ? rich(w.intro) : el("p", "ws-intro", w.intro));
+    // 每一堂的日期與時間，一律寫出年份
+    var when = el("section", "ws-fee ws-sessions");
+    when.appendChild(el("h3", null, "上課日期"));
+    var ol = el("ol");
+    w.sessions.forEach(function (x, i) {
+      var li = el("li");
+      if (w.sessions.length > 1) li.appendChild(el("span", "ws-no", "第 " + (i + 1) + " 堂"));
+      li.appendChild(el("span", "ws-day", Number(x.date.slice(0, 4)) + " 年 " + prettyDate(x.date)));
+      if (x.start) li.appendChild(el("span", "ws-time", x.start + (x.end ? "–" + x.end : "")));
+      ol.appendChild(li);
+    });
+    when.appendChild(ol);
+    s.body.appendChild(when);
     var fee = el("section", "ws-fee");
     fee.appendChild(el("h3", null, "費用"));
     fee.appendChild(priceTable(w));

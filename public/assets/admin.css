@@ -390,23 +390,13 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .ws-ended:not([open])::after { left: 28px; right: 28px; top: 18px; bottom: -18px; background: rgba(255, 255, 255, .28); z-index: -1; }
 .ws-stack {
   position: relative; z-index: 1; cursor: pointer; list-style: none;
-  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px;
-  padding: 14px 14px 14px 16px; border-radius: var(--r-md); color: var(--ink);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px;
+  padding: 14px 14px 14px 20px; border-radius: var(--r-md); color: var(--ink);
   transition: border-color .2s ease, transform .2s ease;
 }
 .ws-stack::-webkit-details-marker { display: none; }
 .ws-stack:hover { border-color: var(--button); }
 .ws-stack:focus-visible { outline: 2px solid var(--button); outline-offset: 2px; }
-.ws-stack-orbs { display: flex; padding-left: 10px; }
-.ws-mini-orb {
-  width: 40px; height: 40px; margin-left: -10px; border-radius: 50%; display: grid; place-items: center;
-  font-size: 11px; letter-spacing: .02em; color: var(--ink); border: 2px solid rgba(255, 255, 255, .9);
-  background:
-    radial-gradient(circle at 32% 28%, rgba(255,255,255,.95) 0 12%, rgba(255,255,255,0) 36%),
-    conic-gradient(from 20deg, #e9d6ff, #ffd9ef, #d4f3ff, #e0ffef, #fff1cf, #e9d6ff);
-  box-shadow: inset -4px -5px 10px rgba(74, 63, 120, .16), 0 6px 12px -8px rgba(74, 63, 120, .5);
-}
-.ws-mini-orb.more { background: var(--tint); color: var(--button); font-weight: 600; }
 .ws-stack-text { display: grid; gap: .1rem; min-width: 0; }
 .ws-stack-text strong { font-family: var(--display); font-weight: 500; font-size: var(--step-0); letter-spacing: .1em; }
 .ws-stack-text small { font-size: var(--step--2); color: var(--ink-soft); letter-spacing: .06em; }
@@ -421,11 +411,10 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
   justify-self: center; grid-template-columns: auto auto; gap: 8px;
   padding: 6px 6px 6px 16px; border-radius: 999px; margin: 6px 0 4px;
 }
-.ws-ended[open] .ws-stack-orbs, .ws-ended[open] .ws-stack-text { display: none; }
+.ws-ended[open] .ws-stack-text { display: none; }
 .ws-ended[open] .ws-stack-less { display: inline; font-size: var(--step--1); color: var(--ink-soft); letter-spacing: .08em; }
 .ws-ended[open] .ws-stack-go { width: 30px; height: 30px; transform: rotate(180deg); }
 .ws-ended > .rows { margin-top: .6rem; }
-@media (max-width: 420px) { .ws-mini-orb:nth-child(n+4) { display: none; } }
 @media (prefers-reduced-motion: reduce) { .ws-stack, .ws-stack-go { transition: none; } }
 
 /* 單一場工作坊彈窗 */

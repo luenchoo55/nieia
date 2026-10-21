@@ -657,11 +657,12 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .ws-title { all: unset; cursor: pointer; font: inherit; letter-spacing: inherit; color: inherit; }
 .ws-title:focus-visible { outline: 2px solid var(--button); outline-offset: 3px; border-radius: 4px; }
 .ws-sessions ol { list-style: none; margin: 0; padding: 0; display: grid; }
-.ws-sessions li { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2rem 1rem; padding: .55rem 0; border-bottom: 1px solid var(--line); font-size: var(--step--1); font-variant-numeric: tabular-nums; }
+.ws-sessions li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: .2rem .9rem; padding: .55rem 0; border-bottom: 1px solid var(--line); font-size: var(--step--1); font-variant-numeric: tabular-nums; }
 .ws-sessions li:last-child { border-bottom: 0; }
 .ws-sessions .ws-no { color: var(--ink-soft); min-width: 3.6em; }
-.ws-sessions .ws-day { color: var(--ink); }
-.ws-sessions .ws-time { color: var(--button); margin-left: auto; }
+.ws-sessions .ws-dt { display: flex; flex-wrap: wrap; column-gap: .8rem; row-gap: .1rem; }
+.ws-sessions .ws-day { color: var(--ink); white-space: nowrap; }
+.ws-sessions .ws-time { color: var(--button); white-space: nowrap; }
 
 /* ---------- 匯款方式（預約療癒、工作坊報名） ---------- */
 .pay-methods { display: grid; gap: 1rem; }
@@ -678,3 +679,4 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .ws-keep h3 { font-size: var(--step-0); letter-spacing: .06em; }
 .ws-keep .copy-row input { min-width: 0; flex: 1; }
 .copy-row > input { width: 0; flex: 1 1 auto; min-width: 0; } /* 窄手機上不撐寬頁面 */
+.ws-time-nb { white-space: nowrap; }

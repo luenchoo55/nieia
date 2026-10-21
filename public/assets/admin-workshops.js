@@ -159,20 +159,44 @@
       });
       box.appendChild(rows);
       host.appendChild(box);
+      slowFold(box, rows);
     }
+  }
+
+  // 收起／展開用動畫慢慢長出、縮回（瀏覽器內建的是瞬間開關）
+  var FOLD_MS = 800;
+  function slowFold(box, rows) {
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (still || !rows.animate) return;
+    var anim = null;
+    box.querySelector("summary").addEventListener("click", function (e) {
+      e.preventDefault();
+      var from = anim ? rows.getBoundingClientRect().height : null;
+      if (anim) anim.cancel();
+      var opening = !box.open || box.classList.contains("is-closing");
+      box.classList.remove("is-closing");
+      if (opening) box.open = true;
+      var full = rows.scrollHeight;
+      var start = from != null ? from : (opening ? 0 : full);
+      var end = opening ? full : 0;
+      // 收起時先讓按鈕變回「一疊卡片」的樣子，列表再慢慢縮回
+      if (!opening) box.classList.add("is-closing");
+      rows.style.overflow = "hidden";
+      anim = rows.animate(
+        [{ height: start + "px", opacity: opening ? (from != null ? 1 : 0) : 1 }, { height: end + "px", opacity: opening ? 1 : 0 }],
+        { duration: FOLD_MS, easing: "cubic-bezier(.45, 0, .25, 1)" }
+      );
+      anim.onfinish = function () {
+        anim = null;
+        rows.style.overflow = "";
+        if (!opening) { box.open = false; box.classList.remove("is-closing"); }
+      };
+    });
   }
 
   // 收起時像一疊收好的卡片：小圓球寫月份、場數與證書數；展開後變成「收起已結束」
   function endedSummary(ended) {
     var sum = el("summary", "ws-stack glass");
-    var orbs = el("span", "ws-stack-orbs");
-    orbs.setAttribute("aria-hidden", "true");
-    ended.slice(0, 4).forEach(function (w) {
-      var d = w.sessions[0].date;
-      orbs.appendChild(el("span", "ws-mini-orb", Number(d.slice(5, 7)) + "月"));
-    });
-    if (ended.length > 4) orbs.appendChild(el("span", "ws-mini-orb more", "+" + (ended.length - 4)));
-    sum.appendChild(orbs);
     var certs = ended.reduce(function (n, w) { return n + (w.certCount || 0); }, 0);
     var text = el("span", "ws-stack-text");
     text.appendChild(el("strong", null, "已結束的工作坊"));

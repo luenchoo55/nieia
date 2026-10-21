@@ -39,10 +39,16 @@
     return meta.join("｜");
   }
   // 把後台寫的介紹轉成段落：空行分段、「1. 」「# 」小標題、「- 」條列、**粗體**
+  // ***粗斜體***、**粗體**、*強調*（斜體）
   function inline(parent, text) {
-    String(text).split(/(\*\*[^*]+\*\*)/).forEach(function (part) {
+    String(text).split(/(\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/).forEach(function (part) {
       if (!part) return;
-      if (/^\*\*[^*]+\*\*$/.test(part)) parent.appendChild(el("strong", null, part.slice(2, -2)));
+      if (/^\*\*\*[^*]+\*\*\*$/.test(part)) {
+        var b = el("strong");
+        b.appendChild(el("em", null, part.slice(3, -3)));
+        parent.appendChild(b);
+      } else if (/^\*\*[^*]+\*\*$/.test(part)) parent.appendChild(el("strong", null, part.slice(2, -2)));
+      else if (/^\*[^*]+\*$/.test(part)) parent.appendChild(el("em", null, part.slice(1, -1)));
       else parent.appendChild(document.createTextNode(part));
     });
   }

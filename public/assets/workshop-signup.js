@@ -21,13 +21,14 @@
     return Number(p[1]) + " 月 " + Number(p[2]) + " 日（" + w + "）";
   }
   // 跨年或不是今年的場次要寫出年份，才不會看起來像日期倒過來
-  function dateRange(ss) {
+  function dateParts(ss) {
     var a = ss[0].date, b = ss[ss.length - 1].date;
     var year = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 4);
     var withYear = a.slice(0, 4) !== b.slice(0, 4) || a.slice(0, 4) !== year;
     var fmt = function (d) { return (withYear ? Number(d.slice(0, 4)) + " 年 " : "") + prettyDate(d); };
-    return a === b ? fmt(a) : fmt(a) + " 至 " + fmt(b);
+    return a === b ? [fmt(a)] : [fmt(a), fmt(b)];
   }
+  function dateRange(ss) { return dateParts(ss).join(" 至 "); }
   function timeText(ss) {
     var s = ss[0];
     if (!s.start) return "";
@@ -113,7 +114,15 @@
     var c = el("article", "ws-card glass");
     var top = el("div", "ws-top");
     top.appendChild(el("span", "ws-state is-" + w.state, STATE[w.state]));
-    top.appendChild(el("span", "ws-when", dateRange(w.sessions) + (timeText(w.sessions) ? " " + timeText(w.sessions) : "")));
+    // 時間包成一整段，手機上放不下時整段換行，不會拆成「09:00–」和「19:00」
+    // 每個日期、時間各是一整段（不從中間斷開），只在段與段之間換行
+    var when = el("span", "ws-when");
+    dateParts(w.sessions).forEach(function (d, i) {
+      if (i) when.appendChild(document.createTextNode(" 至 "));
+      when.appendChild(el("span", "ws-time-nb", d));
+    });
+    if (timeText(w.sessions)) { when.appendChild(document.createTextNode(" ")); when.appendChild(el("span", "ws-time-nb", timeText(w.sessions))); }
+    top.appendChild(when);
     c.appendChild(top);
     // 標題本身是打開課程介紹的按鈕，鍵盤也能操作；費用只放在課程介紹彈窗裡
     var h = el("h3");
@@ -260,18 +269,22 @@
     w.sessions.forEach(function (x, i) {
       var li = el("li");
       if (w.sessions.length > 1) li.appendChild(el("span", "ws-no", "第 " + (i + 1) + " 堂"));
-      li.appendChild(el("span", "ws-day", Number(x.date.slice(0, 4)) + " 年 " + prettyDate(x.date)));
-      if (x.start) li.appendChild(el("span", "ws-time", x.start + (x.end ? "–" + x.end : "")));
+      // 日期和時間放在同一格：放得下就同一行，放不下時間就接在日期下面
+      var dt = el("span", "ws-dt");
+      dt.appendChild(el("span", "ws-day", Number(x.date.slice(0, 4)) + " 年 " + prettyDate(x.date)));
+      if (x.start) dt.appendChild(el("span", "ws-time", x.start + (x.end ? "–" + x.end : "")));
+      li.appendChild(dt);
       ol.appendChild(li);
     });
     when.appendChild(ol);
+    if (w.location) when.appendChild(el("p", "ws-where", "地點：" + w.location));
     s.body.appendChild(when);
     var fee = el("section", "ws-fee");
     fee.appendChild(el("h3", null, "費用"));
     fee.appendChild(priceTable(w));
     s.body.appendChild(fee);
     var foot = el("footer", "detail-foot");
-    var info = el("p", "detail-ask", facts(w).join("｜") + (w.location ? "｜" + w.location : ""));
+    var info = el("p", "detail-ask", facts(w).join("｜"));
     foot.appendChild(info);
     var acts = el("div", "actions");
     acts.appendChild(signupButton(w, from));

@@ -439,8 +439,9 @@
     fact("授課老師", cert.teachers.map(function (t) { return t.name; }).join("、"), cert.teachers.map(function (t) { return t.nameEn; }).filter(Boolean).join(" & "));
     fact("主辦單位", ORG + " " + ORG_EN);
     fact("證書編號", "No. " + cert.no, "", "no");
-    var issued = new Date(cert.issuedAt);
-    $("cpVerify").textContent = "這張證書由阿綸涅亞 NIEIA 於 " + issued.getFullYear() + " 年 " + (issued.getMonth() + 1) + " 月 " + issued.getDate() + " 日發出，編號 " + cert.no + " 已登記在工作室的證書紀錄中。";
+    // 寫結業（最後一堂課）的日期，補發以前的證書時也會是當時上課的日期
+    var done = cert.dates.last.split("-");
+    $("cpVerify").textContent = "這張證書由阿綸涅亞 NIEIA 於 " + Number(done[0]) + " 年 " + Number(done[1]) + " 月 " + Number(done[2]) + " 日頒發，編號 " + cert.no + " 已登記在工作室的證書紀錄中。";
 
     var label = "結業證書：" + cert.name + (cert.nameEn ? "（" + cert.nameEn + "）" : "") + "完成「" + cert.title + "」，" + prettyDateZh(cert.dates) + "，共 " + hoursNum(cert.hours) + " 小時，" + f[0] + "，授課老師 " + cert.teachers.map(function (t) { return t.name; }).join("、") + "，主辦單位阿綸涅亞 NIEIA，證書編號 " + cert.no + "。";
     $("cvMain").setAttribute("aria-label", label);

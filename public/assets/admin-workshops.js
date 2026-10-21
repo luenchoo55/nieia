@@ -143,7 +143,8 @@
       host.appendChild(ask);
     });
     // 已結束（有開成）的收在下面，可以收起／展開；沒有開成的留在上面提醒重新發佈
-    var ended = list.filter(function (w) { return w.sessions[w.sessions.length - 1].date < today && !notHeld(w, w.attendeeCount); });
+    // 已經過去的場次（包括沒有開成的）都收進「已結束」
+    var ended = list.filter(function (w) { return w.sessions[w.sessions.length - 1].date < today; });
     list.filter(function (w) { return ended.indexOf(w) < 0; }).forEach(function (w) { host.appendChild(listRow(w, today)); });
     if (ended.length) {
       var box = el("details", "ws-ended");
@@ -151,7 +152,11 @@
       box.addEventListener("toggle", function () { try { localStorage.setItem(ENDED_KEY, box.open ? "1" : "0"); } catch (e) { /* 無痕模式 */ } });
       box.appendChild(endedSummary(ended));
       var rows = el("div", "rows");
-      ended.forEach(function (w) { rows.appendChild(listRow(w, today)); });
+      ended.forEach(function (w) {
+        var r = listRow(w, today);
+        r.classList.add(notHeld(w, w.attendeeCount) ? "is-not-held" : "is-ended");
+        rows.appendChild(r);
+      });
       box.appendChild(rows);
       host.appendChild(box);
     }
@@ -171,7 +176,8 @@
     var certs = ended.reduce(function (n, w) { return n + (w.certCount || 0); }, 0);
     var text = el("span", "ws-stack-text");
     text.appendChild(el("strong", null, "已結束的工作坊"));
-    text.appendChild(el("small", null, ended.length + " 場" + (certs ? "・已發證書 " + certs + " 張" : "")));
+    var missed = ended.filter(function (w) { return notHeld(w, w.attendeeCount); }).length;
+    text.appendChild(el("small", null, ended.length + " 場" + (certs ? "・已發證書 " + certs + " 張" : "") + (missed ? "・" + missed + " 場沒有開成" : "")));
     sum.appendChild(text);
     sum.appendChild(el("span", "ws-stack-less", "收起已結束"));
     var go = el("span", "ws-stack-go");

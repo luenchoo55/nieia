@@ -441,3 +441,17 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .form-card, .block { grid-template-columns: minmax(0, 1fr); }
 .copy-row > input { width: 0; flex: 1 1 auto; }
 .ws-ask-acts { display: flex; flex-wrap: wrap; gap: .5rem; margin-left: auto; }
+
+/* 已結束區塊裡的卡片換色：已結束＝淡紫，沒有開成＝淡粉紅，和上面進行中的白色卡片分開 */
+.ws-row.is-ended {
+  background: linear-gradient(135deg, rgba(226, 219, 247, .78), rgba(239, 230, 246, .62));
+  border-color: rgba(150, 152, 231, .35);
+}
+.ws-row.is-ended .ws-when { background: rgba(150, 152, 231, .22); }
+.ws-row.is-ended h3 { color: var(--ink-soft); }
+.ws-row.is-not-held {
+  background: linear-gradient(135deg, rgba(250, 226, 236, .82), rgba(245, 234, 244, .62));
+  border-color: rgba(224, 86, 122, .28);
+}
+.ws-row.is-not-held .ws-when { background: rgba(224, 86, 122, .12); }
+.ws-row.is-ended:hover, .ws-row.is-not-held:hover { border-color: var(--button); }

@@ -180,15 +180,34 @@ function publicWorkshop(w, today) {
   };
 }
 
-// 年份流水號：WS-2026-0001
-async function nextCertNo(db, year) {
-  const r = await db.collection("counters").findOneAndUpdate(
-    { _id: `cert:${year}` },
-    { $inc: { seq: 1 } },
-    { upsert: true, returnDocument: "after" }
-  );
-  const doc = r && r.value !== undefined ? r.value : r; // 舊版驅動程式回傳 { value }
-  return `WS-${year}-${String(doc.seq).padStart(4, "0")}`;
+// 證書編號：場次代號-年份-場次內流水號，例如 A-2027-002、AC-2028-001
+// 場次代號在這場第一次發證書時決定，依序 A…Z、AA、AB…（像試算表的欄位名稱），之後不會改變。
+const NO_RE = /^[A-Z]{1,3}-\d{4}-\d{3,}$/;
+const unwrap = (r) => (r && r.value !== undefined ? r.value : r); // 舊版驅動程式回傳 { value }
+
+function letterOf(n) {
+  let s = "";
+  for (; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s;
+  return s;
+}
+
+async function workshopLetter(db, w) {
+  if (w.letter) return w.letter;
+  const seq = unwrap(await db.collection("counters").findOneAndUpdate(
+    { _id: "workshopLetter" }, { $inc: { seq: 1 } }, { upsert: true, returnDocument: "after" }
+  )).seq;
+  // 同時有兩個請求在發同一場的證書時，以先寫進去的代號為準
+  await db.collection("workshops").updateOne({ _id: w._id, letter: { $exists: false } }, { $set: { letter: letterOf(seq) } });
+  const fresh = await db.collection("workshops").findOne({ _id: w._id }, { projection: { letter: 1 } });
+  return (w.letter = fresh.letter);
+}
+
+async function nextCertNo(db, w, year) {
+  const letter = await workshopLetter(db, w);
+  const doc = unwrap(await db.collection("workshops").findOneAndUpdate(
+    { _id: w._id }, { $inc: { certSeq: 1 } }, { returnDocument: "after", projection: { certSeq: 1 } }
+  ));
+  return `${letter}-${year}-${String(doc.certSeq).padStart(3, "0")}`;
 }
 
 function snapshot(w, a) {
@@ -417,7 +436,7 @@ export function mountWorkshops(app) {
           await certs.updateOne({ code: a.certCode }, { $set: { ...snap, photoKey: w.photoKey || null, updatedAt: new Date() } });
         } else {
           a.certCode = randomKey(12);
-          a.certNo = await nextCertNo(db, year);
+          a.certNo = await nextCertNo(db, w, year);
           await certs.insertOne({
             code: a.certCode, no: a.certNo, workshopId: w._id, attendeeId: a.id,
             ...snap, photoKey: w.photoKey || null, issuedAt: new Date(), updatedAt: new Date(),
@@ -514,7 +533,7 @@ export function mountWorkshops(app) {
     if (body.website) return bad(c, "查不到這張證書。", 404); // 機器人陷阱欄位
     const no = str(body.no, 20).toUpperCase().replace(/\s+/g, "").replace(/^NO\.?/, "");
     const who = norm(str(body.name, 60));
-    if (!/^WS-\d{4}-\d{4,}$/.test(no)) return bad(c, "證書編號的格式是 WS-2026-0001，請確認後再試。");
+    if (!NO_RE.test(no)) return bad(c, "證書編號的格式像 A-2026-001，請確認後再試。");
     if (!who) return bad(c, "請填寫證書上的姓名。");
 
     return withDb(c.env, c.executionCtx, async (db) => {

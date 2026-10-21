@@ -463,7 +463,7 @@
   function loadFonts() {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
     var chars = [cert.name, cert.title, ORG, "結業修畢完成本工作坊全部課程特此證明授課老師主辦單位日期時數形式線上實體課程小時", season(cert.dates.last), cert.teachers.map(function (t) { return t.name; }).join("")].join("");
-    var latin = [cert.nameEn, cert.titleEn, "Certificate of Completion No. 0123456789 hours Online Course In person", cert.teachers.map(function (t) { return t.nameEn; }).join(" ")].join(" ");
+    var latin = [cert.nameEn, cert.titleEn, cert.no, "Certificate of Completion No. 0123456789 hours Online Course In person", cert.teachers.map(function (t) { return t.nameEn; }).join(" ")].join(" ");
     var loads = [
       document.fonts.load('900 100px "Noto Serif TC"', chars),
       document.fonts.load('600 40px "Noto Serif TC"', chars),

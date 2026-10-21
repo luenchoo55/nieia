@@ -407,6 +407,7 @@
         fact("線上教室", a);
       } else fact("線上教室", "還沒填連結（平台確定後到「編輯資料」補上）");
     } else fact("地點", w.location);
+    fact("證書代號", w.letter ? w.letter + "（證書編號 " + w.letter + "-" + w.sessions[w.sessions.length - 1].date.slice(0, 4) + "-001 起）" : "第一次發證書時自動決定（A、B、C…）");
     fact("前台報名", w.signupOpen === false ? "不顯示在前台" : "開放中" + (w.capacity ? "（名額 " + w.capacity + " 位）" : "（不限名額）"));
     fact("費用", w.price);
   }

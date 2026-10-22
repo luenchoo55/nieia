@@ -26,17 +26,51 @@ const DEFAULTS = {
   note: "",
   minutesPer: 15,
   services: [],
+  currency: "TWD", // 所有現場項目共用的幣別：TWD 台幣、MYR 馬幣
+  showProducts: true, // 排隊頁顯示聖照選物的商品（只能看，不能下單）
   sessionId: null,
   nextNumber: 1,
 };
 
 async function getMarket(db) {
   const doc = await db.collection("settings").findOne({ _id: KEY });
-  return { ...DEFAULTS, ...(doc || {}) };
+  const m = { ...DEFAULTS, ...(doc || {}) };
+  m.currency = m.currency === "MYR" ? "MYR" : "TWD";
+  m.services = parseServices(m.services, m.currency); // 價格文字依目前的幣別重新產生，改幣別時所有項目一起改
+  return m;
+}
+
+// 價格：每個項目各存台幣與馬幣價格（或「隨喜」），排隊頁顯示哪一個由擺攤設定的幣別決定；
+// price 是顯示用的文字，排隊頁、通知信、擺攤紀錄都用它
+const amountOf = (v) => {
+  const n = Number(v);
+  return v !== "" && v != null && Number.isInteger(n) && n >= 0 && n <= 1000000 ? n : null;
+};
+function parsePrice(s, currency) {
+  let free = s.free === true;
+  let twd = s.twd;
+  let myr = s.myr;
+  if (s.twd == null && s.myr == null && s.amount != null) {
+    // 舊格式：只有一個金額，幣別跟著擺攤設定
+    if (currency === "MYR") myr = s.amount;
+    else twd = s.amount;
+  } else if (s.free == null && s.twd == null && s.myr == null) {
+    // 更舊的資料只有文字，例如「NT$200」「RM 30」「隨喜」「300」
+    const text = String(s.price || "");
+    const num = (text.replace(/,/g, "").match(/\d+/) || [])[0];
+    free = /隨喜/.test(text);
+    if (/RM|MYR|馬幣/i.test(text)) myr = num;
+    else twd = num;
+  }
+  twd = free ? null : amountOf(twd);
+  myr = free ? null : amountOf(myr);
+  const amount = currency === "MYR" ? myr : twd;
+  const price = free ? "隨喜" : amount == null ? "" : (currency === "MYR" ? "RM " : "NT$") + amount.toLocaleString("en-US");
+  return { free, twd, myr, price };
 }
 
 // 現場項目：名稱、分鐘、價格、說明（也相容舊的「名稱｜價格」文字格式）
-function parseServices(input) {
+function parseServices(input, currency) {
   const list = Array.isArray(input) ? input : String(input || "").split("\n");
   return list
     .map((item) => {
@@ -51,7 +85,7 @@ function parseServices(input) {
       return {
         name: str(s.name, 40),
         minutes: Number.isInteger(minutes) && minutes >= 1 && minutes <= 240 ? minutes : null,
-        price: str(s.price, 30),
+        ...parsePrice(s, currency),
         desc: str(s.desc, 500),
       };
     })
@@ -85,6 +119,8 @@ function publicMarket(m, q) {
     note: m.note,
     minutesPer: m.minutesPer,
     services: m.services,
+    currency: m.currency,
+    showProducts: m.showProducts !== false,
     serving: q.serving,
     waiting: q.waiting,
     estMinutes: q.estMinutes || 0,
@@ -222,7 +258,7 @@ export function mountMarket(app) {
       ok: true,
       market: {
         active: m.active, accepting: m.accepting, location: m.location, address: m.address,
-        hours: m.hours, note: m.note, minutesPer: m.minutesPer, services: m.services, startedAt: m.startedAt || null,
+        hours: m.hours, note: m.note, minutesPer: m.minutesPer, services: m.services, currency: m.currency, showProducts: m.showProducts !== false, startedAt: m.startedAt || null,
       },
       tickets: list.map(({ _id, token, ip: _ip, sessionId, ...t }) => ({ id: _id.toString(), ...t })),
     };
@@ -241,7 +277,9 @@ export function mountMarket(app) {
       hours: str(body.hours, 60),
       note: str(body.note, 300),
       minutesPer: Number.isInteger(minutes) && minutes >= 1 && minutes <= 240 ? minutes : 15,
-      services: parseServices(body.services),
+      currency: body.currency === "MYR" ? "MYR" : "TWD",
+      services: parseServices(body.services, body.currency),
+      showProducts: body.showProducts !== false,
     };
     return withDb(c.env, c.executionCtx, async (db) => {
       await db.collection("settings").updateOne({ _id: KEY }, { $set: set }, { upsert: true });

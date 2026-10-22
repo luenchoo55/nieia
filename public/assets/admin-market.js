@@ -46,7 +46,9 @@
       $("mkHours").value = m.hours || "";
       $("mkMinutes").value = m.minutesPer || 15;
       $("mkNote").value = m.note || "";
-      items = (m.services || []).map(function (s) { return { name: s.name, minutes: s.minutes || null, price: s.price || "", desc: s.desc || "" }; });
+      $("mkShowProducts").checked = m.showProducts !== false;
+      $("mkCurrency").value = m.currency === "MYR" ? "MYR" : "TWD";
+      items = (m.services || []).map(function (s) { return { name: s.name, minutes: s.minutes || null, free: Boolean(s.free), twd: s.twd == null ? null : s.twd, myr: s.myr == null ? null : s.myr, desc: s.desc || "" }; });
       renderItems();
     }
 
@@ -170,12 +172,60 @@
   function validItem(it, skip) {
     if (!it.name) return "請填寫項目名稱。";
     if (it.minutes != null && !(Number.isInteger(it.minutes) && it.minutes >= 1 && it.minutes <= 240)) return "分鐘要是 1 到 240 之間的整數。";
+    if ([it.twd, it.myr].some(function (n) { return n != null && !(Number.isInteger(n) && n >= 0 && n <= 1000000); })) return "金額要是整數（不用加小數點或符號）。";
     if (items.some(function (x, k) { return k !== skip && x.name === it.name; })) return "已經有同名的項目了。";
     return "";
   }
-  function readItem(name, min, price, desc) {
+  function readItem(name, min, pick, desc) {
     var m = min.value.trim();
-    return { name: name.value.trim(), minutes: m ? Number(m) : null, price: price.value.trim(), desc: desc.value.trim() };
+    var free = pick.free.checked;
+    var num = function (i) { var v = i.value.trim(); return !free && v ? Number(v) : null; };
+    return { name: name.value.trim(), minutes: m ? Number(m) : null, free: free, twd: num(pick.twd), myr: num(pick.myr), desc: desc.value.trim() };
+  }
+  // 每個項目各存台幣與馬幣價格；擺攤資訊的「價格幣別」決定排隊頁顯示哪一個
+  function money(sym, n) { return n == null ? "" : sym + Number(n).toLocaleString("en-US"); }
+  function priceText(it) {
+    if (it.free) return "隨喜";
+    var shown = $("mkCurrency").value === "MYR" ? "MYR" : "TWD";
+    var parts = [money("NT$", it.twd), money("RM ", it.myr)].filter(Boolean);
+    if (!parts.length) return "";
+    var missing = shown === "MYR" ? it.myr == null : it.twd == null;
+    return parts.join("／") + (missing ? "（" + (shown === "MYR" ? "馬幣" : "台幣") + "價格未填，排隊頁不顯示價格）" : "");
+  }
+  function pricePicker(it) {
+    var f = el("div", "field price-field wide");
+    var lbl = el("span", null, "價格（兩種都可以填，排隊頁依「價格幣別」顯示）");
+    f.appendChild(lbl);
+    var box = el("div", "price-pick");
+    function amount(sym, label, value) {
+      var wrap = el("span", "price-amt");
+      var s = el("span", "price-sym", sym);
+      s.setAttribute("aria-hidden", "true");
+      var i = el("input");
+      i.type = "number"; i.inputMode = "numeric"; i.min = 0; i.max = 1000000; i.step = 1;
+      i.setAttribute("aria-label", label);
+      i.value = value == null ? "" : value;
+      wrap.appendChild(s); wrap.appendChild(i);
+      box.appendChild(wrap);
+      return i;
+    }
+    var twd = amount("NT$", "台幣價格", it.twd);
+    var myr = amount("RM", "馬幣價格", it.myr);
+    var freeLbl = el("label", "price-free");
+    var free = el("input");
+    free.type = "checkbox";
+    free.checked = Boolean(it.free);
+    freeLbl.appendChild(free);
+    freeLbl.appendChild(document.createTextNode("隨喜"));
+    box.appendChild(freeLbl);
+    f.appendChild(box);
+    // 勾「隨喜」時不用填金額
+    function sync() {
+      [twd, myr].forEach(function (i) { i.parentNode.hidden = free.checked; if (free.checked) i.value = ""; });
+    }
+    free.addEventListener("change", sync);
+    sync();
+    return { field: f, free: free, twd: twd, myr: myr, reset: function () { twd.value = ""; myr.value = ""; free.checked = false; sync(); } };
   }
   function input(label, value, opts) {
     var f = el("label", "field" + (opts.wide ? " wide" : ""));
@@ -194,7 +244,7 @@
     var row = el("div", "item-add item-edit");
     var n = input("項目名稱", it.name, { max: 40 });
     var mi = input("分鐘", it.minutes, { type: "number" });
-    var p = input("價格", it.price, { max: 30, placeholder: "NT$200 或 隨喜" });
+    var p = pricePicker(it);
     var d = input("說明（客人會看到）", it.desc, { max: 500, wide: true, textarea: true });
     [n, mi, p, d].forEach(function (x) { row.appendChild(x.field); });
     var msg = el("p", "form-msg wide");
@@ -204,7 +254,7 @@
     var ok = el("button", "btn", "儲存修改"); ok.type = "button";
     var cancel = el("button", "btn btn-ghost", "取消"); cancel.type = "button";
     ok.addEventListener("click", function () {
-      var next = readItem(n.input, mi.input, p.input, d.input);
+      var next = readItem(n.input, mi.input, p, d.input);
       var err = validItem(next, i);
       if (err) { msg.textContent = err; return; }
       items[i] = next;
@@ -213,10 +263,10 @@
       saveItems("已更新項目");
     });
     cancel.addEventListener("click", function () { editing = -1; renderItems(); });
-    [n, mi, p, d].forEach(function (x) {
-      x.input.addEventListener("input", function () { msg.textContent = ""; });
-      x.input.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && x.input.tagName !== "TEXTAREA") { e.preventDefault(); ok.click(); }
+    [n.input, mi.input, p.twd, p.myr, p.free, d.input].forEach(function (x) {
+      x.addEventListener("input", function () { msg.textContent = ""; });
+      x.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && x.tagName === "INPUT") { e.preventDefault(); ok.click(); }
         if (e.key === "Escape") { e.preventDefault(); cancel.click(); }
       });
     });
@@ -236,7 +286,7 @@
       info.appendChild(el("strong", null, it.name));
       var meta = [];
       if (it.minutes) meta.push(it.minutes + " 分鐘");
-      if (it.price) meta.push(it.price);
+      if (priceText(it)) meta.push(priceText(it));
       if (meta.length) info.appendChild(el("span", null, meta.join("｜")));
       if (it.desc) info.appendChild(el("span", "item-desc", it.desc));
       row.appendChild(info);
@@ -260,21 +310,27 @@
   }
   $("mkIAdd").addEventListener("click", function () {
     var msg = $("mkIMsg");
-    var name = $("mkIName").value.trim();
-    var min = $("mkIMin").value.trim();
-    if (!name) { msg.textContent = "請填寫項目名稱。"; $("mkIName").focus(); return; }
-    var err = validItem({ name: name, minutes: min ? Number(min) : null }, -1);
+    var it = readItem($("mkIName"), $("mkIMin"), addPrice, $("mkIDesc"));
+    if (!it.name) { msg.textContent = "請填寫項目名稱。"; $("mkIName").focus(); return; }
+    var err = validItem(it, -1);
     if (err) { msg.textContent = err; return; }
     if (items.length >= 20) { msg.textContent = "最多 20 個項目。"; return; }
     msg.textContent = "";
-    items.push({ name: name, minutes: min ? Number(min) : null, price: $("mkIPrice").value.trim(), desc: $("mkIDesc").value.trim() });
-    ["mkIName", "mkIMin", "mkIPrice", "mkIDesc"].forEach(function (id) { $(id).value = ""; });
+    items.push(it);
+    ["mkIName", "mkIMin", "mkIDesc"].forEach(function (id) { $(id).value = ""; });
+    addPrice.reset();
     renderItems();
     saveItems("已新增項目");
     $("mkIName").focus();
   });
-  ["mkIName", "mkIMin", "mkIPrice", "mkIDesc"].forEach(function (id) {
+  ["mkIName", "mkIMin", "mkIDesc"].forEach(function (id) {
     $(id).addEventListener("keydown", function (e) { if (e.key === "Enter" && this.tagName !== "TEXTAREA") { e.preventDefault(); $("mkIAdd").click(); } });
+  });
+  // 新增表單的價格欄也用同一個元件，放在「說明」前面
+  var addPrice = pricePicker({});
+  $("mkIDesc").parentNode.parentNode.insertBefore(addPrice.field, $("mkIDesc").parentNode);
+  [addPrice.twd, addPrice.myr].forEach(function (i) {
+    i.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("mkIAdd").click(); } });
   });
   // 項目一變動就存，不用另外按儲存
   function saveItems(doneText) {
@@ -293,11 +349,22 @@
     return {
       location: $("mkLocation").value, address: $("mkAddress").value, hours: $("mkHours").value,
       minutesPer: Number($("mkMinutes").value), services: items, note: $("mkNote").value,
+      currency: $("mkCurrency").value,
+      showProducts: $("mkShowProducts").checked,
     };
   }
 
   ["mkLocation", "mkAddress", "mkHours", "mkMinutes", "mkNote"].forEach(function (id) {
     $(id).addEventListener("input", function () { formDirty = true; });
+  });
+  // 改幣別：所有項目一起改成顯示另一種幣別的價格，直接存
+  $("mkCurrency").addEventListener("change", function () {
+    if (editing < 0) renderItems();
+    saveItems("排隊頁改成顯示" + ($("mkCurrency").value === "MYR" ? "馬幣（RM）" : "台幣（NT$）") + "價格");
+  });
+  // 勾選後直接存，不用另外按儲存
+  $("mkShowProducts").addEventListener("change", function () {
+    saveItems(this.checked ? "排隊頁會顯示現場商品" : "排隊頁不顯示現場商品");
   });
   function save() {
     var msg = $("mkMsg");

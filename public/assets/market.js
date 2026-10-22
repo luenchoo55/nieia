@@ -39,6 +39,35 @@
   }
 
   // ---------- 擺攤狀態 ----------
+  // 現場商品：沿用聖照選物已上架的商品，只能看，不連到下單頁。商品不常變動，開頁時讀一次就好
+  var products = null, loadingProducts = false;
+  function shopPanel(on) {
+    var box = $("mShop");
+    if (!on || !window.nieiaArt || !window.nieiaPrice) { box.hidden = true; return; }
+    if (products) { box.hidden = !products.length; return; }
+    if (loadingProducts) return;
+    loadingProducts = true;
+    fetch("/api/products").then(function (r) { return r.json(); }).then(function (data) {
+      products = (data.ok && data.items) || [];
+      var list = $("mShopList");
+      list.innerHTML = "";
+      products.forEach(function (p) {
+        var tile = document.createElement("div");
+        tile.className = "tile product glass" + (p.soldOut ? " sold-out" : "");
+        tile.appendChild(window.nieiaArt(p.glyph, p.palette));
+        [["label", p.name], ["price", window.nieiaPrice(p, "product")], ["pdesc", p.desc]].forEach(function (x) {
+          if (!x[1]) return;
+          var s = document.createElement("span");
+          s.className = x[0];
+          s.textContent = x[1];
+          tile.appendChild(s);
+        });
+        list.appendChild(tile);
+      });
+      box.hidden = !products.length;
+    }).catch(function () { loadingProducts = false; });
+  }
+
   function renderMarket() {
     $("mLoading").hidden = true;
     if (!market || !market.active) {
@@ -69,6 +98,7 @@
       ul.appendChild(li);
     });
     ul.hidden = !market.services || !market.services.length;
+    shopPanel(market.showProducts);
     $("mServing").textContent = market.serving != null ? market.serving + " 號" : "—";
     $("mWaiting").textContent = market.waiting;
     $("mEst").textContent = est(market.estMinutes);

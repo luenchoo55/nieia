@@ -580,8 +580,14 @@ market = f'''{appbar("擺攤排隊", "在攤位現場取號，輪到你時這個
       <p class="form-msg" id="takeMsg" role="alert"></p>
       <button class="btn btn-primary btn-block" id="takeBtn" type="submit">取號</button>
     </form>
+
+    <section class="m-shop glass" id="mShop" hidden aria-labelledby="mShopTitle">
+      <h2 id="mShopTitle">現場商品</h2>
+      <p class="muted">這些聖照卡都可以在攤位上看到實品，有興趣歡迎直接到攤位詢問。</p>
+      <div class="tiles shop" id="mShopList"></div>
+    </section>
   </div>'''
-page('market.html', '擺攤排隊｜阿綸涅亞 NIEIA', '', market, ['/assets/market.js'])
+page('market.html', '擺攤排隊｜阿綸涅亞 NIEIA', '', market, ['/assets/glyphs.js', '/assets/catalog.js', '/assets/market.js'])
 
 # ---------------- 線上簽到 ----------------
 checkin = f'''{appbar("線上簽到", "上課當天點開這一頁，輸入報名時填寫的姓名或 Email，就完成這一堂的簽到。")}

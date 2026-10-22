@@ -575,6 +575,9 @@ fieldset.field legend { padding: 0; margin-bottom: .35rem; }
 .m-services .ms-name strong { font-weight: 500; color: var(--ink); }
 .m-services .ms-name small { color: var(--ink-soft); font-size: var(--step--2); line-height: 1.5; }
 .m-services .ms-desc { white-space: pre-line; overflow-wrap: anywhere; }
+.m-shop { padding: 1.3rem 1.2rem; display: grid; gap: .8rem; }
+.m-shop h2 { font-size: var(--step-1); letter-spacing: .08em; }
+.m-shop .tile:hover { transform: none; } /* 只能看，不能點 */
 
 /* ---------- 療癒項目詳細介紹彈窗 ---------- */
 html.no-scroll, html.no-scroll body { overflow: hidden; }

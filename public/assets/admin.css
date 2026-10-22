@@ -209,11 +209,17 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .item-row .actions { display: flex; gap: .3rem; }
 .item-row .actions button { border: 1px solid var(--line); background: rgba(255, 255, 255, .7); border-radius: 999px; padding: .25rem .75rem; font-size: var(--step--1); cursor: pointer; min-height: 36px; color: var(--ink); }
 .item-row .actions button:disabled { opacity: .35; cursor: default; }
-.item-add { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.2fr); gap: .8rem; align-items: end; padding: 1rem; border-radius: var(--r-md); background: var(--tint); }
+.item-add { display: grid; grid-template-columns: minmax(0, 3fr) minmax(5.5em, 1fr); gap: .8rem; align-items: end; padding: 1rem; border-radius: var(--r-md); background: var(--tint); }
 .item-add .wide { grid-column: 1 / -1; }
 .item-add .btn { grid-column: 1 / -1; justify-self: start; }
-@media (max-width: 520px) { .item-add { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .item-add .field:first-child { grid-column: 1 / -1; } }
 .item-edit { border: 1px solid var(--line); }
+.price-pick { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; min-height: 48px; }
+.price-amt { position: relative; flex: 1 1 8em; min-width: 0; }
+.price-amt[hidden] { display: none; }
+.price-sym { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--ink-soft); pointer-events: none; font-size: var(--step-0); }
+.field .price-amt input[type="number"]:not([type="checkbox"]) { padding-left: 3.1em; } /* 蓋過 site.css 的 .field input:not(...) */
+.price-free { display: flex; align-items: center; gap: .35rem; white-space: nowrap; color: var(--ink); font-size: var(--step--1); cursor: pointer; min-height: 44px; }
+.field .price-free input { width: 18px; height: 18px; min-height: 0; padding: 0; margin: 0; accent-color: var(--button); }
 .item-edit .edit-actions { grid-column: 1 / -1; display: flex; gap: .6rem; flex-wrap: wrap; }
 .item-edit .edit-actions .btn { grid-column: auto; }
 @media (max-width: 520px) { .item-row { grid-template-columns: minmax(0, 1fr); } .item-row .actions { justify-content: flex-end; } }

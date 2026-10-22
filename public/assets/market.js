@@ -62,10 +62,8 @@
       var name = document.createElement("strong");
       name.textContent = s.name;
       left.appendChild(name);
-      var meta = [];
-      if (s.minutes) meta.push("約 " + s.minutes + " 分鐘");
-      if (s.desc) meta.push(s.desc);
-      if (meta.length) { var m = document.createElement("small"); m.textContent = meta.join("｜"); left.appendChild(m); }
+      if (s.minutes) { var m = document.createElement("small"); m.textContent = "約 " + s.minutes + " 分鐘"; left.appendChild(m); }
+      if (s.desc) { var d = document.createElement("small"); d.className = "ms-desc"; d.textContent = s.desc; left.appendChild(d); }
       li.appendChild(left);
       if (s.price) { var b = document.createElement("span"); b.textContent = s.price; li.appendChild(b); }
       ul.appendChild(li);

@@ -52,7 +52,7 @@ function parseServices(input) {
         name: str(s.name, 40),
         minutes: Number.isInteger(minutes) && minutes >= 1 && minutes <= 240 ? minutes : null,
         price: str(s.price, 30),
-        desc: str(s.desc, 120),
+        desc: str(s.desc, 500),
       };
     })
     .filter((s) => s.name)

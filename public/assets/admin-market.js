@@ -180,8 +180,9 @@
   function input(label, value, opts) {
     var f = el("label", "field" + (opts.wide ? " wide" : ""));
     f.appendChild(el("span", null, label));
-    var i = el("input");
-    i.type = opts.type || "text";
+    var i = el(opts.textarea ? "textarea" : "input");
+    if (opts.textarea) i.rows = 3;
+    else i.type = opts.type || "text";
     if (opts.type === "number") { i.min = 1; i.max = 240; i.inputMode = "numeric"; }
     if (opts.max) i.maxLength = opts.max;
     if (opts.placeholder) i.placeholder = opts.placeholder;
@@ -194,7 +195,7 @@
     var n = input("項目名稱", it.name, { max: 40 });
     var mi = input("分鐘", it.minutes, { type: "number" });
     var p = input("價格", it.price, { max: 30, placeholder: "NT$200 或 隨喜" });
-    var d = input("說明（客人會看到）", it.desc, { max: 120, wide: true });
+    var d = input("說明（客人會看到）", it.desc, { max: 500, wide: true, textarea: true });
     [n, mi, p, d].forEach(function (x) { row.appendChild(x.field); });
     var msg = el("p", "form-msg wide");
     msg.setAttribute("role", "status");
@@ -215,7 +216,7 @@
     [n, mi, p, d].forEach(function (x) {
       x.input.addEventListener("input", function () { msg.textContent = ""; });
       x.input.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") { e.preventDefault(); ok.click(); }
+        if (e.key === "Enter" && x.input.tagName !== "TEXTAREA") { e.preventDefault(); ok.click(); }
         if (e.key === "Escape") { e.preventDefault(); cancel.click(); }
       });
     });
@@ -273,7 +274,7 @@
     $("mkIName").focus();
   });
   ["mkIName", "mkIMin", "mkIPrice", "mkIDesc"].forEach(function (id) {
-    $(id).addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); $("mkIAdd").click(); } });
+    $(id).addEventListener("keydown", function (e) { if (e.key === "Enter" && this.tagName !== "TEXTAREA") { e.preventDefault(); $("mkIAdd").click(); } });
   });
   // 項目一變動就存，不用另外按儲存
   function saveItems(doneText) {

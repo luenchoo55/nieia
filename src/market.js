@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { withDb, ensureIndexes } from "./db.js";
 import { requireAdmin, sameOrigin } from "./auth.js";
+import { notifyMarketTicket } from "./notify.js";
 
 // 擺攤模式：設定存在 settings 的 "market" 文件，排隊號碼存在 tickets
 const KEY = "market";
@@ -157,6 +158,7 @@ export function mountMarket(app) {
       const res = await tickets.insertOne(ticket);
       purge(c);
       const aheadList = await tickets.find({ sessionId: m.sessionId, status: "waiting", number: { $lt: number } }).limit(500).toArray();
+      notifyMarketTicket(c, m, ticket, aheadList.length);
       return c.json({ ok: true, ticket: { id: res.insertedId.toString(), token: ticket.token, number, name, service, status: "waiting", ahead: aheadList.length, estMinutes: sumMinutes(m, aheadList) } });
     });
   });

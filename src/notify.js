@@ -145,3 +145,25 @@ export function notifyWorkshopSignup(c, w, a) {
   );
   c.executionCtx.waitUntil(send(c.env, `工作坊報名：${w.title}｜${a.name}`, html, a.email).catch((e) => console.error(e)));
 }
+
+// 擺攤現場取號
+export function notifyMarketTicket(c, m, t, ahead) {
+  const adminUrl = new URL("/admin", c.req.url).toString();
+  const s = (m.services || []).find((x) => x.name === t.service);
+  const html = layout(
+    `擺攤有人取號：${t.number} 號`,
+    "客人剛在排隊頁取了號碼，可以到後台的「擺攤」分頁叫號。",
+    [
+      ["號碼", `${t.number} 號`],
+      ["名字", t.name],
+      ["項目", t.service],
+      ["價格", s?.price],
+      ["電話", t.phone],
+      ["前面還有", `${ahead} 位`],
+      ["地點", m.location],
+    ],
+    adminUrl
+  );
+  const subject = `擺攤取號 ${t.number} 號：${t.name}${t.service ? "｜" + t.service : ""}`;
+  c.executionCtx.waitUntil(send(c.env, subject, html).catch((e) => console.error(e)));
+}

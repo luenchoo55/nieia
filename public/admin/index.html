@@ -192,6 +192,12 @@
         <button class="btn" id="mkQrDl" type="button">下載 QR Code 圖片</button>
         <div class="copy-row"><input id="mkUrl" readonly aria-label="排隊頁網址"><button class="btn btn-ghost" id="mkCopy" type="button">複製網址</button></div>
       </section>
+
+      <section class="glass form-card" aria-labelledby="mk-h-title">
+        <div class="block-head"><h2 id="mk-h-title">擺攤紀錄</h2><span class="count" id="mkHCount"></span></div>
+        <p class="hint">每一場擺攤的取號名單。可以下載成 Excel 留存，下載後就能刪除，節省雲端空間。</p>
+        <div class="mk-history" id="mkHistory"></div>
+      </section>
     </div>
 
     <div class="panel-stack" id="panel-services" role="tabpanel" aria-labelledby="tab-services" hidden>
@@ -229,6 +235,7 @@
 <script src="/assets/admin-catalog.js"></script>
 <script src="/assets/admin-bookings.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="/assets/xlsx.js"></script>
 <script src="/assets/admin-market.js"></script>
 <script src="/assets/admin-payment.js"></script>
 </body>

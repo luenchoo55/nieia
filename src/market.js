@@ -151,8 +151,10 @@ export function mountMarket(app) {
       if (!prev) return bad(c, "擺攤剛剛結束了。", 409);
       const number = prev.nextNumber || 1;
 
+      // 記下取號當時的價格，之後改了項目價格，擺攤紀錄也不會跟著變
+      const price = (m.services.find((s) => s.name === service) || {}).price || "";
       const ticket = {
-        sessionId: m.sessionId, number, name, phone, service,
+        sessionId: m.sessionId, number, name, phone, service, price,
         status: "waiting", token: newToken(), ip: ip(c), createdAt: new Date(),
       };
       const res = await tickets.insertOne(ticket);
@@ -253,11 +255,17 @@ export function mountMarket(app) {
       const m = await getMarket(db);
       if (!m.location) return bad(c, "請先填寫擺攤地點並儲存。");
       if (m.active) return c.json(await adminState(db));
+      const sessionId = new ObjectId().toString();
+      const startedAt = new Date();
       await db.collection("settings").updateOne(
         { _id: KEY },
-        { $set: { active: true, accepting: true, sessionId: new ObjectId().toString(), nextNumber: 1, startedAt: new Date() } },
+        { $set: { active: true, accepting: true, sessionId, nextNumber: 1, startedAt } },
         { upsert: true }
       );
+      // 每一場存一筆紀錄，下一場改了地點也不會蓋掉
+      await db.collection("marketSessions").insertOne({
+        _id: sessionId, location: m.location, address: m.address, hours: m.hours, services: m.services, startedAt,
+      });
       purge(c);
       return c.json(await adminState(db));
     })
@@ -265,7 +273,10 @@ export function mountMarket(app) {
 
   app.post("/api/admin/market/end", (c) =>
     withDb(c.env, c.executionCtx, async (db) => {
-      await db.collection("settings").updateOne({ _id: KEY }, { $set: { active: false, endedAt: new Date() } }, { upsert: true });
+      const m = await getMarket(db);
+      const endedAt = new Date();
+      await db.collection("settings").updateOne({ _id: KEY }, { $set: { active: false, endedAt } }, { upsert: true });
+      if (m.active && m.sessionId) await db.collection("marketSessions").updateOne({ _id: m.sessionId }, { $set: { endedAt } });
       purge(c);
       return c.json(await adminState(db));
     })
@@ -324,4 +335,59 @@ export function mountMarket(app) {
       return c.json(await adminState(db));
     });
   });
+
+  // ---------- 擺攤紀錄 ----------
+  // 舊的場次（加上紀錄功能之前）沒有 marketSessions 文件，從號碼本身推算日期；最後一場用目前的擺攤設定補上地點
+  async function sessionList(db) {
+    const m = await getMarket(db);
+    const [docs, groups] = await Promise.all([
+      db.collection("marketSessions").find({}).toArray(),
+      db.collection("tickets").aggregate([
+        { $group: { _id: "$sessionId", total: { $sum: 1 }, statuses: { $push: "$status" }, first: { $min: "$createdAt" }, last: { $max: "$createdAt" }, lastDone: { $max: "$doneAt" } } },
+      ]).toArray(),
+    ]);
+    const byId = new Map(docs.map((d) => [d._id, d]));
+    const ids = new Set([...docs.map((d) => d._id), ...groups.map((g) => g._id).filter(Boolean)]);
+    const counts = new Map(groups.map((g) => [g._id, g]));
+    return [...ids].map((id) => {
+      const d = byId.get(id) || (id === m.sessionId ? { location: m.location, address: m.address, startedAt: m.startedAt, endedAt: m.active ? null : m.endedAt } : {});
+      const g = counts.get(id) || { total: 0, statuses: [] };
+      const n = (s) => g.statuses.filter((x) => x === s).length;
+      return {
+        id,
+        location: d.location || "",
+        address: d.address || "",
+        startedAt: d.startedAt || g.first || null,
+        endedAt: d.endedAt || (id === m.sessionId && m.active ? null : g.lastDone || g.last || null),
+        current: Boolean(m.active && id === m.sessionId),
+        total: g.total, done: n("done"), skipped: n("skipped"), cancelled: n("cancelled"),
+      };
+    }).sort((a, b) => new Date(b.startedAt || 0) - new Date(a.startedAt || 0));
+  }
+
+  app.get("/api/admin/market/history", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => c.json({ ok: true, sessions: await sessionList(db) }))
+  );
+
+  app.get("/api/admin/market/history/:sid", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const sid = c.req.param("sid");
+      const list = await db.collection("tickets").find({ sessionId: sid }).sort({ number: 1 }).toArray();
+      return c.json({
+        ok: true,
+        tickets: list.map(({ _id, token, ip: _ip, sessionId, ...t }) => ({ id: _id.toString(), ...t })),
+      });
+    })
+  );
+
+  app.delete("/api/admin/market/history/:sid", (c) =>
+    withDb(c.env, c.executionCtx, async (db) => {
+      const sid = c.req.param("sid");
+      const m = await getMarket(db);
+      if (m.active && m.sessionId === sid) return bad(c, "這一場還在擺攤中，請先結束擺攤再刪除。", 409);
+      const res = await db.collection("tickets").deleteMany({ sessionId: sid });
+      await db.collection("marketSessions").deleteOne({ _id: sid });
+      return c.json({ ok: true, deleted: res.deletedCount, sessions: await sessionList(db) });
+    })
+  );
 }

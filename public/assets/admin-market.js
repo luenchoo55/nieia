@@ -131,6 +131,7 @@
         b.disabled = false;
         if (!r.ok) { A.toast(r.message || "無法開始擺攤"); return; }
         A.toast("已開始擺攤，首頁會顯示提醒");
+        loadHistory();
         startPolling();
       });
     };
@@ -151,7 +152,7 @@
     b.disabled = true;
     call("/api/admin/market/end", "POST").then(function (r) {
       b.disabled = false;
-      if (r.ok) A.toast("已結束擺攤，首頁提醒已關閉");
+      if (r.ok) { A.toast("已結束擺攤，首頁提醒已關閉"); loadHistory(); }
     });
   });
 
@@ -376,6 +377,163 @@
     else $("mkUrl").select();
   });
 
+  // ---------- 擺攤紀錄 ----------
+  var WEEK = "日一二三四五六";
+  var STATUS = { waiting: "等候中", serving: "服務中", done: "完成", skipped: "過號", cancelled: "已取消" };
+  var downloaded = {}; // 這次打開後台下載過的場次，刪除時少問一句
+  var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+  function day(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    return d.getFullYear() + "/" + pad(d.getMonth() + 1) + "/" + pad(d.getDate()) + "（" + WEEK[d.getDay()] + "）";
+  }
+  function hm(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    return pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function stamp(iso) { return iso ? day(iso).replace(/（.）/, "") + " " + hm(iso) : ""; }
+  function sessionTitle(s) {
+    return (day(s.startedAt) || "日期不明") + " " + (s.location || "地點未記錄");
+  }
+
+  function loadHistory() {
+    return A.api("/api/admin/market/history").then(function (r) {
+      if (r.status === 401) { A.checkSession(); return; }
+      if (r.ok) renderHistory(r.sessions || []);
+    });
+  }
+
+  function renderHistory(list) {
+    var box = $("mkHistory");
+    box.innerHTML = "";
+    $("mkHCount").textContent = list.length ? "共 " + list.length + " 場" : "";
+    if (!list.length) { box.appendChild(el("p", "hint", "還沒有擺攤紀錄。")); return; }
+    list.forEach(function (s) { box.appendChild(historyRow(s)); });
+  }
+
+  function historyRow(s) {
+    var row = el("div", "mk-h-row");
+    var info = el("div", "q-info");
+    info.appendChild(el("strong", null, sessionTitle(s)));
+    var time = s.startedAt ? hm(s.startedAt) + (s.endedAt ? "–" + hm(s.endedAt) : "") : "";
+    var meta = [];
+    if (time) meta.push(time);
+    if (s.current) meta.push("擺攤中");
+    meta.push("取號 " + s.total + " 位");
+    if (s.done) meta.push("完成 " + s.done);
+    if (s.skipped) meta.push("過號 " + s.skipped);
+    if (s.cancelled) meta.push("取消 " + s.cancelled);
+    info.appendChild(el("span", null, meta.join("｜")));
+    if (s.address) info.appendChild(el("span", null, s.address));
+    row.appendChild(info);
+
+    var detail = el("div", "mk-h-detail");
+    detail.hidden = true;
+    var tickets = null;
+    function fetchTickets() {
+      if (tickets) return Promise.resolve(tickets);
+      return A.api("/api/admin/market/history/" + encodeURIComponent(s.id)).then(function (r) {
+        if (r.status === 401) { A.checkSession(); return null; }
+        if (!r.ok) { A.toast(r.message || "讀取失敗"); return null; }
+        tickets = r.tickets || [];
+        return tickets;
+      });
+    }
+
+    var actions = el("div", "actions");
+    var view = btn("查看名單", function (b) {
+      if (!detail.hidden) { detail.hidden = true; b.textContent = "查看名單"; return; }
+      b.disabled = true;
+      fetchTickets().then(function (list) {
+        b.disabled = false;
+        if (!list) return;
+        detail.innerHTML = "";
+        if (!list.length) detail.appendChild(el("p", "hint", "這一場沒有人取號。"));
+        list.forEach(function (t) { detail.appendChild(pastTicket(t)); });
+        detail.hidden = false;
+        b.textContent = "收起名單";
+      });
+    });
+    var dl = btn("下載 Excel", function (b) {
+      b.disabled = true;
+      fetchTickets().then(function (list) {
+        b.disabled = false;
+        if (!list) return;
+        downloadExcel(s, list);
+        downloaded[s.id] = true;
+      });
+    });
+    var delArmed = null;
+    var del = btn("刪除", function (b) {
+      if (s.current) { A.toast("這一場還在擺攤中，請先結束擺攤再刪除"); return; }
+      if (!delArmed) {
+        b.textContent = downloaded[s.id] ? "確定刪除？" : "還沒下載，確定刪除？";
+        b.classList.add("confirm");
+        delArmed = setTimeout(function () { delArmed = null; b.textContent = "刪除"; b.classList.remove("confirm"); }, 5000);
+        return;
+      }
+      clearTimeout(delArmed); delArmed = null;
+      b.disabled = true;
+      A.api("/api/admin/market/history/" + encodeURIComponent(s.id), { method: "DELETE" }).then(function (r) {
+        b.disabled = false;
+        if (r.status === 401) { A.checkSession(); return; }
+        if (!r.ok) { A.toast(r.message || "刪除失敗"); b.textContent = "刪除"; b.classList.remove("confirm"); return; }
+        A.toast("已刪除 " + sessionTitle(s) + " 的紀錄");
+        renderHistory(r.sessions || []);
+        load();
+      });
+    });
+    del.classList.add("danger");
+    del.disabled = s.current;
+    actions.appendChild(view); actions.appendChild(dl); actions.appendChild(del);
+    row.appendChild(actions);
+    row.appendChild(detail);
+    return row;
+  }
+
+  function pastTicket(t) {
+    var r = el("div", "q-row is-past");
+    r.appendChild(el("span", "q-num", String(t.number)));
+    var info = el("div", "q-info");
+    info.appendChild(el("strong", null, t.name));
+    var meta = [];
+    if (t.service) meta.push(t.service + (t.price ? " " + t.price : ""));
+    meta.push(STATUS[t.status] || t.status);
+    meta.push(hm(t.createdAt) + " 取號");
+    info.appendChild(el("span", null, meta.join("｜")));
+    if (t.phone) {
+      var tel = el("a", "q-tel", t.phone);
+      tel.href = "tel:" + t.phone;
+      info.appendChild(tel);
+    }
+    r.appendChild(info);
+    return r;
+  }
+
+  function downloadExcel(s, list) {
+    if (!window.nieiaXlsx) { A.toast("Excel 工具沒有載入，請重新整理後再試"); return; }
+    var rows = [
+      ["擺攤紀錄", sessionTitle(s)],
+      ["攤位位置", s.address || ""],
+      ["時間", s.startedAt ? stamp(s.startedAt) + (s.endedAt ? " – " + hm(s.endedAt) : "") : ""],
+      ["取號人數", String(s.total), "完成 " + s.done + "｜過號 " + s.skipped + "｜取消 " + s.cancelled],
+      [],
+      ["號碼", "名字", "電話", "項目", "價格", "狀態", "取號時間", "叫號時間", "結束時間"],
+    ];
+    list.forEach(function (t) {
+      rows.push([String(t.number), t.name, t.phone, t.service, t.price, STATUS[t.status] || t.status, stamp(t.createdAt), stamp(t.calledAt), stamp(t.doneAt)]);
+    });
+    var d = s.startedAt ? new Date(s.startedAt) : new Date();
+    var name = "擺攤紀錄_" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + (s.location ? "_" + s.location.replace(/[\\\/:*?"<>|\s]+/g, "") : "") + ".xlsx";
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(window.nieiaXlsx("擺攤紀錄", rows, [8, 14, 14, 18, 12, 10, 18, 18, 18]));
+    a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    A.toast("已下載 " + name);
+  }
+
   // ---------- 擺攤中每 15 秒自動更新排隊 ----------
   function startPolling() {
     if (timer) return;
@@ -385,6 +543,6 @@
     }, 15000);
   }
 
-  $("tab-market").addEventListener("click", function () { load().then(startPolling); });
-  document.addEventListener("nieia:dash", function () { load().then(startPolling); });
+  $("tab-market").addEventListener("click", function () { load().then(startPolling); loadHistory(); });
+  document.addEventListener("nieia:dash", function () { load().then(startPolling); loadHistory(); });
 })();

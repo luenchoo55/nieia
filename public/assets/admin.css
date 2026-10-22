@@ -159,6 +159,20 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .q-row .actions button:hover { border-color: var(--button); color: var(--button); }
 .q-past summary { cursor: pointer; color: var(--ink-soft); font-size: var(--step--1); min-height: 36px; display: flex; align-items: center; }
 .q-past .q-list { margin-top: .4rem; }
+.mk-history { display: grid; gap: 8px; }
+.mk-h-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .6rem .8rem; padding: .7rem .9rem; border-radius: var(--r-sm); background: rgba(255, 255, 255, .55); border: 1px solid var(--line); }
+.mk-h-row .actions { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
+.mk-h-row .actions button { border: 1px solid var(--line); background: rgba(255, 255, 255, .7); border-radius: 999px; padding: .3rem .9rem; font-size: var(--step--1); cursor: pointer; min-height: 38px; color: var(--ink); }
+.mk-h-row .actions button:hover:not(:disabled) { border-color: var(--button); color: var(--button); }
+.mk-h-row .actions button:disabled { opacity: .4; cursor: default; }
+.mk-h-row .actions .danger { color: #9B2C4A; }
+.mk-h-row .actions .danger.confirm { background: #9B2C4A; color: #fff; border-color: #9B2C4A; }
+.mk-h-detail { grid-column: 1 / -1; display: grid; gap: 6px; }
+.mk-h-detail[hidden] { display: none; }
+@media (max-width: 640px) {
+  .mk-h-row { grid-template-columns: minmax(0, 1fr); }
+  .mk-h-row .actions { justify-content: flex-start; }
+}
 .qr { width: min(100%, 240px); aspect-ratio: 1; background: #fff; border-radius: var(--r-sm); padding: 8px; }
 .qr svg { width: 100%; height: 100%; display: block; }
 .qr-card { justify-items: start; }

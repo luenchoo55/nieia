@@ -9,6 +9,22 @@
     return parts.join("｜");
   }
 
+  // 讀取列表：先用這台裝置上次存下的資料馬上畫出來，再到網站拿最新的；內容有變才重畫
+  window.nieiaLoad = function (url, render) {
+    var key = "nieia-cache:" + url, last = null;
+    try { last = localStorage.getItem(key); } catch (e) { /* 無痕模式 */ }
+    if (last) {
+      try { render(JSON.parse(last)); } catch (e) { last = null; }
+    }
+    return fetch(url).then(function (r) { return r.text(); }).then(function (text) {
+      if (text === last) return;
+      var data = JSON.parse(text);
+      if (!data.ok) return;
+      try { localStorage.setItem(key, text); } catch (e) { /* 無痕模式 */ }
+      render(data);
+    });
+  };
+
   window.nieiaPrice = function (item, kind) {
     if (kind === "product") {
       if (item.soldOut) return "已售完";
@@ -199,7 +215,7 @@
   // ---------- 療癒服務頁 ----------
   var svcList = document.getElementById("svc-list");
   if (svcList) {
-    fetch("/api/services").then(function (r) { return r.json(); }).then(function (data) {
+    window.nieiaLoad("/api/services", function (data) {
       if (!data.ok || !data.items) return;
       svcList.innerHTML = "";
       data.items.forEach(function (s) {
@@ -235,7 +251,7 @@
   // ---------- 聖照選物頁 ----------
   var shop = document.getElementById("shop-list");
   if (shop) {
-    fetch("/api/products").then(function (r) { return r.json(); }).then(function (data) {
+    window.nieiaLoad("/api/products", function (data) {
       if (!data.ok || !data.items) return;
       shop.innerHTML = "";
       data.items.forEach(function (p) {

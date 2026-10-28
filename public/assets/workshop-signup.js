@@ -188,14 +188,16 @@
     });
   }
 
-  fetch("/api/workshops").then(function (r) { return r.json(); }).then(function (data) {
-    if (!data.ok || !data.items || !data.items.length) { openFromUrl(); return; }
+  // 先畫上次存下的列表，拿到最新的再重畫；專屬網址只在第一次畫好時打開
+  var urlHandled = false;
+  function onceFromUrl() { if (!urlHandled) { urlHandled = true; openFromUrl(); } }
+  window.nieiaLoad("/api/workshops", function (data) {
+    items = data.ok && data.items ? data.items : [];
     host.innerHTML = "";
-    items = data.items;
     refreshCards();
-    box.hidden = false;
-    openFromUrl();
-  }).catch(function () { /* 讀取失敗就不顯示 */ });
+    box.hidden = !items.length;
+    onceFromUrl();
+  }).then(onceFromUrl, onceFromUrl); // 讀取失敗就不顯示列表，專屬網址照樣打開
 
   // ---------- 報名彈窗 ----------
   var sheet = null, lastFocus = null;

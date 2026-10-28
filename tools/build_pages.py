@@ -1,5 +1,5 @@
 # 產生 public/ 下的頁面：python3 tools/build_pages.py public
-import os, sys
+import os, re, sys
 out = sys.argv[1]
 
 def svg(body, vb="0 0 100 100", stroke="#fff", sw=2.4, fill="none"):
@@ -52,6 +52,9 @@ def tabbar(cur):
 def appbar(title, sub, back=True, centered=False, back_href="/", back_label="首頁"):
     b = f'<a class="back" href="{back_href}">{BACK}{back_label}</a>' if back else ''
     c = ' centered' if centered else ''
+    # 一句包成一段，放不下時整句換到下一行，不會從句子中間斷開
+    if '。' in sub:
+        sub = ''.join(f'<span class="sent">{s}</span>' for s in re.findall(r'[^。]+。?', sub))
     return f'''  <header class="appbar{c}">
     {b}
     <h1>{title}</h1>

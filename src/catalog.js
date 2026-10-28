@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { withDb } from "./db.js";
+import { withDb, cachedJson, purgeCached } from "./db.js";
 import { requireAdmin } from "./auth.js";
 import { detailFor } from "./details.js";
 
@@ -176,39 +176,22 @@ async function readJson(c) {
   try { return await c.req.json(); } catch { return null; }
 }
 
-const edgeCache = () => (typeof caches !== "undefined" ? caches.default : null);
-const PUBLIC_TTL = 60;
+const PUBLIC_TTL = 60; // 前台資料超過 60 秒，就在背景重新查一次資料庫
 
 function mountOne(app, publicPath, adminPath, schema) {
   const col = (db) => db.collection(schema.collection);
   const listAll = async (db) => (await col(db).find({}).sort({ order: 1 }).toArray()).map(present);
-  const cacheKey = (c) => new Request(new URL(publicPath, c.req.url).toString());
-
   // 後台有變更時，清掉前台的快取，讓客人馬上看到新內容
-  const purge = (c) => {
-    const cache = edgeCache();
-    if (cache) c.executionCtx.waitUntil(cache.delete(cacheKey(c)));
-  };
+  const purge = (c) => purgeCached(c, publicPath);
 
   // 公開：只回傳已上架的
-  app.get(publicPath, async (c) => {
-    const cache = edgeCache();
-    if (cache) {
-      const hit = await cache.match(cacheKey(c));
-      if (hit) return new Response(hit.body, { status: 200, headers: { "content-type": "application/json; charset=UTF-8", "x-cache": "hit" } });
-    }
-    return withDb(c.env, c.executionCtx, async (db) => {
+  app.get(publicPath, (c) =>
+    cachedJson(c, publicPath, PUBLIC_TTL, async (db) => {
       await seedOnce(db, schema);
       const docs = await col(db).find({ published: true }).sort({ order: 1 }).toArray();
-      const body = JSON.stringify({ ok: true, items: docs.map(present) });
-      if (cache) {
-        c.executionCtx.waitUntil(cache.put(cacheKey(c), new Response(body, {
-          headers: { "content-type": "application/json; charset=UTF-8", "cache-control": `public, max-age=${PUBLIC_TTL}` },
-        })));
-      }
-      return new Response(body, { status: 200, headers: { "content-type": "application/json; charset=UTF-8" } });
-    });
-  });
+      return { ok: true, items: docs.map(present) };
+    })
+  );
 
   app.use(adminPath, requireAdmin);
   app.use(adminPath + "/*", requireAdmin);

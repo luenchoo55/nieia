@@ -1,12 +1,12 @@
 import { ObjectId } from "mongodb";
-import { withDb, ensureIndexes } from "./db.js";
+import { withDb, ensureIndexes, cachedJson, purgeCached } from "./db.js";
 import { requireAdmin, sameOrigin } from "./auth.js";
 import { notifyMarketTicket } from "./notify.js";
 
 // 擺攤模式：設定存在 settings 的 "market" 文件，排隊號碼存在 tickets
 const KEY = "market";
 const MAX_ACTIVE_PER_IP = 3;
-const PUBLIC_TTL = 10; // 前台每 10 秒最多查一次資料庫
+const PUBLIC_TTL = 10; // 前台資料超過 10 秒，就在背景重新查一次資料庫
 
 const bad = (c, message, status = 400) => c.json({ ok: false, message }, status);
 const str = (v, max) => (v == null ? "" : String(v).trim().slice(0, max));
@@ -127,32 +127,16 @@ function publicMarket(m, q) {
   };
 }
 
-const edgeCache = () => (typeof caches !== "undefined" ? caches.default : null);
-function purge(c) {
-  const cache = edgeCache();
-  if (cache) c.executionCtx.waitUntil(cache.delete(new Request(new URL("/api/market", c.req.url).toString())));
-}
+const purge = (c) => purgeCached(c, "/api/market");
 
 export function mountMarket(app) {
   // ---------- 前台：擺攤狀態（首頁提醒與排隊頁共用） ----------
-  app.get("/api/market", async (c) => {
-    const cache = edgeCache();
-    const key = new Request(new URL("/api/market", c.req.url).toString());
-    if (cache) {
-      const hit = await cache.match(key);
-      if (hit) return new Response(hit.body, { headers: { "content-type": "application/json; charset=UTF-8" } });
-    }
-    return withDb(c.env, c.executionCtx, async (db) => {
+  app.get("/api/market", (c) =>
+    cachedJson(c, "/api/market", PUBLIC_TTL, async (db) => {
       const m = await getMarket(db);
-      const body = JSON.stringify({ ok: true, market: publicMarket(m, await queueState(db, m)) });
-      if (cache) {
-        c.executionCtx.waitUntil(cache.put(key, new Response(body, {
-          headers: { "content-type": "application/json; charset=UTF-8", "cache-control": `public, max-age=${PUBLIC_TTL}` },
-        })));
-      }
-      return new Response(body, { headers: { "content-type": "application/json; charset=UTF-8" } });
-    });
-  });
+      return { ok: true, market: publicMarket(m, await queueState(db, m)) };
+    })
+  );
 
   // ---------- 前台：取號 ----------
   app.post("/api/market/tickets", async (c) => {

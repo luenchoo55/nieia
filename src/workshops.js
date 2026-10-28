@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { withDb, ensureIndexes } from "./db.js";
+import { withDb, ensureIndexes, cachedJson, purgeCached } from "./db.js";
 import { requireAdmin, sameOrigin } from "./auth.js";
 import { notifyWorkshopSignup } from "./notify.js";
 import { REGIONS, getPayment, publicPayment } from "./payment.js";
@@ -265,6 +265,14 @@ export function mountWorkshops(app) {
   app.use("/api/admin/certificates", requireAdmin);
   app.use("/api/admin/certificates/*", requireAdmin);
 
+  // 後台改了工作坊（新增、修改、學員、發證書…），清掉前台工作坊列表的快取
+  const purgeList = async (c, next) => {
+    await next();
+    if (c.req.method !== "GET" && c.res.ok) purgeCached(c, "/api/workshops");
+  };
+  app.use("/api/admin/workshops", purgeList);
+  app.use("/api/admin/workshops/*", purgeList);
+
   async function readBody(c) {
     try { return await c.req.json(); } catch { return null; }
   }
@@ -507,7 +515,7 @@ export function mountWorkshops(app) {
   // ================= 學員 =================
   // ---------- 前台：近期工作坊與報名 ----------
   app.get("/api/workshops", (c) =>
-    withDb(c.env, c.executionCtx, async (db) => {
+    cachedJson(c, "/api/workshops", 60, async (db) => {
       const today = todayLocal();
       // 還有任何一堂在今天或之後，就算還沒結束
       const docs = await db.collection("workshops")
@@ -515,7 +523,7 @@ export function mountWorkshops(app) {
         .sort({ firstDate: 1 })
         .limit(30)
         .toArray();
-      return c.json({ ok: true, items: docs.map((w) => publicWorkshop(w, today)) });
+      return { ok: true, items: docs.map((w) => publicWorkshop(w, today)) };
     })
   );
 
@@ -559,6 +567,7 @@ export function mountWorkshops(app) {
       };
       // 用 $push 加在最後，避免和其他人同時報名或後台修改時互相覆蓋
       await db.collection("workshops").updateOne({ _id: w._id }, { $push: { attendees: a }, $set: { updatedAt: new Date() } });
+      purgeCached(c, "/api/workshops"); // 剩餘名額變了
       notifyWorkshopSignup(c, w, a);
       return c.json({ ok: true, ...signupView(w, a, await getPayment(db)) });
     });

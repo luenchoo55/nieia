@@ -50,3 +50,37 @@ export async function ensureIndexes(db) {
   ]);
   indexesReady = true;
 }
+
+// 前台公開資料的快取：有存過就馬上回傳，超過 freshSec 秒才在背景重新查資料庫，
+// 客人不必等連線資料庫（每次連線要 2～3 秒）。後台有變更時用 purgeCached 清掉。
+const edgeCache = () => (typeof caches !== "undefined" ? caches.default : null);
+const cacheKey = (c, path) => new Request(new URL(path, c.req.url).toString());
+const JSON_TYPE = "application/json; charset=UTF-8";
+
+export async function cachedJson(c, path, freshSec, load) {
+  const cache = edgeCache();
+  const key = cacheKey(c, path);
+  const refresh = async () => {
+    const body = JSON.stringify(await withDb(c.env, c.executionCtx, load));
+    if (cache) {
+      await cache.put(key, new Response(body, {
+        headers: { "content-type": JSON_TYPE, "cache-control": "public, max-age=86400", "x-saved-at": String(Date.now()) },
+      }));
+    }
+    return body;
+  };
+  if (cache) {
+    const hit = await cache.match(key);
+    if (hit) {
+      const stale = Date.now() - Number(hit.headers.get("x-saved-at") || 0) > freshSec * 1000;
+      if (stale) c.executionCtx.waitUntil(refresh().catch((err) => console.error(err)));
+      return new Response(hit.body, { headers: { "content-type": JSON_TYPE, "x-cache": stale ? "stale" : "hit" } });
+    }
+  }
+  return new Response(await refresh(), { headers: { "content-type": JSON_TYPE, "x-cache": "miss" } });
+}
+
+export function purgeCached(c, path) {
+  const cache = edgeCache();
+  if (cache) c.executionCtx.waitUntil(cache.delete(cacheKey(c, path)));
+}

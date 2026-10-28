@@ -120,6 +120,13 @@ function cleanWorkshop(body, old) {
   errors.push(...s.errors);
   out.sessions = s.sessions;
 
+  // 最後報名日（含當天），留空就是開課前一天都能報名
+  const dl = str(body.signupDeadline, 10);
+  if (!dl) out.signupDeadline = "";
+  else if (!/^\d{4}-\d{2}-\d{2}$/.test(dl)) errors.push("最後報名日的日期格式不正確。");
+  else if (out.sessions.length && dl >= out.sessions[0].date) errors.push("最後報名日要在第一堂課之前。");
+  else out.signupDeadline = dl;
+
   const t = cleanTeachers(body.teachers);
   errors.push(...t.errors);
   out.teachers = t.teachers;
@@ -193,6 +200,7 @@ function signupView(w, a, payment) {
 // 前台工作坊頁：只給客人需要的資訊（不含簽到代碼、教室連結和名單）
 function signupState(w, today) {
   if (today >= w.sessions[0].date) return "started";
+  if (w.signupDeadline && today > w.signupDeadline) return "closed";
   if (w.capacity && (w.attendees || []).length >= w.capacity) return "full";
   return "open";
 }
@@ -209,6 +217,7 @@ function publicWorkshop(w, today) {
     teachers: w.teachers.map((t) => t.name),
     intro: w.intro || "",
     prices: w.prices || null,
+    signupDeadline: w.signupDeadline || "",
     state: signupState(w, today),
   };
 }
@@ -519,7 +528,7 @@ export function mountWorkshops(app) {
       const today = todayLocal();
       // 還有任何一堂在今天或之後，就算還沒結束
       const docs = await db.collection("workshops")
-        .find({ signupOpen: { $ne: false }, "sessions.date": { $gte: today } }, { projection: { "attendees.id": 1, title: 1, titleEn: 1, type: 1, format: 1, location: 1, sessions: 1, hours: 1, teachers: 1, intro: 1, prices: 1, capacity: 1 } })
+        .find({ signupOpen: { $ne: false }, "sessions.date": { $gte: today } }, { projection: { "attendees.id": 1, title: 1, titleEn: 1, type: 1, format: 1, location: 1, sessions: 1, hours: 1, teachers: 1, intro: 1, prices: 1, capacity: 1, signupDeadline: 1 } })
         .sort({ firstDate: 1 })
         .limit(30)
         .toArray();
@@ -552,6 +561,7 @@ export function mountWorkshops(app) {
       if (!w || w.signupOpen === false) return bad(c, "找不到這場工作坊，可能已經關閉報名了。", 404);
       const state = signupState(w, todayLocal());
       if (state === "started") return bad(c, "這場工作坊已經開始上課，不能再報名了。", 409);
+      if (state === "closed") return bad(c, "這場工作坊已經截止報名了，可以 IG 私訊阿綸詢問。", 409);
       if (state === "full") return bad(c, "這場工作坊已經額滿了，可以 IG 私訊阿綸詢問下一場。", 409);
       const list = w.attendees || [];
       if (list.some((a) => norm(a.name) === norm(p.name) || (a.email && a.email === p.email))) {

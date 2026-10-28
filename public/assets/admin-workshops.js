@@ -104,6 +104,7 @@
     var to = new Date(addDays(todayLocal(), 7) + "T00:00:00Z");
     var shift = Math.round((to - from) / 86400000);
     copy.sessions.forEach(function (s) { s.date = addDays(s.date, shift); });
+    if (copy.signupDeadline) copy.signupDeadline = addDays(copy.signupDeadline, shift);
     copy.signupOpen = true;
     return copy;
   }
@@ -241,7 +242,7 @@
       title: "", titleEn: "", type: "spirit", format: "onsite", location: "", roomUrl: "", hours: 16,
       sessions: [{ date: d, start: "10:00", end: "18:00" }, { date: addDays(d, 1), start: "10:00", end: "18:00" }],
       teachers: [{ name: "阿綸", nameEn: "" }],
-      signupOpen: true, intro: "", prices: null, capacity: 0,
+      signupOpen: true, intro: "", prices: null, capacity: 0, signupDeadline: "",
     };
   }
 
@@ -403,11 +404,13 @@
       });
     });
     var fCap = input("wfCap", data.capacity || "", { type: "number", inputmode: "numeric", min: "1", max: "200", step: "1", placeholder: "不限就留空" });
+    var fDeadline = input("wfDeadline", data.signupDeadline || "", { type: "date" });
     var fIntro = el("textarea");
     fIntro.id = "wfIntro"; fIntro.rows = 10; fIntro.maxLength = 5000; fIntro.value = data.intro || "";
     fIntro.placeholder = "空一行就是新的段落\n\n# 課程內容\n- 靈氣的起源和歷史\n- 完整手位法\n\n**粗體**也可以用";
     pGrid.appendChild(openField);
     pGrid.appendChild(field("名額", fCap));
+    pGrid.appendChild(field("最後報名日（當天還能報名；留空就是開課前一天）", fDeadline));
     var priceBox = el("div", "field wide");
     priceBox.appendChild(el("span", null, "費用（前台顯示成價目表；有填複訓價格，報名時客人才能選「複訓」）"));
     priceBox.appendChild(priceGrid);
@@ -448,7 +451,7 @@
         title: fTitle.value, titleEn: fTitleEn.value, type: fType.value, format: fFormat.value,
         hours: fHours.value, location: fLocation.value, roomUrl: fRoom.value.trim(),
         sessions: data.sessions, teachers: data.teachers,
-        signupOpen: fOpen.checked, capacity: fCap.value.trim(), intro: fIntro.value,
+        signupOpen: fOpen.checked, capacity: fCap.value.trim(), signupDeadline: fDeadline.value, intro: fIntro.value,
         prices: {
           new: { twd: priceInputs.new.twd.value.trim(), myr: priceInputs.new.myr.value.trim() },
           retake: { twd: priceInputs.retake.twd.value.trim(), myr: priceInputs.retake.myr.value.trim() },
@@ -571,7 +574,7 @@
       } else fact("線上教室", "還沒填連結（平台確定後到「編輯資料」補上）");
     } else fact("地點", w.location);
     fact("證書代號", w.letter ? w.letter + "（證書編號 " + w.letter + "-" + w.sessions[w.sessions.length - 1].date.slice(0, 4) + "-001 起）" : "第一次發證書時自動決定（A、B、C…）");
-    fact("前台報名", w.signupOpen === false ? "不顯示在前台" : "開放中" + (w.capacity ? "（名額 " + w.capacity + " 位）" : "（不限名額）"));
+    fact("前台報名", w.signupOpen === false ? "不顯示在前台" : "開放中" + (w.capacity ? "（名額 " + w.capacity + " 位" : "（不限名額") + (w.signupDeadline ? "，" + prettyDate(w.signupDeadline) + "截止" : "") + "）");
     fact("費用", priceText(w.prices));
   }
 

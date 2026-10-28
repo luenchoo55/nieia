@@ -639,7 +639,7 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .ws-state::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .ws-state.is-open { color: #2F7A5B; }
 .ws-state.is-full { color: #B23A5C; }
-.ws-state.is-started { color: var(--ink-soft); }
+.ws-state.is-started, .ws-state.is-closed { color: var(--ink-soft); }
 .ws-intro, .ws-where { font-size: var(--step--1); color: var(--ink-soft); line-height: 1.75; }
 .ws-price { font-weight: 500; font-variant-numeric: tabular-nums; }
 .ws-sheet-head { grid-template-columns: minmax(0, 1fr); }

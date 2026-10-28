@@ -7,7 +7,7 @@
 
   var WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
   var FORMAT = { onsite: "實體課", online: "線上課" };
-  var STATE = { open: "報名中", full: "已額滿", started: "上課中" };
+  var STATE = { open: "報名中", full: "已額滿", closed: "報名截止", started: "上課中" };
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -134,6 +134,7 @@
     c.appendChild(h);
     if (w.titleEn) c.appendChild(el("span", "en", w.titleEn));
     if (w.location) c.appendChild(el("p", "ws-where", "地點：" + w.location));
+    if (w.signupDeadline && w.state === "open") c.appendChild(el("p", "ws-where", "報名截止：" + prettyDate(w.signupDeadline)));
     // 最後一排：左邊堂數／時數／老師，右邊報名按鈕
     var row = el("div", "ws-bottom");
     var f = el("div", "facts");
@@ -278,6 +279,7 @@
     });
     when.appendChild(ol);
     if (w.location) when.appendChild(el("p", "ws-where", "地點：" + w.location));
+    if (w.signupDeadline) when.appendChild(el("p", "ws-where", "報名截止：" + Number(w.signupDeadline.slice(0, 4)) + " 年 " + prettyDate(w.signupDeadline)));
     s.body.appendChild(when);
     var fee = el("section", "ws-fee");
     fee.appendChild(el("h3", null, "費用"));

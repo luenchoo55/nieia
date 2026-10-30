@@ -3,6 +3,7 @@ import { withDb, ensureIndexes, cachedJson, purgeCached } from "./db.js";
 import { requireAdmin, sameOrigin } from "./auth.js";
 import { notifyWorkshopSignup } from "./notify.js";
 import { REGIONS, getPayment, publicPayment } from "./payment.js";
+import { cleanAmount } from "./ledger.js";
 
 // 工作坊：場次、學員名單、出席、結業證書、大合照、線上簽到。
 // 學員資料直接存在工作坊文件裡（一場通常不超過幾十人）；
@@ -105,6 +106,16 @@ function cleanWorkshop(body, old) {
       if (!Number.isInteger(n) || n < 0 || n > 9999999) { errors.push(`${PRICE_LABEL[who]}的${cur === "twd" ? "台灣" : "馬來西亞"}價格請填整數。`); continue; }
       out.prices[who][cur] = n;
     }
+  }
+
+  // 教材費（和學費分開收，只在後台記帳與提醒用，前台不顯示）：台灣／馬來西亞，留空代表沒有
+  out.materialFee = {};
+  for (const cur of CURRENCIES) {
+    const v = body.materialFee?.[cur];
+    if (v === "" || v == null) { out.materialFee[cur] = null; continue; }
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 0 || n > 9999999) { errors.push(`${cur === "twd" ? "台灣" : "馬來西亞"}的教材費請填整數。`); continue; }
+    out.materialFee[cur] = n;
   }
 
   const cap = body.capacity === "" || body.capacity == null ? 0 : Number(body.capacity);
@@ -403,6 +414,17 @@ export function mountWorkshops(app) {
         Object.assign(a, p);
       }
       if (body.certSent && a.certCode) a.certSentAt = new Date();
+      // 學費、教材費：{ paid, amount, currency }；paid 為 false 就清除付款紀錄
+      for (const field of ["tuition", "material"]) {
+        const p = body[field];
+        if (!p || typeof p !== "object") continue;
+        if (!p.paid) { a[field] = null; continue; }
+        const amount = cleanAmount(p.amount);
+        if (amount == null) return bad(c, `請填寫${field === "tuition" ? "學費" : "教材費"}的實收金額（整數）。`);
+        const currency = p.currency === "MYR" ? "MYR" : "TWD";
+        const paidAt = /^d{4}-d{2}-d{2}$/.test(p.date || "") ? new Date(p.date + "T12:00:00+08:00") : a[field]?.paidAt || new Date();
+        a[field] = { amount, currency, paidAt };
+      }
       if (body.attended && typeof body.attended === "object") {
         const keys = new Set(w.sessions.map((s) => s.key));
         a.attended = { ...(a.attended || {}) };

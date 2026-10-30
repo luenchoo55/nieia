@@ -33,7 +33,7 @@
         <button class="btn btn-ghost btn-small" id="logoutBtn" type="button" hidden>登出</button>
       </div>
     </div>
-    <p class="sub" id="subtitle">只有阿綸可以進入，用來管理預約、時段、療癒項目、商品與工作坊。</p>
+    <p class="sub" id="subtitle">只有阿綸可以進入，用來管理預約、時段、療癒項目、商品、工作坊與收支。</p>
   </header>
 
   <p class="status-line" id="loading">正在確認登入狀態…</p>
@@ -66,12 +66,49 @@
       <span class="admin-link-text"><strong>工作坊管理</strong><span>學員名單、點名、抽籤、大合照與結業證書</span></span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
     </a>
+
+    <!-- 總覽：不用切分頁，一打開後台就看得到 -->
+    <section class="panel-stack ov-block" id="overview" aria-labelledby="ov-title">
+      <div class="block-head"><h2 id="ov-title">總覽</h2><div class="head-acts"><button class="btn btn-ghost btn-small" type="button" id="ovRemind">查看提醒</button><button class="btn btn-primary btn-small" type="button" id="ovExport">下載全部資料</button></div></div>
+      <div id="ovBody" aria-live="polite"><p class="empty glass">載入中…</p></div>
+    </section>
+
     <div class="seg admin-tabs" role="tablist" aria-label="後台功能" data-tabs>
-      <button type="button" role="tab" id="tab-bookings" aria-controls="panel-bookings" aria-selected="true">預約與時段</button>
+      <button type="button" role="tab" id="tab-bookings" aria-controls="panel-bookings" aria-selected="true">預約</button>
+      <button type="button" role="tab" id="tab-ledger" aria-controls="panel-ledger" aria-selected="false" tabindex="-1">收支</button>
       <button type="button" role="tab" id="tab-market" aria-controls="panel-market" aria-selected="false" tabindex="-1">擺攤</button>
       <button type="button" role="tab" id="tab-services" aria-controls="panel-services" aria-selected="false" tabindex="-1">療癒項目</button>
       <button type="button" role="tab" id="tab-products" aria-controls="panel-products" aria-selected="false" tabindex="-1">商品</button>
       <button type="button" role="tab" id="tab-payment" aria-controls="panel-payment" aria-selected="false" tabindex="-1">匯款方式</button>
+    </div>
+
+    <div class="panel-stack" id="panel-ledger" role="tabpanel" aria-labelledby="tab-ledger" hidden>
+      <div class="block-head"><h2>收支</h2>
+        <div class="head-acts"><label class="field ld-month" for="ldMonth"><span class="hp">月份</span><input id="ldMonth" type="month"></label><button class="btn btn-ghost btn-small" type="button" id="ldDownload">下載這個月</button></div>
+      </div>
+      <p class="hint">預約（確認收款那天）、工作坊學費與教材費（標記已付那天）、擺攤（擺攤那天）的收入會自動帶入。支出和其他收入（例如商品賣出）請在下方新增。新台幣和馬幣分開計算。</p>
+      <div id="ldBody" aria-live="polite"><p class="empty glass">載入中…</p></div>
+      <section class="glass form-card" aria-labelledby="ld-add-title">
+        <h2 id="ld-add-title">新增收支</h2>
+        <form id="ldForm" novalidate>
+          <div class="seg ld-type" role="radiogroup" aria-label="收入或支出">
+            <button type="button" role="radio" data-ltype="expense" aria-checked="true">支出</button>
+            <button type="button" role="radio" data-ltype="income" aria-checked="false">收入</button>
+          </div>
+          <div class="field-grid">
+            <label class="field" for="ldDate"><span>日期</span><input id="ldDate" type="date" required></label>
+            <label class="field" for="ldCategory"><span>類別</span><input id="ldCategory" maxlength="20" list="ldCategories" placeholder="例如 場地、材料、交通" required></label>
+            <label class="field" for="ldProduct" id="ldProductField" hidden><span>商品</span><select id="ldProduct"></select></label>
+            <label class="field" for="ldQty" id="ldQtyField" hidden><span>數量</span><input id="ldQty" type="number" inputmode="numeric" min="1" max="1000" value="1"></label>
+            <label class="field" for="ldCurrency"><span>幣別</span><select id="ldCurrency"><option value="TWD">新台幣 NT$</option><option value="MYR">馬幣 RM</option></select></label>
+            <label class="field" for="ldAmount"><span>金額</span><input id="ldAmount" type="number" inputmode="numeric" min="0" step="1" required></label>
+            <label class="field wide" for="ldNote"><span>說明（選填）</span><input id="ldNote" maxlength="300"></label>
+          </div>
+          <datalist id="ldCategories"></datalist>
+          <p class="form-msg" id="ldMsg" role="alert"></p>
+          <button class="btn btn-primary btn-block" id="ldSave" type="submit">新增</button>
+        </form>
+      </section>
     </div>
 
     <div class="panel-stack" id="panel-bookings" role="tabpanel" aria-labelledby="tab-bookings">
@@ -230,17 +267,29 @@
   </div>
 </main>
 
+<!-- 打開後台時的提醒 -->
+<div class="ws-modal" id="remindModal" hidden>
+  <div class="ws-modal-panel remind-panel" role="dialog" aria-modal="true" aria-labelledby="remindTitle">
+    <div class="ws-modal-bar"><button class="ws-back" type="button" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>關閉</button></div>
+    <h2 class="remind-title" id="remindTitle">今天的提醒</h2>
+    <div id="remindBody"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="/assets/site.js"></script>
 <script src="/assets/glyphs.js"></script>
 <script src="/assets/catalog.js"></script>
 <script src="/assets/admin.js"></script>
+<script src="/assets/admin-ui.js"></script>
 <script src="/assets/admin-catalog.js"></script>
 <script src="/assets/admin-bookings.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="/assets/xlsx.js"></script>
 <script src="/assets/admin-market.js"></script>
 <script src="/assets/admin-payment.js"></script>
+<script src="/assets/admin-overview.js"></script>
+<script src="/assets/admin-ledger.js"></script>
 </body>
 </html>

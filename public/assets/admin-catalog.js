@@ -40,13 +40,15 @@
       api: "/api/admin/products",
       noun: "商品",
       priceKind: "product",
-      blank: { name: "", desc: "", priceTwd: "", priceMyr: "", url: "", glyph: "card", palette: "g2", soldOut: false, published: true },
+      blank: { name: "", desc: "", priceTwd: "", priceMyr: "", url: "", glyph: "card", palette: "g2", soldOut: false, published: true, stock: "", lowStock: "" },
       fields: [
         { key: "name", label: "名稱", type: "text", max: 40, required: true },
         { key: "desc", label: "介紹", type: "textarea", max: 300 },
         { key: "priceTwd", label: "台幣價格（NT$）", type: "number", min: 0, max: 1000000 },
         { key: "priceMyr", label: "馬幣價格（RM）", type: "number", min: 0, max: 100000, hint: "沒填就不顯示馬幣價格" },
         { key: "url", label: "購買連結", type: "url", hint: "例如 7-11 賣貨便的商品網址，要以 https:// 開頭" },
+        { key: "stock", label: "庫存數量", type: "number", min: -100000, max: 100000, placeholder: "不記庫存就留空", hint: "只有後台看得到。在「收支」新增商品賣出時會自動扣掉" },
+        { key: "lowStock", label: "剩幾件以下要提醒", type: "number", min: 0, max: 100000, placeholder: "3", hint: "留空就是剩 3 件以下提醒" },
         { key: "glyph", label: "縮圖圖案", type: "glyph" },
         { key: "palette", label: "縮圖色調", type: "palette" },
         { key: "soldOut", label: "已售完", type: "check" },
@@ -104,6 +106,10 @@
       var pills = el("div", "pills");
       pills.appendChild(el("span", "pill " + (item.published ? "open" : "closed"), item.published ? "上架中" : "已下架"));
       if (item.soldOut) pills.appendChild(el("span", "pill closed", "已售完"));
+      if (typeof item.stock === "number") {
+        var low = item.stock <= (item.lowStock == null ? 3 : item.lowStock);
+        pills.appendChild(el("span", "pill " + (low ? "warn" : "booked"), (low ? "庫存不足・" : "庫存 ") + item.stock + " 件"));
+      }
       text.appendChild(pills);
       row.appendChild(text);
 

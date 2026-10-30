@@ -1,5 +1,6 @@
-// 產生簡單的 Excel 檔（.xlsx）：一個工作表、全部用文字格式（電話開頭的 0 不會不見）
+// 產生簡單的 Excel 檔（.xlsx）：全部用文字格式（電話開頭的 0 不會不見）
 // window.nieiaXlsx(工作表名稱, [[第一列...], [第二列...]], 欄寬陣列) → Blob
+// window.nieiaXlsxBook([{ name, rows, widths }, ...]) → 一個檔案裡放多個工作表
 (function () {
   "use strict";
 
@@ -54,7 +55,7 @@
     return s;
   }
 
-  window.nieiaXlsx = function (sheetName, rows, widths) {
+  function sheetXml(rows, widths) {
     var cols = (widths || []).map(function (w, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join("");
     var body = rows.map(function (r, ri) {
       return '<row r="' + (ri + 1) + '">' + r.map(function (v, ci) {
@@ -62,13 +63,31 @@
         return '<c r="' + col(ci) + (ri + 1) + '" t="inlineStr"><is><t xml:space="preserve">' + esc(v) + "</t></is></c>";
       }).join("") + "</row>";
     }).join("");
+    return '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' + (cols ? "<cols>" + cols + "</cols>" : "") + "<sheetData>" + body + "</sheetData></worksheet>";
+  }
+
+  // 多個工作表：[{ name, rows, widths }] → Blob
+  window.nieiaXlsxBook = function (sheets) {
     var xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+    var used = {};
+    var names = sheets.map(function (sh, i) {
+      var n = String(sh.name || "").replace(/[\\\/?*\[\]:]/g, " ").slice(0, 31) || "Sheet" + (i + 1);
+      while (used[n]) n = n.slice(0, 28) + " " + (i + 1);
+      used[n] = true;
+      return n;
+    });
+    var overrides = sheets.map(function (sh, i) { return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join("");
+    var sheetTags = names.map(function (n, i) { return '<sheet name="' + esc(n) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join("");
+    var rels = sheets.map(function (sh, i) { return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join("");
     return zip([
-      { name: "[Content_Types].xml", data: xml + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>' },
+      { name: "[Content_Types].xml", data: xml + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' + overrides + "</Types>" },
       { name: "_rels/.rels", data: xml + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
-      { name: "xl/workbook.xml", data: xml + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="' + esc(String(sheetName).replace(/[\\\/?*\[\]:]/g, " ").slice(0, 31) || "Sheet1") + '" sheetId="1" r:id="rId1"/></sheets></workbook>' },
-      { name: "xl/_rels/workbook.xml.rels", data: xml + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>' },
-      { name: "xl/worksheets/sheet1.xml", data: xml + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' + (cols ? "<cols>" + cols + "</cols>" : "") + "<sheetData>" + body + "</sheetData></worksheet>" },
-    ]);
+      { name: "xl/workbook.xml", data: xml + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' + sheetTags + "</sheets></workbook>" },
+      { name: "xl/_rels/workbook.xml.rels", data: xml + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + rels + "</Relationships>" },
+    ].concat(sheets.map(function (sh, i) { return { name: "xl/worksheets/sheet" + (i + 1) + ".xml", data: xml + sheetXml(sh.rows, sh.widths) }; })));
+  };
+
+  window.nieiaXlsx = function (sheetName, rows, widths) {
+    return window.nieiaXlsxBook([{ name: sheetName, rows: rows, widths: widths }]);
   };
 })();

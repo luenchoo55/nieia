@@ -146,6 +146,10 @@
     main.appendChild(document.createTextNode("　" + b.serviceName + (b.mode === "onsite" ? "（現場）" : "") + "　" + money(b.amount, b.currency, b.priceMode)));
     c.appendChild(main);
 
+    if (b.status === "confirmed") {
+      var paid = b.paidAmount != null ? b.paidAmount : b.amount;
+      c.appendChild(el("p", "bc-pay", "實收：" + (paid == null ? "還沒填（記帳需要，請按「修改實收金額」）" : money(paid, b.currency))));
+    }
     if (b.paymentReport) {
       c.appendChild(el("p", "bc-pay", "已回報匯款：" + b.paymentReport.paidDate + "，末五碼 " + b.paymentReport.last5 + (b.paymentReport.payerName ? "，" + b.paymentReport.payerName : "")));
     }
@@ -172,6 +176,18 @@
     details.appendChild(dl);
     c.appendChild(details);
 
+    // 個案筆記：只有後台看得到，打開時才載入
+    if (b.status !== "cancelled") {
+      var notes = el("details", "bc-details");
+      notes.appendChild(el("summary", null, "個案筆記"));
+      var noteHost = el("div");
+      notes.appendChild(noteHost);
+      notes.addEventListener("toggle", function () {
+        if (notes.open && !noteHost.childNodes.length && window.NieiaUI) window.NieiaUI.mountNotes(noteHost, { bookingId: b.id, date: b.date });
+      });
+      c.appendChild(notes);
+    }
+
     var reply = el("div", "bc-reply");
     var to = el("p", "bc-email");
     to.appendChild(el("span", null, "回覆客人"));
@@ -195,11 +211,17 @@
 
     if (b.status !== "cancelled") {
       var actions = el("div", "actions bc-status-actions");
+      var payForm = paidForm(b);
       if (b.status !== "confirmed") {
         var ok = el("button", "primary-action", "確認收款");
         ok.type = "button";
-        ok.addEventListener("click", function () { setStatus(b, "confirmed", ok, "已確認收款，預約成立"); });
+        ok.addEventListener("click", function () { payForm.hidden = !payForm.hidden; if (!payForm.hidden) payForm.querySelector("input").focus(); });
         actions.appendChild(ok);
+      } else {
+        var fix = el("button", null, "修改實收金額");
+        fix.type = "button";
+        fix.addEventListener("click", function () { payForm.hidden = !payForm.hidden; if (!payForm.hidden) payForm.querySelector("input").focus(); });
+        actions.appendChild(fix);
       }
       var cancel = el("button", "danger", "取消預約");
       cancel.type = "button";
@@ -216,13 +238,52 @@
       });
       actions.appendChild(cancel);
       c.appendChild(actions);
+      c.appendChild(payForm);
     }
     return c;
   }
 
-  function setStatus(b, status, btn, doneText) {
+  // 確認收款時填實收金額（記帳用）；有固定價格就先帶入
+  function paidForm(b) {
+    var f = el("form", "bc-paid");
+    f.hidden = true;
+    f.noValidate = true;
+    var label = el("label", "field");
+    label.appendChild(el("span", null, "實收金額（" + (b.currency === "MYR" ? "RM" : "NT$") + "）"));
+    var input = el("input");
+    input.type = "number"; input.inputMode = "numeric"; input.min = "0"; input.step = "1";
+    var paid = b.paidAmount != null ? b.paidAmount : b.amount;
+    input.value = paid == null ? "" : paid;
+    input.placeholder = b.priceMode === "inquiry" ? "隨喜收到的金額" : "";
+    label.appendChild(input);
+    f.appendChild(label);
+    var save = el("button", "btn btn-primary btn-small", b.status === "confirmed" ? "儲存" : "確認收款");
+    save.type = "submit";
+    f.appendChild(save);
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (input.value === "") { A.toast("請填寫實收金額"); input.focus(); return; }
+      if (b.status === "confirmed") savePaid(b, input.value, save);
+      else setStatus(b, "confirmed", save, "已確認收款，預約成立", { paidAmount: input.value });
+    });
+    return f;
+  }
+
+  function savePaid(b, value, btn) {
     btn.disabled = true;
-    A.api("/api/admin/bookings/" + b.id, { method: "PATCH", body: { status: status } }).then(function (r) {
+    A.api("/api/admin/bookings/" + b.id, { method: "PATCH", body: { paidAmount: value } }).then(function (r) {
+      btn.disabled = false;
+      if (r.status === 401) return A.checkSession();
+      if (!r.ok) { A.toast(r.message || "儲存失敗"); return; }
+      Object.assign(b, r.item);
+      render();
+      A.toast("已更新實收金額");
+    });
+  }
+
+  function setStatus(b, status, btn, doneText, extra) {
+    btn.disabled = true;
+    A.api("/api/admin/bookings/" + b.id, { method: "PATCH", body: Object.assign({ status: status }, extra) }).then(function (r) {
       btn.disabled = false;
       if (r.status === 401) return A.checkSession();
       if (!r.ok) { A.toast(r.message || "更新失敗"); return; }
@@ -231,6 +292,7 @@
       A.toast(doneText + (r.slotReopened ? "，時段已重新開放" : ""));
       // 時段列表在同一頁，跟著更新
       document.dispatchEvent(new Event("nieia:slots"));
+      if (window.NieiaOverview) window.NieiaOverview.reload();
     });
   }
 

@@ -104,8 +104,13 @@ export const SCHEMAS = {
       palette: F.oneOf(PALETTES, "g2"),
       soldOut: F.bool(false),
       published: F.bool(true),
+      // 庫存：留空代表不記庫存；低於「庫存不足」的數量時，打開後台會提醒
+      stock: F.int(-100000, 100000),
+      lowStock: F.int(0, 100000),
     },
-    labels: { name: "名稱", desc: "介紹", priceTwd: "台幣價格", priceMyr: "馬幣價格", url: "購買連結" },
+    // 只在後台使用，前台 API 不回傳
+    privateFields: ["stock", "lowStock"],
+    labels: { name: "名稱", desc: "介紹", priceTwd: "台幣價格", priceMyr: "馬幣價格", url: "購買連結", stock: "庫存", lowStock: "庫存不足提醒" },
     seed: [
       ["紫色火焰", "flame", "g1"],
       ["YHWH 四字神名", "sun", "g5"],
@@ -170,6 +175,12 @@ function present(doc) {
   return { id: _id.toString(), ...rest };
 }
 
+function publicView(schema, doc) {
+  const out = present(doc);
+  for (const k of schema.privateFields || []) delete out[k];
+  return out;
+}
+
 const bad = (c, message, status = 400) => c.json({ ok: false, message }, status);
 const parseId = (id) => (ObjectId.isValid(id) ? new ObjectId(id) : null);
 async function readJson(c) {
@@ -189,7 +200,7 @@ function mountOne(app, publicPath, adminPath, schema) {
     cachedJson(c, publicPath, PUBLIC_TTL, async (db) => {
       await seedOnce(db, schema);
       const docs = await col(db).find({ published: true }).sort({ order: 1 }).toArray();
-      return { ok: true, items: docs.map(present) };
+      return { ok: true, items: docs.map((d) => publicView(schema, d)) };
     })
   );
 

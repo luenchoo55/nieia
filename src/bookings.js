@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { withDb, ensureIndexes } from "./db.js";
 import { requireAdmin, sameOrigin } from "./auth.js";
+import { cleanAmount } from "./ledger.js";
 import { notifyNewBooking, notifyPaymentReported } from "./notify.js";
 import { REGIONS, getPayment, publicPayment } from "./payment.js";
 
@@ -260,8 +261,11 @@ export function mountBookings(app) {
     if (!id) return bad(c, "找不到這筆預約。", 404);
     let body;
     try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
-    const status = body.status;
+    // 只改實收金額時可以不帶狀態
+    const status = body.status ?? (body.paidAmount !== undefined ? "confirmed" : undefined);
     if (!STATUS.includes(status)) return bad(c, "狀態不正確。");
+    const paidAmount = cleanAmount(body.paidAmount);
+    if (paidAmount === undefined) return bad(c, "實收金額請填整數。");
 
     return withDb(c.env, c.executionCtx, async (db) => {
       const col = db.collection("bookings");
@@ -270,7 +274,12 @@ export function mountBookings(app) {
       if (b.status === "cancelled" && status !== "cancelled") return bad(c, "已取消的預約不能恢復，請客人重新預約。", 409);
 
       const set = { status, updatedAt: new Date() };
-      if (status === "confirmed") set.confirmedAt = new Date();
+      // 確認收款：記下實收金額（記帳用）；沒填就用預約時的固定價格，兩個都沒有就要填
+      if (status === "confirmed") {
+        if (paidAmount != null) set.paidAmount = paidAmount;
+        else if (b.paidAmount == null && b.amount == null) return bad(c, "這筆預約沒有固定價格，請填寫實收金額。");
+        if (b.status !== "confirmed") set.confirmedAt = new Date();
+      }
       if (status === "cancelled") set.cancelledAt = new Date();
       await col.updateOne({ _id: id }, { $set: set });
 

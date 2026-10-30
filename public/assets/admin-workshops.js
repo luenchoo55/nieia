@@ -242,7 +242,7 @@
       title: "", titleEn: "", type: "spirit", format: "onsite", location: "", roomUrl: "", hours: 16,
       sessions: [{ date: d, start: "10:00", end: "18:00" }, { date: addDays(d, 1), start: "10:00", end: "18:00" }],
       teachers: [{ name: "阿綸", nameEn: "" }],
-      signupOpen: true, intro: "", prices: null, capacity: 0, signupDeadline: "",
+      signupOpen: true, intro: "", prices: null, materialFee: null, capacity: 0, signupDeadline: "",
     };
   }
 
@@ -403,6 +403,15 @@
         priceGrid.appendChild(field(who[1] + "・" + cur[1], i));
       });
     });
+    // 教材費：和學費分開收，只在後台記帳和提醒用
+    var mf = data.materialFee || {};
+    var materialInputs = {};
+    var materialGrid = el("div", "field-grid ws-prices");
+    [["twd", "台灣 NT$"], ["myr", "馬來西亞 RM"]].forEach(function (cur) {
+      var i = input("wfM" + cur[0], mf[cur[0]] == null ? "" : mf[cur[0]], { type: "number", inputmode: "numeric", min: "0", step: "1", placeholder: "沒有就留空" });
+      materialInputs[cur[0]] = i;
+      materialGrid.appendChild(field("教材費・" + cur[1], i));
+    });
     var fCap = input("wfCap", data.capacity || "", { type: "number", inputmode: "numeric", min: "1", max: "200", step: "1", placeholder: "不限就留空" });
     var fDeadline = input("wfDeadline", data.signupDeadline || "", { type: "date" });
     var fIntro = el("textarea");
@@ -415,6 +424,10 @@
     priceBox.appendChild(el("span", null, "費用（前台顯示成價目表；有填複訓價格，報名時客人才能選「複訓」）"));
     priceBox.appendChild(priceGrid);
     pGrid.appendChild(priceBox);
+    var materialBox = el("div", "field wide");
+    materialBox.appendChild(el("span", null, "教材費（和學費分開收；前台不顯示，開課前兩週還沒付的學員會出現在後台提醒）"));
+    materialBox.appendChild(materialGrid);
+    pGrid.appendChild(materialBox);
     pGrid.appendChild(field("課程介紹（選填，客人在前台按「課程介紹」才會打開；空一行分段，「# 」小標題，「- 」條列）", fIntro, "wide"));
     pBox.appendChild(pGrid);
     pBox.appendChild(el("p", "hint-text", "實體課的上課地點也會顯示在前台；線上教室連結不會公開。"));
@@ -456,6 +469,7 @@
           new: { twd: priceInputs.new.twd.value.trim(), myr: priceInputs.new.myr.value.trim() },
           retake: { twd: priceInputs.retake.twd.value.trim(), myr: priceInputs.retake.myr.value.trim() },
         },
+        materialFee: { twd: materialInputs.twd.value.trim(), myr: materialInputs.myr.value.trim() },
       };
       if (!body.title.trim()) { msg.textContent = "請填寫工作坊名稱。"; fTitle.focus(); return; }
       msg.textContent = "";
@@ -576,6 +590,16 @@
     fact("證書代號", w.letter ? w.letter + "（證書編號 " + w.letter + "-" + w.sessions[w.sessions.length - 1].date.slice(0, 4) + "-001 起）" : "第一次發證書時自動決定（A、B、C…）");
     fact("前台報名", w.signupOpen === false ? "不顯示在前台" : "開放中" + (w.capacity ? "（名額 " + w.capacity + " 位" : "（不限名額") + (w.signupDeadline ? "，" + prettyDate(w.signupDeadline) + "截止" : "") + "）");
     fact("費用", priceText(w.prices));
+    if (hasMaterial(w)) fact("教材費", money(w.materialFee));
+  }
+
+  function hasMaterial(w) { return Boolean(w.materialFee && (w.materialFee.twd != null || w.materialFee.myr != null)); }
+  function payMoney(p) { return (p.currency === "MYR" ? "RM " : "NT$") + Number(p.amount).toLocaleString("en-US"); }
+  // 依學員的身分與居住地，應收的學費／教材費
+  function expected(w, a, field) {
+    var cur = a.region === "MY" ? "myr" : "twd";
+    var v = field === "tuition" ? w.prices && w.prices[a.status || "new"] && w.prices[a.status || "new"][cur] : w.materialFee && w.materialFee[cur];
+    return v == null ? null : v;
   }
 
   // ---------- 名單與點名 ----------
@@ -621,6 +645,10 @@
       if (a.note) th.appendChild(el("span", null, "想說的話：" + a.note));
       if (a.source === "web") th.appendChild(el("span", "pill booked", "網站報名・" + (a.status === "retake" ? "複訓" : "新生") + (a.region ? "・" + (a.region === "MY" ? "馬來西亞" : "台灣") : "")));
       if (a.certNo) th.appendChild(el("span", "pill open", a.certNo));
+      var pays = el("span", "pay-pills");
+      pays.appendChild(el("span", "pill " + (a.tuition ? "open" : "warn"), a.tuition ? "學費 " + payMoney(a.tuition) : "學費未付"));
+      if (hasMaterial(w) || a.material) pays.appendChild(el("span", "pill " + (a.material ? "open" : "warn"), a.material ? "教材費 " + payMoney(a.material) : "教材費未付"));
+      th.appendChild(pays);
       tr.appendChild(th);
       w.sessions.forEach(function (s, i) {
         var td = el("td", "att-col");
@@ -674,6 +702,21 @@
     form.appendChild(field("姓名", n));
     form.appendChild(field("英文姓名", ne));
     form.appendChild(field("Email", em));
+    // 付款：金額留空代表還沒付
+    var cur = select("wpCur", { TWD: "新台幣 NT$", MYR: "馬幣 RM" }, (a.tuition && a.tuition.currency) || (a.material && a.material.currency) || (a.region === "MY" ? "MYR" : "TWD"));
+    form.appendChild(field("付款幣別", cur));
+    function payInput(id, fieldName) {
+      var p = a[fieldName];
+      var exp = expected(w, a, fieldName);
+      return input(id, p ? p.amount : "", { type: "number", inputmode: "numeric", min: "0", step: "1", placeholder: exp != null ? "應收 " + exp + "，還沒付就留空" : "還沒付就留空" });
+    }
+    var tu = payInput("wpTuition", "tuition");
+    form.appendChild(field("學費實收", tu));
+    var ma = null;
+    if (hasMaterial(w) || a.material) {
+      ma = payInput("wpMaterial", "material");
+      form.appendChild(field("教材費實收", ma));
+    }
     var msg = el("p", "form-msg wide");
     msg.setAttribute("role", "alert");
     form.appendChild(msg);
@@ -686,6 +729,8 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       var body = { name: n.value, nameEn: ne.value, email: em.value };
+      body.tuition = { paid: tu.value.trim() !== "", amount: tu.value.trim(), currency: cur.value };
+      if (ma) body.material = { paid: ma.value.trim() !== "", amount: ma.value.trim(), currency: cur.value };
       save.disabled = true;
       A.api("/api/admin/workshops/" + w.id + "/attendees/" + a.id, { method: "PATCH", body: body }).then(function (r) {
         save.disabled = false;

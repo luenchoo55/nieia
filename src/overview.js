@@ -88,13 +88,17 @@ function bookingRow(b) {
 async function overview(db) {
   const today = todayLocal();
   const tomorrow = addDays(today, 1);
-  const [soon, pending, workshops, products, entries, olds] = await Promise.all([
+  // 這週：星期一到星期日
+  const weekStart = addDays(today, -((new Date(today + "T00:00:00Z").getUTCDay() + 6) % 7));
+  const weekEnd = addDays(weekStart, 6);
+  const [soon, pending, workshops, products, entries, olds, weekCount] = await Promise.all([
     db.collection("bookings").find({ date: { $in: [today, tomorrow] }, status: { $ne: "cancelled" } }).sort({ date: 1, start: 1 }).toArray(),
     db.collection("bookings").find({ status: { $in: ["pending_payment", "payment_reported"] } }).sort({ startAt: 1 }).limit(200).toArray(),
     db.collection("workshops").find({ firstDate: { $gte: addDays(today, -60) } }).toArray(),
     db.collection("products").find({ stock: { $type: "number" } }).sort({ order: 1 }).toArray(),
     ledgerEntries(db),
     oldCustomers(db, today),
+    db.collection("bookings").countDocuments({ date: { $gte: weekStart, $lte: weekEnd }, status: { $ne: "cancelled" } }),
   ]);
 
   // 還沒結束的工作坊（最後一堂還沒過）
@@ -137,6 +141,7 @@ async function overview(db) {
     today, tomorrow, month,
     bookingsToday: soon.filter((b) => b.date === today).map(bookingRow),
     bookingsTomorrow: soon.filter((b) => b.date === tomorrow).map(bookingRow),
+    week: { start: weekStart, end: weekEnd, count: weekCount },
     pendingBookings: pending.map(bookingRow),
     pendingTuition,
     monthTotals: totals(entries.filter((e) => e.date.startsWith(month))),

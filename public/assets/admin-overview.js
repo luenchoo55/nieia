@@ -43,24 +43,6 @@
     return b;
   }
 
-  // 可以收合的區塊；收起或打開會記住（存在這台裝置）
-  var FOLD_KEY = "nieia-ov-fold";
-  function folded() { try { return JSON.parse(localStorage.getItem(FOLD_KEY)) || {}; } catch (e) { return {}; } }
-  function section(title, count, key) {
-    var s = el("details", "glass form-card ov-section");
-    s.open = !folded()[key];
-    var h = el("summary", "block-head");
-    h.appendChild(el("h3", null, title));
-    h.appendChild(el("span", "count", count || "0"));
-    s.appendChild(h);
-    s.addEventListener("toggle", function () {
-      var f = folded();
-      if (s.open) delete f[key]; else f[key] = 1;
-      try { localStorage.setItem(FOLD_KEY, JSON.stringify(f)); } catch (e) { /* 無痕模式 */ }
-    });
-    return s;
-  }
-
   function bookingLine(b, showDate) {
     var row = el("button", "ov-line");
     row.type = "button";
@@ -100,30 +82,14 @@
       d.missingAmounts ? "有 " + d.missingAmounts + " 筆金額待補" : "支出 " + money(mt.TWD.expense, "TWD") + "・" + money(mt.MYR.expense, "MYR"),
       function () { goTab("ledger"); }));
     var pendingCount = d.pendingBookings.length + d.pendingTuition.length;
-    stats.appendChild(stat("待匯款", pendingCount + " 筆", "預約 " + d.pendingBookings.length + "・工作坊 " + d.pendingTuition.length));
-    stats.appendChild(stat("今天／明天預約", d.bookingsToday.length + "／" + d.bookingsTomorrow.length + " 位", null, function () { goTab("bookings"); }));
+    stats.appendChild(stat("待匯款", pendingCount + " 筆", "預約 " + d.pendingBookings.length + "・工作坊 " + d.pendingTuition.length, function () { goTab("bookings"); }));
+    stats.appendChild(stat("這週預約", d.week.count + " 位", U.prettyDate(d.week.start) + "–" + U.prettyDate(d.week.end), function () { goTab("bookings"); }));
     host.appendChild(stats);
 
-    [["今天的預約", d.bookingsToday, d.today, "today"], ["明天的預約", d.bookingsTomorrow, d.tomorrow, "tomorrow"]].forEach(function (x) {
-      var s = section(x[0] + "・" + U.prettyDate(x[2]), x[1].length + " 位", x[3]);
-      if (!x[1].length) s.appendChild(el("p", "hint", "沒有預約。"));
-      x[1].forEach(function (b) { s.appendChild(bookingLine(b)); });
-      host.appendChild(s);
-    });
-
-    var p = section("待匯款", pendingCount + " 筆", "pending");
-    if (!pendingCount) p.appendChild(el("p", "hint", "目前沒有待匯款的項目。"));
-    d.pendingBookings.forEach(function (b) {
-      var line = bookingLine(b, true);
-      var sub = line.querySelector(".ov-main span");
-      sub.textContent += "・" + (b.priceMode === "inquiry" ? "隨喜" : b.amount == null ? "金額待告知" : money(b.amount, b.currency));
-      p.appendChild(line);
-    });
-    d.pendingTuition.forEach(function (x) { p.appendChild(tuitionLine(x, "學費未付")); });
-    host.appendChild(p);
-
-    var w = section("即將開課的工作坊", d.upcomingWorkshops.length + " 場", "workshops");
-    if (!d.upcomingWorkshops.length) w.appendChild(el("p", "hint", "目前沒有安排中的工作坊。"));
+    // 進行中的工作坊：列在「工作坊管理」卡片裡，沒有就不顯示
+    var w = $("ovWorkshops");
+    w.innerHTML = "";
+    w.hidden = !d.upcomingWorkshops.length;
     d.upcomingWorkshops.forEach(function (x) {
       var row = el("a", "ov-line");
       row.href = "/admin/workshops";
@@ -138,7 +104,6 @@
       row.appendChild(el("span", "pill " + (x.started ? "booked" : "open"), x.started ? "上課中" : "報名中"));
       w.appendChild(row);
     });
-    host.appendChild(w);
   }
 
   // ---------- 提醒彈窗 ----------

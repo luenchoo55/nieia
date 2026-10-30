@@ -62,10 +62,14 @@
 
   <!-- 時段管理 -->
   <div id="dashView" hidden>
-    <a class="glass admin-link" href="/admin/workshops">
-      <span class="admin-link-text"><strong>工作坊管理</strong><span>學員名單、點名、抽籤、大合照與結業證書</span></span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
-    </a>
+    <!-- 工作坊管理：下面列出還沒結束的工作坊 -->
+    <div class="glass admin-link-card">
+      <a class="admin-link" href="/admin/workshops">
+        <span class="admin-link-text"><strong>工作坊管理</strong><span>學員名單、點名、抽籤、大合照與結業證書</span></span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </a>
+      <div class="ov-workshops" id="ovWorkshops" aria-label="進行中的工作坊" hidden></div>
+    </div>
 
     <!-- 總覽：不用切分頁，一打開後台就看得到 -->
     <section class="panel-stack ov-block" id="overview" aria-labelledby="ov-title">

@@ -490,8 +490,6 @@ button.ov-stat:hover { border-color: var(--lavender); }
 .ov-label { font-size: var(--step--1); color: var(--ink-soft); letter-spacing: .06em; }
 .ov-value { display: grid; font-size: var(--step-1); font-weight: 600; letter-spacing: .02em; font-variant-numeric: tabular-nums; line-height: 1.35; }
 .ov-sub { font-size: var(--step--2); color: var(--ink-soft); }
-.ov-section { gap: .5rem; }
-.ov-section h3 { font-size: var(--step-0); letter-spacing: .08em; }
 .ov-line {
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .3rem .8rem;
   padding: .6rem .2rem; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; color: var(--ink);
@@ -582,12 +580,12 @@ div.ov-line:hover .ov-main strong { color: inherit; }
 .ov-line.ov-stack { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
 .ov-stack .ov-amt { white-space: normal; }
 
-/* 總覽放在分頁列上方；四個區塊可以收合 */
+/* 總覽放在分頁列上方 */
 .ov-block { margin-bottom: 1.6rem; }
 .ov-block #ovBody { display: grid; gap: 10px; }
-.ov-section > summary { cursor: pointer; list-style: none; align-items: center; }
-.ov-section > summary::-webkit-details-marker { display: none; }
-.ov-section > summary .count { margin-left: auto; }
-.ov-section > summary::after { content: ""; width: 8px; height: 8px; margin-left: .7rem; border-right: 1.6px solid var(--ink-soft); border-bottom: 1.6px solid var(--ink-soft); transform: rotate(45deg) translateY(-3px); transition: transform .2s; flex: none; }
-.ov-section[open] > summary::after { transform: rotate(-135deg) translateY(-1px); }
-.ov-section:not([open]) { gap: 0; }
+/* 工作坊管理卡片：上面是連結，下面列出進行中的工作坊 */
+.admin-link-card { margin-bottom: 1.2rem; border-radius: var(--r-md); }
+.admin-link-card:hover { border-color: var(--button); }
+.admin-link-card .admin-link { margin-bottom: 0; border-radius: var(--r-md); }
+.ov-workshops { padding: 0 1.1rem .3rem; }
+.ov-workshops[hidden] { display: none; }

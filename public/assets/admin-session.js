@@ -41,7 +41,7 @@
         return;
       }
       if (!r.ok && r.configured !== false) { $("loading").textContent = r.message || "暫時無法連線，請重新整理。"; return; }
-      if (r.configured === false) $("loginNeededText").textContent = "後台密碼還沒有設定，請先依照後台頁面的說明在 Cloudflare 新增 ADMIN_PASSWORD。";
+      if (r.configured === false) $("loginNeededText").textContent = "後台還沒有設定好：" + (r.message || "請先依照後台頁面的說明在 Cloudflare 新增需要的 Secret。");
       show("loginNeeded");
     });
   }

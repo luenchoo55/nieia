@@ -1,6 +1,7 @@
 /* 後台：沿用網站的色彩與玻璃質感，介面以清楚好操作為主 */
 .admin { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)); gap: 1.6rem; }
 .admin-title { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.admin-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
 .status-line { color: var(--ink-soft); font-size: var(--step--1); }
 
 .btn-small { min-height: 38px; padding: .3rem 1rem; }

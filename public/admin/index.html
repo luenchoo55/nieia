@@ -28,7 +28,10 @@
     <a class="back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>回到網站</a>
     <div class="admin-title">
       <h1>後台</h1>
-      <button class="btn btn-ghost btn-small" id="logoutBtn" type="button" hidden>登出</button>
+      <div class="admin-actions">
+        <button class="btn btn-ghost btn-small" id="logoutAllBtn" type="button" hidden>登出所有裝置</button>
+        <button class="btn btn-ghost btn-small" id="logoutBtn" type="button" hidden>登出</button>
+      </div>
     </div>
     <p class="sub" id="subtitle">只有阿綸可以進入，用來管理預約、時段、療癒項目、商品與工作坊。</p>
   </header>
@@ -37,8 +40,8 @@
 
   <!-- 尚未設定密碼 -->
   <section class="notice glass" id="setupView" hidden aria-labelledby="setup-title">
-    <h2 id="setup-title">還沒有設定後台密碼</h2>
-    <p>請到 Cloudflare 的 nieia → Settings → Variables and Secrets 新增一個 Secret：名稱填 ADMIN_PASSWORD，值填你想用的後台密碼。儲存並部署後，重新整理這一頁就能登入。</p>
+    <h2 id="setup-title">後台還沒有設定好</h2>
+    <p id="setupText">請到 Cloudflare 的 nieia → Settings → Variables and Secrets 新增一個 Secret：名稱填 ADMIN_PASSWORD，值填你想用的後台密碼。儲存並部署後，重新整理這一頁就能登入。</p>
   </section>
 
   <!-- 登入 -->

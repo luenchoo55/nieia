@@ -11,6 +11,8 @@
   function api(path, options) {
     options = options || {};
     var init = { method: options.method || "GET", headers: {}, credentials: "same-origin" };
+    // 背景自動更新不算一次「有動作」，閒置 1 小時仍會自動登出
+    if (options.background) init.headers["X-Nieia-Background"] = "1";
     if (options.body !== undefined) {
       init.headers["Content-Type"] = "application/json";
       init.body = JSON.stringify(options.body);
@@ -37,6 +39,7 @@
   function show(view) {
     ["loading", "setupView", "loginView", "dashView"].forEach(function (id) { $(id).hidden = id !== view; });
     $("logoutBtn").hidden = view !== "dashView";
+    $("logoutAllBtn").hidden = view !== "dashView";
   }
 
   function busy(btn, on, text) {
@@ -69,7 +72,7 @@
   function checkSession() {
     show("loading");
     api("/api/admin/me").then(function (r) {
-      if (r.configured === false) return show("setupView");
+      if (r.configured === false) { if (r.message) $("setupText").textContent = r.message + "儲存並部署後，重新整理這一頁就能登入。"; return show("setupView"); }
       if (!r.ok) { $("loading").textContent = r.message || "暫時無法連線，請重新整理。"; return; }
       if (r.loggedIn && new URLSearchParams(location.search).get("next") === "workshops") { location.replace("/admin/workshops"); return; }
       if (r.loggedIn) { show("dashView"); loadSlots(); document.dispatchEvent(new Event("nieia:dash")); }
@@ -114,6 +117,17 @@
       slots = [];
       show("loginView");
       toast("已登出");
+    });
+  });
+
+  $("logoutAllBtn").addEventListener("click", function () {
+    if (!confirm("要登出所有裝置嗎？手機、電腦等所有登入中的後台都要重新登入。")) return;
+    api("/api/admin/logout-all", { method: "POST" }).then(function (r) {
+      if (r.status === 401) return checkSession();
+      if (!r.ok) return toast(r.message || "登出失敗，請再試一次。");
+      slots = [];
+      show("loginView");
+      toast("已登出所有裝置");
     });
   });
 

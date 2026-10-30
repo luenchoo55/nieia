@@ -16,14 +16,14 @@
     if (text != null) e.textContent = text;
     return e;
   }
-  function call(path, method, body) {
-    return A.api(path, { method: method || "GET", body: body }).then(function (r) {
+  function call(path, method, body, background) {
+    return A.api(path, { method: method || "GET", body: body, background: background }).then(function (r) {
       if (r.status === 401) { A.checkSession(); return r; }
       if (r.ok && r.market) { data = r; render(); }
       return r;
     });
   }
-  function load() { return call("/api/admin/market"); }
+  function load(background) { return call("/api/admin/market", "GET", undefined, background); }
 
   // ---------- 畫面 ----------
   function render() {
@@ -607,7 +607,7 @@
     if (timer) return;
     timer = setInterval(function () {
       var visible = !$("panel-market").hidden && !document.hidden;
-      if (visible && data && data.market.active) load();
+      if (visible && data && data.market.active) load(true);
     }, 15000);
   }
 

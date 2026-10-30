@@ -167,3 +167,20 @@ export function notifyMarketTicket(c, m, t, ahead) {
   const subject = `擺攤取號 ${t.number} 號：${t.name}${t.service ? "｜" + t.service : ""}`;
   c.executionCtx.waitUntil(send(c.env, subject, html).catch((e) => console.error(e)));
 }
+
+// 全站登入錯誤太多，後台登入暫時鎖住
+export function notifyLoginLocked(c, info) {
+  const adminUrl = new URL("/admin", c.req.url).toString();
+  const tw = (d) => new Date(d.getTime() + 8 * 3600 * 1000).toISOString().slice(0, 16).replace("T", " ");
+  const html = layout(
+    "後台登入已暫時鎖住",
+    "過去 1 小時內，後台密碼全站累計錯誤超過 10 次，所以先鎖住登入；最多 1 小時後會自動解鎖。如果不是你自己輸錯，建議到 Cloudflare 更換 ADMIN_PASSWORD，並確認 Zero Trust Access 設定正常。",
+    [
+      ["鎖住時間", tw(info.at) + "（台灣時間）"],
+      ["1 小時內錯誤次數", `${info.total} 次`],
+      ...info.byIp.map((r) => [`IP ${r._id}`, `${r.count} 次，最後一次 ${tw(r.last)}`]),
+    ],
+    adminUrl
+  );
+  c.executionCtx.waitUntil(send(c.env, `後台登入已鎖住：1 小時內錯了 ${info.total} 次`, html).catch((e) => console.error(e)));
+}

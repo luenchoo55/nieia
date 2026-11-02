@@ -88,8 +88,53 @@
 
     <div class="panel-stack" id="panel-ledger" role="tabpanel" aria-labelledby="tab-ledger" hidden>
       <div class="block-head"><h2>收支</h2>
-        <div class="head-acts"><label class="field ld-month" for="ldMonth"><span class="hp">月份</span><input id="ldMonth" type="month"></label><button class="btn btn-ghost btn-small" type="button" id="ldDownload">下載這個月</button></div>
+        <div class="head-acts" id="ldHeadActs"><label class="field ld-month" for="ldMonth"><span class="hp">月份</span><input id="ldMonth" type="month"></label><button class="btn btn-ghost btn-small" type="button" id="ldDownload">下載這個月</button></div>
       </div>
+      <div class="seg ld-view" role="tablist" aria-label="收支功能">
+        <button type="button" role="tab" id="ldViewReport" aria-controls="ldReport" aria-selected="true">報表</button>
+        <button type="button" role="tab" id="ldViewPos" aria-controls="posView" aria-selected="false" tabindex="-1">收銀</button>
+        <button type="button" role="tab" id="ldViewPromo" aria-controls="promoView" aria-selected="false" tabindex="-1">優惠設定</button>
+      </div>
+
+      <!-- 優惠設定：收銀結帳時自動套用 -->
+      <div class="promo" id="promoView" role="tabpanel" aria-labelledby="ldViewPromo" hidden>
+        <p class="hint">集中管理特價、滿額禮、整筆折扣、手動折扣、組合價和套餐。結帳時自動套用。特價、組合價、套餐折掉的金額算在那些品項上，整筆折扣和手動折扣依金額比例分攤，報表和 Excel 記的都是折扣後的實收。</p>
+        <div id="promoBody"><p class="empty glass">載入中…</p></div>
+        <p class="form-msg" id="promoMsg" role="alert"></p>
+        <button class="btn btn-primary btn-block" type="button" id="promoSave">儲存優惠設定</button>
+      </div>
+
+      <!-- 收銀：點商品或療癒項目加入，結帳後自動記成收入、扣庫存 -->
+      <div class="pos" id="posView" role="tabpanel" aria-labelledby="ldViewPos" hidden>
+        <div class="pos-items">
+          <div class="seg pos-cur" role="radiogroup" aria-label="幣別">
+            <button type="button" role="radio" data-pcur="TWD" aria-checked="true">新台幣 NT$</button>
+            <button type="button" role="radio" data-pcur="MYR" aria-checked="false">馬幣 RM</button>
+          </div>
+          <div id="posGrid" aria-live="polite"><p class="empty glass">載入中…</p></div>
+        </div>
+        <aside class="pos-cart glass" aria-labelledby="posCartTitle">
+          <div class="block-head"><h3 id="posCartTitle">購物車</h3><button class="mini" type="button" id="posClear" hidden>清空</button></div>
+          <div class="pos-lines" id="posLines"><p class="hint">點左邊的商品或療癒項目加入。</p></div>
+          <form class="pos-custom" id="posCustom" novalidate>
+            <input id="posCustomName" maxlength="40" placeholder="其他品項" aria-label="其他品項名稱">
+            <input id="posCustomPrice" type="number" inputmode="numeric" min="0" step="1" placeholder="金額" aria-label="其他品項金額">
+            <button class="mini" type="submit">加入</button>
+          </form>
+          <div class="pos-promo" id="posPromo"></div>
+          <div class="pos-total"><span>合計</span><strong id="posTotal">NT$0</strong></div>
+          <div class="seg pos-pay" role="radiogroup" aria-label="付款方式" id="posPay"></div>
+          <div class="pos-cash" id="posCash">
+            <label class="field" for="posGiven"><span>客人給</span><input id="posGiven" type="number" inputmode="numeric" min="0" step="1" placeholder="0"></label>
+            <div class="pos-quick" id="posQuick"></div>
+            <div class="pos-change"><span>找零</span><strong id="posChange">—</strong></div>
+          </div>
+          <p class="form-msg" id="posMsg" role="alert"></p>
+          <button class="btn btn-primary btn-block" type="button" id="posCheckout" disabled>結帳</button>
+        </aside>
+      </div>
+
+      <div class="panel-stack" id="ldReport" role="tabpanel" aria-labelledby="ldViewReport">
       <p class="hint">預約（確認收款那天）、工作坊學費與教材費（標記已付那天）、擺攤（擺攤那天）的收入會自動帶入。支出和其他收入（例如商品賣出）請在下方新增。新台幣和馬幣分開計算。</p>
       <div id="ldBody" aria-live="polite"><p class="empty glass">載入中…</p></div>
       <section class="glass form-card" aria-labelledby="ld-add-title">
@@ -113,6 +158,7 @@
           <button class="btn btn-primary btn-block" id="ldSave" type="submit">新增</button>
         </form>
       </section>
+      </div>
     </div>
 
     <div class="panel-stack" id="panel-bookings" role="tabpanel" aria-labelledby="tab-bookings">
@@ -272,6 +318,21 @@
 </main>
 
 <!-- 打開後台時的提醒 -->
+<!-- 收銀結帳後的收據：圖片＋可以貼給客人的文字 -->
+<div class="ws-modal" id="receiptModal" hidden>
+  <div class="ws-modal-panel receipt-panel" role="dialog" aria-modal="true" aria-labelledby="receiptTitle">
+    <div class="ws-modal-bar"><h2 id="receiptTitle">收據 <span id="receiptNo"></span></h2><button class="ws-back" type="button" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>關閉</button></div>
+    <img class="receipt-img" id="receiptImg" alt="收據圖片">
+    <div class="receipt-acts">
+      <button class="btn btn-primary btn-small" type="button" id="receiptDownload">下載圖片</button>
+      <button class="btn btn-ghost btn-small" type="button" id="receiptShare" hidden>分享圖片</button>
+      <button class="btn btn-ghost btn-small" type="button" id="receiptCopyImg" hidden>複製圖片</button>
+    </div>
+    <label class="field receipt-text" for="receiptText"><span>文字訊息（可以直接貼給客人）</span><textarea id="receiptText" rows="10" readonly></textarea></label>
+    <button class="btn btn-ghost btn-small btn-block" type="button" id="receiptCopy">複製文字</button>
+  </div>
+</div>
+
 <div class="ws-modal" id="remindModal" hidden>
   <div class="ws-modal-panel remind-panel" role="dialog" aria-modal="true" aria-labelledby="remindTitle">
     <div class="ws-modal-bar"><button class="ws-back" type="button" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>關閉</button></div>
@@ -295,5 +356,8 @@
 <script src="/assets/admin-payment.js"></script>
 <script src="/assets/admin-overview.js"></script>
 <script src="/assets/admin-ledger.js"></script>
+<script src="/assets/promo-calc.js"></script>
+<script src="/assets/admin-pos.js"></script>
+<script src="/assets/admin-promo.js"></script>
 </body>
 </html>

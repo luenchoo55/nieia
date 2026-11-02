@@ -50,7 +50,7 @@
   function modeText(m) {
     if (m === "onsite") return "現場進行（地點由阿綸另外告知）";
     if (m === "remote") return "IG 視訊遠距";
-    if (m === "async") return "線上完成・不需視訊（完成後傳送作品）";
+    if (m === "async") return "線上完成・不需視訊";
     return "";
   }
   function renderMode() {

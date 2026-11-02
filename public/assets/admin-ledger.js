@@ -9,7 +9,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var CATS = {
     expense: ["場地", "材料", "交通", "廣告", "平台手續費", "器材", "進貨", "其他"],
-    income: ["商品", "其他收入"],
+    income: ["商品", "現場服務", "其他收入"],
   };
   var SOURCE = { booking: "預約", workshop: "工作坊", market: "擺攤", manual: "手動" };
   var data = null;

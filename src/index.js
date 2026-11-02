@@ -10,6 +10,7 @@ import { mountPayment } from "./payment.js";
 import { mountLedger } from "./ledger.js";
 import { mountNotes } from "./notes.js";
 import { mountOverview } from "./overview.js";
+import { mountPromos } from "./promos.js";
 
 // strict: false 讓 /api/health 和 /api/health/ 都能使用
 const app = new Hono({ strict: false });
@@ -54,6 +55,7 @@ mountPayment(app);
 mountLedger(app);
 mountNotes(app);
 mountOverview(app);
+mountPromos(app);
 
 app.notFound((c) =>
   c.json({ ok: false, message: "找不到這個 API。", path: new URL(c.req.url).pathname }, 404)

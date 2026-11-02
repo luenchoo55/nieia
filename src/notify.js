@@ -6,7 +6,7 @@ const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 
 const REGION = { TW: "台灣", MY: "馬來西亞" };
-const MODE = { remote: "IG 視訊遠距", async: "線上完成・不需視訊（完成後傳送作品）", onsite: "現場進行" };
+const MODE = { remote: "IG 視訊遠距", async: "線上完成・不需視訊", onsite: "現場進行" };
 const EXTRA_LABELS = {
   practiced: "曾習修擴大療癒", departedName: "亡者全名", relation: "與客人的關係",
   birthName: "出生時的完整姓名", birthDate: "出生日期",

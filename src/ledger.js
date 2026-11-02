@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { withDb } from "./db.js";
 import { requireAdmin } from "./auth.js";
+import { getPromos, computePromos } from "./promos.js";
 
 // 收支記帳：預約、工作坊、擺攤的收入每次查詢時即時從原始資料算出來（改了預約，報表就跟著變）；
 // 支出與其他收入（例如商品賣出）手動新增，存在 ledger。新台幣與馬幣分開計算，不換算。
@@ -9,10 +10,14 @@ const CURRENCIES = ["TWD", "MYR"];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH_RE = /^\d{4}-\d{2}$/;
 export const PRODUCT_CATEGORY = "商品";
+const SERVICE_CATEGORY = "現場服務";
+const CUSTOM_CATEGORY = "其他收入";
+const PAY_METHODS = { cash: "現金", transfer: "轉帳", linepay: "LINE Pay", tng: "TNG" };
 
 const bad = (c, message, status = 400) => c.json({ ok: false, message }, status);
 const str = (v, max) => (v == null ? "" : String(v).trim().slice(0, max));
 const oid = (v) => (ObjectId.isValid(v) ? new ObjectId(v) : null);
+const unwrap = (r) => (r && r.value !== undefined ? r.value : r); // 舊版驅動程式回傳 { value }
 // 台灣／馬來西亞時間（UTC+8）的日期
 export const twDate = (d) => new Date(new Date(d).getTime() + 8 * 3600e3).toISOString().slice(0, 10);
 export const todayLocal = () => twDate(Date.now());
@@ -108,7 +113,7 @@ export async function ledgerEntries(db) {
     out.push({
       date: e.date, type: e.type, source: "manual", category: e.category,
       currency: e.currency, amount: e.amount,
-      label: [e.productName && `${e.productName} × ${e.qty}`, e.note].filter(Boolean).join("｜"),
+      label: [(e.productName || e.itemName) && `${e.productName || e.itemName} × ${e.qty}`, e.note].filter(Boolean).join("｜"),
       ref: e._id.toString(),
     });
   }
@@ -192,6 +197,97 @@ export function mountLedger(app) {
       }
       const r = await db.collection("ledger").insertOne(doc);
       return c.json({ ok: true, id: r.insertedId.toString() });
+    });
+  });
+
+  // 收銀結帳：購物車每一項記成一筆收入（同一次結帳共用 saleId），商品扣庫存。
+  // 商品與療癒項目的單價以資料庫為準；優惠依「優惠設定」重新計算，每一項記折扣後的實收。
+  // 庫存不夠時整筆不成立，已扣的庫存還回去。
+  app.post("/api/admin/ledger/checkout", async (c) => {
+    let body;
+    try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
+    const currency = CURRENCIES.includes(body.currency) ? body.currency : null;
+    if (!currency) return bad(c, "請選擇幣別。");
+    const method = PAY_METHODS[body.method] ? body.method : null;
+    if (!method) return bad(c, "請選擇付款方式。");
+    const items = Array.isArray(body.items) ? body.items.slice(0, 50) : [];
+    if (!items.length) return bad(c, "購物車是空的。");
+    const priceKey = currency === "MYR" ? "priceMyr" : "priceTwd";
+
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const lines = [];
+      for (const it of items) {
+        const qty = Number(it.qty);
+        if (!Number.isInteger(qty) || qty < 1 || qty > 1000) return bad(c, "數量請填 1 以上的整數。");
+        if (it.kind === "product" || it.kind === "service") {
+          const id = oid(it.id);
+          const doc = id && (await db.collection(it.kind === "product" ? "products" : "services").findOne({ _id: id }));
+          if (!doc) return bad(c, "找不到其中一個品項，可能已經刪除了，請重新整理。", 404);
+          const price = doc[priceKey];
+          if (price == null || (it.kind === "service" && doc.priceMode !== "fixed")) return bad(c, `「${doc.name}」沒有${currency === "MYR" ? "馬幣" : "台幣"}價格。`);
+          lines.push({ kind: it.kind, id, name: doc.name, qty, price, stocked: it.kind === "product" && typeof doc.stock === "number" });
+        } else if (it.kind === "custom") {
+          const name = str(it.name, 40);
+          const price = cleanAmount(it.price);
+          if (!name) return bad(c, "請填寫其他品項的名稱。");
+          if (price == null) return bad(c, `「${name}」的金額請填整數。`);
+          lines.push({ kind: "custom", name, qty, price });
+        } else return bad(c, "品項格式不正確。");
+      }
+
+      const promo = computePromos(
+        lines.map((l, i) => ({ ref: l.kind === "custom" ? `custom:${i}` : `${l.kind}:${l.id}`, name: l.name, price: l.price, qty: l.qty })),
+        await getPromos(db), currency, { discountId: str(body.discountId, 24), manual: body.manual }
+      );
+
+      // 先扣庫存（庫存要夠才扣），有一項不夠就把前面扣的還回去
+      const products = db.collection("products");
+      const taken = [];
+      for (const l of lines.filter((x) => x.stocked)) {
+        const r = await products.updateOne({ _id: l.id, stock: { $gte: l.qty } }, { $inc: { stock: -l.qty }, $set: { updatedAt: new Date() } });
+        if (!r.modifiedCount) {
+          for (const t of taken) await products.updateOne({ _id: t.id }, { $inc: { stock: t.qty } });
+          const left = (await products.findOne({ _id: l.id }, { projection: { stock: 1 } }))?.stock ?? 0;
+          return bad(c, `「${l.name}」庫存不夠（剩 ${left}），請調整數量。`, 409);
+        }
+        taken.push(l);
+      }
+
+      const saleId = new ObjectId();
+      const now = new Date();
+      const date = twDate(now);
+      // 收據單號：全站流水號 #0001 起
+      const seq = unwrap(await db.collection("counters").findOneAndUpdate(
+        { _id: "receipt" }, { $inc: { seq: 1 } }, { upsert: true, returnDocument: "after" }
+      )).seq;
+      const receiptNo = String(seq).padStart(4, "0");
+      const promoNote = [
+        ...promo.adjustments.map((a) => `${a.label} −${a.amount}`),
+        ...promo.gifts.map((g) => `贈 ${g}`),
+      ].join("、");
+      const note = `收銀 #${receiptNo}｜${PAY_METHODS[method]}${promoNote ? "｜" + promoNote : ""}`;
+      const docs = lines.map((l, i) => ({
+        type: "income", date, currency, amount: promo.amounts[i], listAmount: l.price * l.qty, qty: l.qty, note,
+        category: l.kind === "product" ? PRODUCT_CATEGORY : l.kind === "service" ? SERVICE_CATEGORY : CUSTOM_CATEGORY,
+        ...(l.kind === "product" ? { productId: l.id, productName: l.name } : { itemName: l.name }),
+        ...(l.kind === "service" ? { serviceId: l.id } : {}),
+        saleId, receiptNo, payMethod: method, createdAt: now,
+      }));
+      try {
+        await db.collection("ledger").insertMany(docs);
+      } catch (err) {
+        for (const t of taken) await products.updateOne({ _id: t.id }, { $inc: { stock: t.qty } });
+        throw err;
+      }
+      const total = promo.total;
+      return c.json({
+        ok: true, saleId: saleId.toString(), total, currency,
+        receipt: {
+          no: receiptNo, at: now.toISOString(), currency, method: PAY_METHODS[method], total,
+          subtotal: promo.subtotal, adjustments: promo.adjustments, gifts: promo.gifts,
+          lines: lines.map((l) => ({ name: l.name, qty: l.qty, price: l.price, amount: l.price * l.qty })),
+        },
+      });
     });
   });
 

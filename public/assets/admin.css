@@ -679,7 +679,7 @@ div.ov-line:hover .ov-main strong { color: inherit; }
 .pos-tile-meta s { opacity: .7; }
 .pos-sale {
   position: absolute; top: .9rem; left: .9rem; max-width: calc(100% - 1.8rem); padding: .12rem .55rem; border-radius: 999px;
-  background: rgba(252, 248, 248, .92); color: #B0466A; font-size: var(--step--2); font-weight: 600; letter-spacing: .04em;
+  background: #D2608A; color: #fff; font-size: var(--step--2); font-weight: 600; letter-spacing: .04em; box-shadow: 0 4px 10px -4px rgba(176, 70, 106, .6);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .pos-promo { display: grid; gap: .5rem; }

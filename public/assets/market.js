@@ -62,6 +62,7 @@
           s.textContent = x[1];
           tile.appendChild(s);
         });
+        if (window.nieiaSale) window.nieiaSale(tile, p);
         list.appendChild(tile);
       });
       box.hidden = !products.length;

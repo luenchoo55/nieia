@@ -35,6 +35,26 @@
     return money(item) || "價格即將公布";
   };
 
+  // 商品特價：價格改成「原價劃掉＋特價」，左上角加特價標籤（售完就不顯示）
+  window.nieiaSale = function (tile, item) {
+    if (!item.sale || item.soldOut) return;
+    var price = tile.querySelector(".price");
+    if (price) {
+      price.innerHTML = "";
+      [["twd", "priceTwd", "NT$"], ["myr", "priceMyr", "RM "]].forEach(function (c, i) {
+        if (item[c[1]] == null) return;
+        if (price.childNodes.length) price.appendChild(document.createTextNode("｜"));
+        var now = item.sale[c[0]];
+        if (now != null && now < item[c[1]]) {
+          price.appendChild(el("s", "was", c[2] + Number(item[c[1]]).toLocaleString("en-US")));
+          price.appendChild(el("strong", "now", c[2] + Number(now).toLocaleString("en-US")));
+        } else price.appendChild(document.createTextNode(c[2] + Number(item[c[1]]).toLocaleString("en-US")));
+      });
+    }
+    tile.classList.add("on-sale");
+    tile.appendChild(el("span", "sale-tag", item.sale.label));
+  };
+
   function el(tag, cls, text) {
     var e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -263,6 +283,7 @@
         tile.appendChild(el("span", "label", p.name));
         tile.appendChild(el("span", "price", window.nieiaPrice(p, "product")));
         if (p.desc) tile.appendChild(el("span", "pdesc", p.desc));
+        window.nieiaSale(tile, p);
         shop.appendChild(tile);
       });
       if (!data.items.length) shop.appendChild(el("p", "notice glass", "目前沒有上架的商品。"));

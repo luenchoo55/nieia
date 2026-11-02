@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { withDb, cachedJson, purgeCached } from "./db.js";
+import { getPromos } from "./promos.js";
 import { requireAdmin } from "./auth.js";
 import { detailFor } from "./details.js";
 
@@ -200,7 +201,18 @@ function mountOne(app, publicPath, adminPath, schema) {
     cachedJson(c, publicPath, PUBLIC_TTL, async (db) => {
       await seedOnce(db, schema);
       const docs = await col(db).find({ published: true }).sort({ order: 1 }).toArray();
-      return { ok: true, items: docs.map((d) => publicView(schema, d)) };
+      const items = docs.map((d) => publicView(schema, d));
+      // 商品：附上「優惠設定」裡的特價，前台顯示原價劃掉＋特價
+      if (schema.collection === "products") {
+        const promos = await getPromos(db);
+        for (const it of items) {
+          const ref = "product:" + it.id;
+          const twd = it.priceTwd != null ? globalThis.nieiaPromo.saleOf(ref, it.priceTwd, promos, "TWD") : null;
+          const myr = it.priceMyr != null ? globalThis.nieiaPromo.saleOf(ref, it.priceMyr, promos, "MYR") : null;
+          if (twd || myr) it.sale = { label: (twd || myr).rule.name || "特價", twd: twd ? twd.price : null, myr: myr ? myr.price : null };
+        }
+      }
+      return { ok: true, items };
     })
   );
 

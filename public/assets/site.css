@@ -688,3 +688,13 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .ws-keep .copy-row input { min-width: 0; flex: 1; }
 .copy-row > input { width: 0; flex: 1 1 auto; min-width: 0; } /* 窄手機上不撐寬頁面 */
 .ws-time-nb { white-space: nowrap; }
+
+/* 商品特價：原價劃掉＋特價、左上角粉紅標籤 */
+.tile.product.on-sale { position: relative; }
+.tile.product .price .was { color: var(--ink-soft); opacity: .75; margin-right: .35em; font-size: var(--step--2); }
+.tile.product .price .now { color: #C24E7A; font-weight: 600; }
+.tile.product .sale-tag {
+  position: absolute; top: 16px; left: 16px; max-width: calc(100% - 32px); padding: .15rem .65rem; border-radius: 999px;
+  background: #D2608A; color: #fff; font-size: var(--step--2); font-weight: 600; letter-spacing: .06em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 10px -4px rgba(176, 70, 106, .6);
+}

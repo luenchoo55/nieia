@@ -1,4 +1,4 @@
-import { withDb } from "./db.js";
+import { withDb, purgeCached } from "./db.js";
 import { requireAdmin } from "./auth.js";
 import "../public/assets/promo-calc.js";
 
@@ -116,6 +116,7 @@ export function mountPromos(app) {
     if (errs.length) return bad(c, errs.join(" "));
     return withDb(c.env, c.executionCtx, async (db) => {
       await db.collection("settings").updateOne({ _id: KEY }, { $set: { promos, updatedAt: new Date() } }, { upsert: true });
+      purgeCached(c, "/api/products"); // 前台商品的特價馬上更新
       return c.json({ ok: true, promos });
     });
   });

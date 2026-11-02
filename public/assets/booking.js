@@ -50,12 +50,21 @@
   function modeText(m) {
     if (m === "onsite") return "現場進行（地點由阿綸另外告知）";
     if (m === "remote") return "IG 視訊遠距";
+    if (m === "async") return "線上完成・不需視訊（完成後傳送作品）";
     return "";
   }
   function renderMode() {
     var both = !!(state.service && state.service.mode === "both");
     $("modeField").hidden = !both;
     if (!both) document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.checked = false; });
+    // 不需視訊的項目不用選時段，後面的步驟編號往前補
+    var noSlot = !needSlot();
+    $("slotStep").hidden = noSlot;
+    $("num3").textContent = noSlot ? "2" : "3";
+    $("num4").textContent = noSlot ? "3" : "4";
+  }
+  function needSlot() {
+    return !(state.service && state.service.mode === "async");
   }
   function priceFor(service, reg) {
     if (!service || service.priceMode !== "fixed") return null;
@@ -85,7 +94,8 @@
       text.appendChild(el("strong", null, s.name));
       var meta = [];
       if (s.mode === "onsite") meta.push("現場進行");
-      else if (s.mode === "both") meta.push("遠距或現場");
+      else if (s.mode === "async") meta.push("不需視訊・完成後傳送作品");
+      else if (s.mode === "both") meta.push("線上或現場");
       if (s.duration) meta.push(s.duration + " 分鐘");
       meta.push(bookable ? window.nieiaPrice(s, "service") : "價格即將公布，尚未開放預約");
       text.appendChild(el("span", "meta", meta.join("｜")));
@@ -207,7 +217,7 @@
     var reg = region();
     summaryRows($("summary"), [
       ["療癒項目", state.service ? state.service.name : "尚未選擇"],
-      ["時段", state.slot ? prettyDate(state.slot.date, state.slot.weekday) + " " + state.slot.start + "–" + state.slot.end : "尚未選擇"],
+      ["時段", !needSlot() ? "不需預約時段，完成後傳送作品" : state.slot ? prettyDate(state.slot.date, state.slot.weekday) + " " + state.slot.start + "–" + state.slot.end : "尚未選擇"],
       ["費用", state.service ? (state.service.priceMode === "inquiry" ? "隨喜服務，金額依你的心意" : (priceFor(state.service, reg) || (state.service.priceMode === "fixed" && !reg ? "選擇居住地後顯示" : "阿綸會另外告知金額"))) : ""],
       ["進行方式", state.service ? (modeText(modeOf()) || "請在上方選擇") : ""],
     ]);
@@ -220,7 +230,7 @@
     var msg = $("bookMsg");
     var problems = [];
     if (!state.service) problems.push("請選擇療癒項目");
-    if (!state.slot) problems.push("請選擇時段");
+    if (needSlot() && !state.slot) problems.push("請選擇時段");
     if (!region()) problems.push("請選擇居住地");
     if (state.service && !modeOf()) problems.push("請選擇進行方式");
     if (!$("fName").value.trim()) problems.push("請填寫姓名");
@@ -240,7 +250,7 @@
       method: "POST",
       body: {
         serviceId: state.service.id,
-        slotId: state.slot.id,
+        slotId: needSlot() && state.slot ? state.slot.id : null,
         region: region(),
         mode: modeOf(),
         name: $("fName").value,
@@ -279,7 +289,7 @@
     $("doneRef").textContent = b.ref;
     summaryRows($("doneSummary"), [
       ["療癒項目", b.serviceName],
-      ["時段", prettyDate(b.date, b.weekday) + " " + b.start + "–" + b.end],
+      ["時段", b.mode === "async" ? "不需預約時段，完成後傳送作品" : prettyDate(b.date, b.weekday) + " " + b.start + "–" + b.end],
       ["進行方式", modeText(b.mode || "remote")],
     ]);
 

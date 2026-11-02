@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { withDb, ensureIndexes } from "./db.js";
 import { requireAdmin, sameOrigin } from "./auth.js";
-import { cleanAmount } from "./ledger.js";
+import { cleanAmount, twDate } from "./ledger.js";
 import { notifyNewBooking, notifyPaymentReported } from "./notify.js";
 import { REGIONS, getPayment, publicPayment } from "./payment.js";
 
@@ -111,7 +111,6 @@ export function mountBookings(app) {
 
     const errors = [];
     if (!ObjectId.isValid(body.serviceId)) errors.push("請選擇療癒項目。");
-    if (!ObjectId.isValid(body.slotId)) errors.push("請選擇時段。");
     if (!region) errors.push("請選擇你住在台灣或馬來西亞。");
     if (!name) errors.push("請填寫姓名。");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("請填寫正確的 Email。");
@@ -139,23 +138,30 @@ export function mountBookings(app) {
       const svcMode = service.mode || "remote";
       const mode = svcMode === "both" ? (["remote", "onsite"].includes(body.mode) ? body.mode : null) : svcMode;
       if (!mode) return bad(c, "請選擇想要的進行方式（IG 視訊遠距或現場）。");
+      // 不需視訊的項目不用選時段
+      const noSlot = mode === "async";
+      if (!noSlot && !ObjectId.isValid(body.slotId)) return bad(c, "請選擇時段。");
 
       const { out: extra, errors: extraErrors } = cleanExtra(service.extra || "none", body.extra);
       if (extraErrors.length) return bad(c, extraErrors.join(" "));
 
       // 鎖定時段：只有「仍可預約」且「時間還夠早」的時段才會被搶下，避免兩個人同時預約到同一格
       const slots = db.collection("availability");
-      const earliest = new Date(Date.now() + MIN_NOTICE_HOURS * 3600e3);
-      const slotId = new ObjectId(body.slotId);
       const ref = newRef();
-      const claim = await slots.updateOne(
-        { _id: slotId, status: "open", startAt: { $gt: earliest } },
-        { $set: { status: "booked", bookingRef: ref, updatedAt: new Date() } }
-      );
-      if (!claim.matchedCount) {
-        return bad(c, "這個時段剛剛被預約走了，或已經太接近療程時間，請選擇其他時段。", 409);
+      let slotId = null, slot = null;
+      if (!noSlot) {
+        const earliest = new Date(Date.now() + MIN_NOTICE_HOURS * 3600e3);
+        slotId = new ObjectId(body.slotId);
+        const claim = await slots.updateOne(
+          { _id: slotId, status: "open", startAt: { $gt: earliest } },
+          { $set: { status: "booked", bookingRef: ref, updatedAt: new Date() } }
+        );
+        if (!claim.matchedCount) {
+          return bad(c, "這個時段剛剛被預約走了，或已經太接近療程時間，請選擇其他時段。", 409);
+        }
+        slot = await slots.findOne({ _id: slotId });
       }
-      const slot = await slots.findOne({ _id: slotId });
+      const now = new Date();
 
       const amount = service.priceMode === "fixed"
         ? (region === "TW" ? service.priceTwd : service.priceMyr) ?? null
@@ -168,11 +174,10 @@ export function mountBookings(app) {
         serviceId: service._id,
         serviceName: service.name,
         extraKind: service.extra || "none",
-        slotId,
-        date: slot.date,
-        start: slot.start,
-        end: slot.end,
-        startAt: slot.startAt,
+        // 沒有時段的預約，日期記預約當天，排序時間用送出時間
+        ...(slot
+          ? { slotId, date: slot.date, start: slot.start, end: slot.end, startAt: slot.startAt }
+          : { date: twDate(now), start: "", end: "", startAt: now }),
         region,
         currency: REGIONS[region].currency,
         amount,
@@ -181,14 +186,14 @@ export function mountBookings(app) {
         name, email, instagram, age, gender, reasons, otherReason, note,
         extra,
         ip: ip(c),
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: now,
+        updatedAt: now,
       };
       try {
         await bookings.insertOne(booking);
       } catch (err) {
         // 寫入失敗就把時段還回去
-        await slots.updateOne({ _id: slotId, bookingRef: ref }, { $set: { status: "open" }, $unset: { bookingRef: "" } });
+        if (slotId) await slots.updateOne({ _id: slotId, bookingRef: ref }, { $set: { status: "open" }, $unset: { bookingRef: "" } });
         throw err;
       }
       notifyNewBooking(c, { ...booking, weekday: weekday(booking.date) });

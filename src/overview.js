@@ -92,7 +92,7 @@ async function overview(db) {
   const weekStart = addDays(today, -((new Date(today + "T00:00:00Z").getUTCDay() + 6) % 7));
   const weekEnd = addDays(weekStart, 6);
   const [soon, pending, workshops, products, entries, olds, weekCount] = await Promise.all([
-    db.collection("bookings").find({ date: { $in: [today, tomorrow] }, status: { $ne: "cancelled" } }).sort({ date: 1, start: 1 }).toArray(),
+    db.collection("bookings").find({ date: { $in: [today, tomorrow] }, status: { $ne: "cancelled" }, mode: { $ne: "async" } }).sort({ date: 1, start: 1 }).toArray(),
     db.collection("bookings").find({ status: { $in: ["pending_payment", "payment_reported"] } }).sort({ startAt: 1 }).limit(200).toArray(),
     db.collection("workshops").find({ firstDate: { $gte: addDays(today, -60) } }).toArray(),
     db.collection("products").find({ stock: { $type: "number" } }).sort({ order: 1 }).toArray(),

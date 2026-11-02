@@ -38,10 +38,11 @@
 
   // 依預約狀態準備好回信的主旨與內容
   function letter(b) {
-    var when = prettyDate(b.date, b.weekday) + " " + b.start + "–" + b.end;
+    var when = b.mode === "async" ? "不需預約時段，完成後傳送作品" : prettyDate(b.date, b.weekday) + " " + b.start + "–" + b.end;
     var fee = b.priceMode === "inquiry" ? "隨喜服務" : money(b.amount, b.currency, b.priceMode);
     var onsite = b.mode === "onsite";
-    var how = onsite ? "現場進行（地點：＿＿＿＿）" : "IG 視訊（請先追蹤並私訊 @nieia4928）";
+    var async = b.mode === "async";
+    var how = onsite ? "現場進行（地點：＿＿＿＿）" : async ? "線上完成，不需視訊，完成後會傳送作品給你" : "IG 視訊（請先追蹤並私訊 @nieia4928）";
     var subject, lines;
     if (b.status === "confirmed") {
       subject = "【阿綸涅亞 NIEIA】預約確認：" + b.serviceName + " " + when;
@@ -72,7 +73,7 @@
         "預約編號：" + b.ref,
         "",
         b.paymentReport ? "已看到你回報的匯款（末五碼 " + b.paymentReport.last5 + "），核對後會再通知你。" : "完成匯款後，請在預約頁面回報匯款末五碼，阿綸確認收款後預約就正式成立。",
-        onsite ? "療程在現場進行，地點：＿＿＿＿。" : "療程當天以 IG 視訊進行，請先追蹤並私訊 @nieia4928。",
+        onsite ? "療程在現場進行，地點：＿＿＿＿。" : async ? "這個項目由阿綸在線上完成，不需要視訊，完成後會傳送作品給你。" : "療程當天以 IG 視訊進行，請先追蹤並私訊 @nieia4928。",
         "",
         "阿綸",
       ];
@@ -134,8 +135,8 @@
     var c = el("article", "booking-card glass" + (b.status === "cancelled" ? " is-closed" : ""));
     var head = el("div", "bc-head");
     var when = el("div", "bc-when");
-    when.appendChild(el("span", "time", b.start + "–" + b.end));
-    when.appendChild(el("span", "bc-date", prettyDate(b.date, b.weekday)));
+    when.appendChild(el("span", "time", b.mode === "async" ? "不需時段" : b.start + "–" + b.end));
+    when.appendChild(el("span", "bc-date", (b.mode === "async" ? "預約於 " : "") + prettyDate(b.date, b.weekday)));
     head.appendChild(when);
     var st = STATUS[b.status] || [b.status, "closed"];
     head.appendChild(el("span", "pill " + st[1], st[0]));
@@ -143,7 +144,7 @@
 
     var main = el("p", "bc-main");
     main.appendChild(el("strong", null, b.name));
-    main.appendChild(document.createTextNode("　" + b.serviceName + (b.mode === "onsite" ? "（現場）" : "") + "　" + money(b.amount, b.currency, b.priceMode)));
+    main.appendChild(document.createTextNode("　" + b.serviceName + (b.mode === "onsite" ? "（現場）" : b.mode === "async" ? "（不需視訊）" : "") + "　" + money(b.amount, b.currency, b.priceMode)));
     c.appendChild(main);
 
     if (b.status === "confirmed") {

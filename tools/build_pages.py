@@ -416,14 +416,14 @@ booking = f'''{appbar("預約療癒", "選擇療癒項目與時段，填寫資�
       <div class="choices" id="serviceChoices" role="radiogroup" aria-labelledby="s1"><p class="muted">載入中…</p></div>
     </section>
 
-    <section class="step glass" aria-labelledby="s2">
+    <section class="step glass" id="slotStep" aria-labelledby="s2">
       <h2 id="s2"><span class="num" aria-hidden="true">2</span>選擇時段</h2>
       <div class="date-chips" id="dateChips" role="tablist" aria-label="日期"></div>
       <div class="time-grid" id="timeGrid" role="radiogroup" aria-labelledby="s2"><p class="muted">載入中…</p></div>
     </section>
 
     <section class="step glass" aria-labelledby="s3">
-      <h2 id="s3"><span class="num" aria-hidden="true">3</span>填寫資料</h2>
+      <h2 id="s3"><span class="num" id="num3" aria-hidden="true">3</span>填寫資料</h2>
       <div class="field-grid">
         <fieldset class="field wide">
           <legend>你住在</legend>
@@ -477,7 +477,7 @@ booking = f'''{appbar("預約療癒", "選擇療癒項目與時段，填寫資�
     </section>
 
     <section class="step glass" aria-labelledby="s4">
-      <h2 id="s4"><span class="num" aria-hidden="true">4</span>確認並送出</h2>
+      <h2 id="s4"><span class="num" id="num4" aria-hidden="true">4</span>確認並送出</h2>
       <dl class="summary" id="summary"></dl>
       <div class="rules">
         <p><strong>預約須知</strong></p>

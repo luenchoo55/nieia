@@ -49,7 +49,8 @@
   function svcMeta(s, bookable) {
     var meta = [];
     if (s.mode === "onsite") meta.push("現場進行");
-    else if (s.mode === "both") meta.push("遠距或現場");
+    else if (s.mode === "async") meta.push("不需視訊・完成後傳送作品");
+    else if (s.mode === "both") meta.push("線上或現場");
     if (s.duration) meta.push(s.duration + " 分鐘");
     meta.push(bookable ? window.nieiaPrice(s, "service") : "價格即將公布，尚未開放預約");
     return meta.join("｜");

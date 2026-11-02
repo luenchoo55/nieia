@@ -47,11 +47,11 @@
     var row = el("button", "ov-line");
     row.type = "button";
     row.addEventListener("click", function () { goTab("bookings"); });
-    var when = el("span", "ov-when", (showDate ? U.prettyDate(b.date) + " " : "") + b.start + "–" + b.end);
+    var when = el("span", "ov-when", (showDate ? U.prettyDate(b.date) + " " : "") + (b.mode === "async" ? "不需時段" : b.start + "–" + b.end));
     row.appendChild(when);
     var main = el("span", "ov-main");
     main.appendChild(el("strong", null, b.name));
-    main.appendChild(el("span", null, b.serviceName + (b.mode === "onsite" ? "（現場）" : "")));
+    main.appendChild(el("span", null, b.serviceName + (b.mode === "onsite" ? "（現場）" : b.mode === "async" ? "（不需視訊）" : "")));
     row.appendChild(main);
     var st = STATUS[b.status] || [b.status, "closed"];
     row.appendChild(el("span", "pill " + st[1], st[0]));

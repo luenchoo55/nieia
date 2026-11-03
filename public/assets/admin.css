@@ -804,3 +804,38 @@ div.ov-line:hover .ov-main strong { color: inherit; }
 }
 .promo-opt { grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: end; }
 .promo-opt > .promo-toggle, .promo-opt > .promo-x { align-self: center; }
+
+/* 取消並退款 */
+.bc-refund { background: rgba(155, 44, 74, .07); }
+.bc-refund .bc-refund-note { flex: 2 1 220px; }
+.bc-refund-sum { flex: 1 1 100%; margin: 0; font-size: var(--step--1); color: var(--ink); }
+.bc-refund-btn { background: #9B2C4A; border-color: #9B2C4A; color: #fff; }
+.bc-refunded { background: rgba(155, 44, 74, .08); color: #9B2C4A; }
+
+/* 預約卡片的按鈕列：收款／收據、寫信，其他收進「更多」 */
+.bc-status-actions { align-items: center; }
+.bc-status-actions .mail-btn {
+  display: inline-flex; align-items: center; min-height: 40px; padding: .4rem 1rem; border-radius: 999px;
+  border: 1px solid var(--button); color: var(--button); background: rgba(255, 255, 255, .7); text-decoration: none; font-size: var(--step--1);
+}
+.bc-status-actions .mail-btn:hover { background: var(--tint); }
+.bc-more { position: relative; margin-left: auto; }
+.bc-more > summary {
+  list-style: none; display: inline-flex; align-items: center; gap: .35rem; min-height: 40px; padding: .4rem 1rem; border-radius: 999px;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, .6); color: var(--ink); font-size: var(--step--1); cursor: pointer; user-select: none;
+}
+.bc-more > summary::-webkit-details-marker { display: none; }
+.bc-more > summary::after { content: "⋯"; letter-spacing: .1em; }
+.bc-more[open] > summary { border-color: var(--button); color: var(--button); }
+.bc-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; min-width: 11rem; display: grid; padding: .35rem;
+  border-radius: var(--r-sm); background: #fff; border: 1px solid var(--line); box-shadow: 0 16px 32px -16px rgba(54, 47, 82, .45);
+}
+.booking-card .bc-menu button {
+  border: 0; border-radius: 10px; background: none; text-align: left; padding: .55rem .8rem; min-height: 40px; font-size: var(--step--1); color: var(--ink); width: 100%;
+}
+.booking-card .bc-menu button:hover { background: var(--tint); }
+.booking-card .bc-menu .danger { color: #9B2C4A; }
+.booking-card .bc-menu .danger.confirm { background: #9B2C4A; color: #fff; }
+/* 打開「更多」的那張卡片要在下一張卡片之上，選單才不會被蓋住 */
+.booking-card:has(.bc-more[open]) { position: relative; z-index: 6; overflow: visible; }

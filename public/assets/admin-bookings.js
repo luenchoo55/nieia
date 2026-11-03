@@ -44,7 +44,22 @@
     var async = b.mode === "async";
     var how = onsite ? "現場進行（地點：＿＿＿＿）" : async ? "線上完成，不需視訊，完成後會傳送作品給你" : "IG 視訊（請先追蹤並私訊 @nieia4928）";
     var subject, lines;
-    if (b.status === "confirmed") {
+    if (b.status === "cancelled") {
+      var r = b.refund;
+      subject = "【阿綸涅亞 NIEIA】預約已取消：" + b.serviceName + " " + when;
+      lines = [
+        b.name + " 你好：",
+        "",
+        "這次的預約已經取消了。",
+        "",
+        "療癒項目：" + b.serviceName,
+        "時段：" + when,
+        "預約編號：" + b.ref,
+      ];
+      if (r && r.amount > 0) lines.push("退款金額：" + money(r.amount, b.currency) + "（" + r.date + " 退款）");
+      if (r && r.note) lines.push("說明：" + r.note);
+      lines.push("", "期待之後還有機會與你相見，有任何問題歡迎 IG 私訊 @nieia4928。", "", "阿綸");
+    } else if (b.status === "confirmed") {
       subject = "【阿綸涅亞 NIEIA】預約確認：" + b.serviceName + " " + when;
       lines = [
         b.name + " 你好：",
@@ -155,7 +170,7 @@
     who.appendChild(el("span", "bc-svc", b.serviceName + (b.mode === "onsite" ? "（現場）" : "")));
     head.appendChild(who);
     var side = el("span", "bc-side");
-    side.appendChild(el("span", "bc-amount", money(b.amount, b.currency, b.priceMode)));
+    side.appendChild(el("span", "bc-amount", b.refund && b.refund.amount > 0 ? "退 " + money(b.refund.amount, b.currency) : money(b.amount, b.currency, b.priceMode)));
     if (manual) side.appendChild(el("span", "src-tag", "手動"));
     var st = STATUS[b.status] || [b.status, "closed"];
     side.appendChild(el("span", "pill " + st[1], st[0]));
@@ -186,6 +201,13 @@
     if (b.status === "confirmed") {
       var paid = b.paidAmount != null ? b.paidAmount : b.amount;
       c.appendChild(el("p", "bc-pay", "實收：" + (paid == null ? "還沒填（記帳需要，請按「修改實收金額」）" : money(paid, b.currency))));
+    }
+    if (b.refund) {
+      var kept = (b.paidAmount != null ? b.paidAmount : b.amount || 0) - b.refund.amount;
+      c.appendChild(el("p", "bc-pay bc-refunded",
+        (b.refund.amount > 0 ? "已退款 " + money(b.refund.amount, b.currency) + "（" + b.refund.date + "）" : "取消，不退款") +
+        (b.refund.amount > 0 && kept <= 0 ? "・全額退款" : "・留下 " + money(kept, b.currency) + " 算收入") +
+        (b.refund.note ? "・" + b.refund.note : "")));
     }
     if (b.paymentReport) {
       c.appendChild(el("p", "bc-pay", "已回報匯款：" + b.paymentReport.paidDate + "，末五碼 " + b.paymentReport.last5 + (b.paymentReport.payerName ? "，" + b.paymentReport.payerName : "")));
@@ -228,63 +250,126 @@
       c.appendChild(notes);
     }
 
-    var reply = el("div", "bc-reply");
-    var to = el("p", "bc-email");
-    to.appendChild(el("span", null, "回覆客人"));
-    to.appendChild(document.createTextNode(b.email));
-    reply.appendChild(to);
-    var mail = el("div", "actions mail-actions");
-    var write = el("a", "mail-btn", "用 Gmail 寫信");
-    write.href = gmailUrl(b);
-    write.target = "_blank"; write.rel = "noopener";
-    mail.appendChild(write);
-    var copyLetter = el("button", null, "複製信件內容");
-    copyLetter.type = "button";
-    copyLetter.addEventListener("click", function () { var m = letter(b); copyText(m.subject + "\n\n" + m.body, copyLetter, "複製信件內容"); });
-    mail.appendChild(copyLetter);
-    var copy = el("button", null, "複製 Email");
-    copy.type = "button";
-    copy.addEventListener("click", function () { copyText(b.email, copy, "複製 Email"); });
-    mail.appendChild(copy);
-    reply.appendChild(mail);
-    if (b.email) c.appendChild(reply); // 手動新增的個案可能沒有 Email
+    // 按鈕：常用的放外面（收款／收據、寫信），其他收進「更多」選單
+    var actions = el("div", "actions bc-status-actions");
+    var payForm = b.status !== "cancelled" ? paidForm(b) : null;
+    var refundForm = b.status === "confirmed" ? refundFormFor(b) : null;
+    function showForm(f) {
+      [payForm, refundForm].forEach(function (x) { if (x && x !== f) x.hidden = true; });
+      if (!f) return;
+      f.hidden = !f.hidden;
+      if (!f.hidden) f.querySelector("input").select();
+    }
+    if (b.status === "confirmed") {
+      var rcBtn = el("button", "primary-action", "收據");
+      rcBtn.type = "button";
+      rcBtn.addEventListener("click", function () { showReceipt(b); });
+      actions.appendChild(rcBtn);
+    } else if (b.status !== "cancelled") {
+      var ok = el("button", "primary-action", "確認收款");
+      ok.type = "button";
+      ok.addEventListener("click", function () { showForm(payForm); });
+      actions.appendChild(ok);
+    }
+    if (b.email) {
+      var write = el("a", "mail-btn", "Gmail 寫信");
+      write.href = gmailUrl(b);
+      write.target = "_blank"; write.rel = "noopener";
+      actions.appendChild(write);
+    }
 
-    if (b.status !== "cancelled") {
-      var actions = el("div", "actions bc-status-actions");
-      var payForm = paidForm(b);
-      if (b.status !== "confirmed") {
-        var ok = el("button", "primary-action", "確認收款");
-        ok.type = "button";
-        ok.addEventListener("click", function () { payForm.hidden = !payForm.hidden; if (!payForm.hidden) payForm.querySelector("input").focus(); });
-        actions.appendChild(ok);
-      } else {
-        var rcBtn = el("button", "primary-action", "收據");
-        rcBtn.type = "button";
-        rcBtn.addEventListener("click", function () { showReceipt(b); });
-        actions.appendChild(rcBtn);
-        var fix = el("button", null, "修改實收金額");
-        fix.type = "button";
-        fix.addEventListener("click", function () { payForm.hidden = !payForm.hidden; if (!payForm.hidden) payForm.querySelector("input").focus(); });
-        actions.appendChild(fix);
-      }
-      var cancel = el("button", "danger", "取消預約");
-      cancel.type = "button";
+    var more = el("details", "bc-more");
+    more.appendChild(el("summary", null, "更多"));
+    var menu = el("div", "bc-menu");
+    function item(text, cls, fn) {
+      var x = el("button", cls || null, text);
+      x.type = "button";
+      x.addEventListener("click", function () { fn(x); });
+      menu.appendChild(x);
+      return x;
+    }
+    if (b.email) {
+      item("複製信件內容", null, function (x) { var m = letter(b); copyText(m.subject + "\n\n" + m.body, x, "複製信件內容"); });
+      item("複製 Email", null, function (x) { copyText(b.email, x, "複製 Email"); });
+    }
+    if (b.status === "confirmed") {
+      item("修改實收金額", null, function () { more.open = false; showForm(payForm); });
+      // 已收款：取消時一定要說退多少（可以是 0），收支報表才算得對
+      item("取消並退款", "danger", function () { more.open = false; showForm(refundForm); });
+    } else if (b.status !== "cancelled") {
       var armed = null;
-      cancel.addEventListener("click", function () {
+      item("取消預約", "danger", function (x) {
         if (!armed) {
-          cancel.classList.add("confirm");
-          cancel.textContent = "確定取消？時段會重新開放";
-          armed = setTimeout(function () { armed = null; cancel.classList.remove("confirm"); cancel.textContent = "取消預約"; }, 5000);
+          x.classList.add("confirm");
+          x.textContent = "確定取消？時段會重新開放";
+          armed = setTimeout(function () { armed = null; x.classList.remove("confirm"); x.textContent = "取消預約"; }, 5000);
           return;
         }
         clearTimeout(armed);
-        setStatus(b, "cancelled", cancel, "已取消預約");
+        setStatus(b, "cancelled", x, "已取消預約");
       });
-      actions.appendChild(cancel);
-      c.appendChild(actions);
-      c.appendChild(payForm);
     }
+    if (menu.childNodes.length) {
+      more.appendChild(menu);
+      actions.appendChild(more);
+    }
+    if (actions.childNodes.length) c.appendChild(actions);
+    if (payForm) c.appendChild(payForm);
+    if (refundForm) c.appendChild(refundForm);
     return wrap;
+  }
+
+  // 取消並退款：退款金額預設全額，可改成部分退款或 0；留下的部分照樣算收入
+  function refundFormFor(b) {
+    var paid = b.paidAmount != null ? b.paidAmount : b.amount;
+    var unit = b.currency === "MYR" ? "RM" : "NT$";
+    var f = el("form", "bc-paid bc-refund");
+    f.hidden = true;
+    f.noValidate = true;
+    var amtLabel = el("label", "field");
+    amtLabel.appendChild(el("span", null, "退款金額（" + unit + "）"));
+    var amt = el("input");
+    amt.type = "number"; amt.inputMode = "numeric"; amt.min = "0"; amt.step = "1";
+    if (paid != null) amt.max = String(paid);
+    amt.value = paid == null ? "0" : String(paid);
+    amtLabel.appendChild(amt);
+    f.appendChild(amtLabel);
+    var dateLabel = el("label", "field");
+    dateLabel.appendChild(el("span", null, "退款日期"));
+    var date = el("input");
+    date.type = "date";
+    date.value = todayLocal();
+    dateLabel.appendChild(date);
+    f.appendChild(dateLabel);
+    var noteLabel = el("label", "field bc-refund-note");
+    noteLabel.appendChild(el("span", null, "原因（選填）"));
+    var note = el("input");
+    note.maxLength = 200;
+    note.placeholder = "例如 客人臨時有事";
+    noteLabel.appendChild(note);
+    f.appendChild(noteLabel);
+    var sum = el("p", "bc-refund-sum");
+    f.appendChild(sum);
+    function update() {
+      var n = Number(amt.value);
+      if (amt.value === "" || !Number.isInteger(n) || n < 0) { sum.textContent = "請填退款金額，不退款請填 0。"; return; }
+      if (paid != null && n > paid) { sum.textContent = "退款金額不能超過實收 " + money(paid, b.currency) + "。"; return; }
+      sum.textContent = n === 0 ? "不退款，" + money(paid, b.currency) + " 照樣算收入。"
+        : paid != null && n === paid ? "全額退款，這筆收入會在退款日扣回來。"
+        : "退 " + money(n, b.currency) + "，留下 " + money(paid - n, b.currency) + " 算收入。";
+    }
+    amt.addEventListener("input", update);
+    update();
+    var save = el("button", "btn btn-small bc-refund-btn", "確定取消並退款");
+    save.type = "submit";
+    f.appendChild(save);
+    f.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var n = Number(amt.value);
+      if (amt.value === "" || !Number.isInteger(n) || n < 0 || (paid != null && n > paid)) { amt.focus(); update(); return; }
+      setStatus(b, "cancelled", save, n > 0 ? "已取消並記錄退款 " + money(n, b.currency) : "已取消（不退款）", { refund: { amount: n, date: date.value, note: note.value.trim() } });
+    });
+    return f;
   }
 
   // 收據：用收銀台同一份收據（圖片＋文字），單號是預約編號
@@ -359,6 +444,14 @@
       if (window.NieiaOverview) window.NieiaOverview.reload();
     });
   }
+
+  // 「更多」選單：點外面或按 Esc 就收起來
+  document.addEventListener("click", function (e) {
+    document.querySelectorAll(".bc-more[open]").forEach(function (d) { if (!d.contains(e.target)) d.open = false; });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") document.querySelectorAll(".bc-more[open]").forEach(function (d) { d.open = false; });
+  });
 
   // ---------- 手動新增個案 ----------
   var manualModal = null, services = null;

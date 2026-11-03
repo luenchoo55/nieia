@@ -348,6 +348,17 @@ export function mountBookings(app) {
         if (b.status !== "confirmed") set.confirmedAt = new Date();
       }
       if (status === "cancelled") set.cancelledAt = new Date();
+      // 取消並退款：只用在已收款（已成立）的預約。退款金額可以是 0（不退款），留下的部分照樣算收入
+      if (body.refund != null) {
+        if (status !== "cancelled" || b.status !== "confirmed") return bad(c, "只有已成立的預約可以取消並退款。", 409);
+        const paidNow = b.paidAmount != null ? b.paidAmount : b.amount;
+        const r = body.refund || {};
+        const refundAmount = cleanAmount(r.amount);
+        if (refundAmount == null || refundAmount === undefined) return bad(c, "請填寫退款金額（整數，不退款請填 0）。");
+        if (paidNow != null && refundAmount > paidNow) return bad(c, "退款金額不能超過實收金額。");
+        const refundDate = DATE_RE.test(r.date || "") ? r.date : twDate(new Date());
+        set.refund = { amount: refundAmount, date: refundDate, note: str(r.note, 200), at: new Date() };
+      }
       await col.updateOne({ _id: id }, { $set: set });
 
       // 取消時，把還沒到的時段重新開放

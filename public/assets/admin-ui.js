@@ -21,7 +21,8 @@
   }
   function money(amount, currency) {
     if (amount == null) return "未填";
-    return (currency === "MYR" ? "RM " : "NT$") + Number(amount).toLocaleString("en-US");
+    var n = Number(amount);
+    return (n < 0 ? "−" : "") + (currency === "MYR" ? "RM " : "NT$") + Math.abs(n).toLocaleString("en-US"); // 退款是負的收入
   }
   function today() { return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10); }
   function prettyDate(date) {

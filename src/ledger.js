@@ -47,7 +47,8 @@ export const bookingPaid = (b) => (b.paidAmount != null ? b.paidAmount : b.amoun
 // amount 為 null 代表金額還沒填（例如隨喜預約），報表會另外列出提醒補上
 export async function ledgerEntries(db) {
   const [bookings, workshops, tickets, sessions, marketExtra, manual] = await Promise.all([
-    db.collection("bookings").find({ status: "confirmed" }, { projection: { token: 0, ip: 0 } }).toArray(),
+    // 已成立的預約，加上「取消並退款」過的預約（原本的收入照記，退款另外記一筆負的收入）
+    db.collection("bookings").find({ $or: [{ status: "confirmed" }, { status: "cancelled", refund: { $exists: true } }] }, { projection: { token: 0, ip: 0 } }).toArray(),
     db.collection("workshops").find({}, { projection: { title: 1, sessions: 1, "attendees.id": 1, "attendees.name": 1, "attendees.email": 1, "attendees.tuition": 1, "attendees.material": 1 } }).toArray(),
     db.collection("tickets").find({ status: "done" }, { projection: { sessionId: 1, price: 1, createdAt: 1 } }).toArray(),
     db.collection("marketSessions").find({}, { projection: { location: 1, startedAt: 1 } }).toArray(),
@@ -61,9 +62,17 @@ export async function ledgerEntries(db) {
       date: twDate(b.confirmedAt || b.updatedAt || b.startAt),
       type: "income", source: "booking", category: "療癒預約",
       currency: b.currency, amount: bookingPaid(b),
-      label: `${b.name}｜${b.serviceName}｜${b.date}`,
+      label: `${b.name}｜${b.serviceName}｜${b.date}${b.refund ? "（已取消）" : ""}`,
       ref: b._id.toString(),
     });
+    if (b.refund && b.refund.amount > 0) {
+      out.push({
+        date: b.refund.date, type: "income", source: "booking", category: "療癒退款",
+        currency: b.currency, amount: -b.refund.amount,
+        label: `${b.name}｜${b.serviceName}｜${b.date}${b.refund.note ? "｜" + b.refund.note : ""}`,
+        ref: b._id.toString(),
+      });
+    }
   }
 
   for (const w of workshops) {

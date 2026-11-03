@@ -310,9 +310,10 @@
       "【阿綸涅亞 NIEIA 收據】",
       "單號：#" + rc.no,
       "時間：" + stamp(rc.at),
-      "付款：" + rc.method,
-      "－－－－－－－－－－",
     ];
+    if (rc.method) out.push("付款：" + rc.method);
+    (rc.rows || []).forEach(function (r) { out.push(r[0] + "：" + r[1]); });
+    out.push("－－－－－－－－－－");
     rc.lines.forEach(function (l) {
       out.push(l.name);
       out.push("　" + money(l.price, rc.currency) + " × " + l.qty + "　" + money(l.amount, rc.currency));
@@ -356,9 +357,10 @@
   }
 
   function drawReceipt(rc, given) {
+    function fitTextAt(s, max) { ctx.font = "600 14px " + FONT_BODY; return fitText(ctx, String(s), max); }
     var W = 440, PAD = 36, S = 2;
     var lineH = 62;
-    var H = 400 + rc.lines.length * lineH + ((rc.adjustments || []).length + 1) * 26 + (rc.gifts || []).length * 30 + 260; // 先畫在夠高的畫布上，最後依實際高度裁切
+    var H = 400 + (rc.rows || []).length * 26 + rc.lines.length * lineH + ((rc.adjustments || []).length + 1) * 26 + (rc.gifts || []).length * 30 + 260; // 先畫在夠高的畫布上，最後依實際高度裁切
     var cv = document.createElement("canvas");
     cv.width = W * S; cv.height = H * S;
     var ctx = cv.getContext("2d");
@@ -371,8 +373,9 @@
     ctx.fillRect(0, 0, W, H);
     var g = ctx.createLinearGradient(0, 0, W, 0);
     g.addColorStop(0, "rgba(150,152,231,.55)");
-    g.addColorStop(.5, "rgba(238,193,221,.55)");
-    g.addColorStop(1, "rgba(244,203,146,.5)");
+    g.addColorStop(.4, "rgba(238,193,221,.55)");
+    g.addColorStop(.72, "rgba(244,203,146,.5)");
+    g.addColorStop(1, "rgba(166,212,240,.5)"); // 最右邊淡淡的淺藍
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, 150);
     var fade = ctx.createLinearGradient(0, 40, 0, 150);
@@ -426,7 +429,9 @@
 
     row("單號", "#" + rc.no); y += 26;
     row("時間", stamp(rc.at)); y += 26;
-    row("付款", rc.method); y += 22;
+    if (rc.method) { row("付款", rc.method); y += 26; }
+    (rc.rows || []).forEach(function (r) { row(r[0], fitTextAt(r[1], W - PAD * 2 - 80)); y += 26; });
+    y -= 4;
     dashed(); y += 34;
 
     rc.lines.forEach(function (l) {
@@ -526,6 +531,9 @@
       }, "image/png");
     });
   }
+
+  // 預約也用同一份收據（後台預約卡片的「收據」按鈕）
+  window.NieiaReceipt = { show: showReceipt };
 
   function flash(btn, text) {
     var old = btn.textContent;

@@ -258,6 +258,10 @@
         ok.addEventListener("click", function () { payForm.hidden = !payForm.hidden; if (!payForm.hidden) payForm.querySelector("input").focus(); });
         actions.appendChild(ok);
       } else {
+        var rcBtn = el("button", "primary-action", "收據");
+        rcBtn.type = "button";
+        rcBtn.addEventListener("click", function () { showReceipt(b); });
+        actions.appendChild(rcBtn);
         var fix = el("button", null, "修改實收金額");
         fix.type = "button";
         fix.addEventListener("click", function () { payForm.hidden = !payForm.hidden; if (!payForm.hidden) payForm.querySelector("input").focus(); });
@@ -281,6 +285,26 @@
       c.appendChild(payForm);
     }
     return wrap;
+  }
+
+  // 收據：用收銀台同一份收據（圖片＋文字），單號是預約編號
+  function showReceipt(b) {
+    if (!window.NieiaReceipt) { A.toast("收據還在載入，請稍候再試"); return; }
+    var paid = b.paidAmount != null ? b.paidAmount : b.amount;
+    if (paid == null) { A.toast("請先填寫實收金額"); return; }
+    var when = prettyDate(b.date, b.weekday) + (b.start ? " " + b.start + (b.end ? "–" + b.end : "") : "");
+    window.NieiaReceipt.show({
+      no: b.ref,
+      at: b.confirmedAt || b.updatedAt || b.createdAt,
+      method: "",
+      currency: b.currency,
+      rows: [["客人", b.name], ["療程日期", when]],
+      lines: [{ name: b.serviceName, price: paid, qty: 1, amount: paid }],
+      subtotal: paid,
+      total: paid,
+      adjustments: [],
+      gifts: [],
+    }, null);
   }
 
   // 確認收款時填實收金額（記帳用）；有固定價格就先帶入

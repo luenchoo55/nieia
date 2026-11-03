@@ -135,13 +135,41 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 }
 
 /* ---------- 預約 ---------- */
-.booking-list { display: grid; gap: 10px; }
-.booking-card { padding: 1rem 1.1rem; display: grid; gap: .6rem; border-radius: var(--r-md); }
-.bc-head { display: flex; align-items: center; justify-content: space-between; gap: .8rem; flex-wrap: wrap; }
-.bc-when { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; }
-.bc-when .time { font-variant-numeric: tabular-nums; font-size: var(--step-1); font-family: var(--display); }
+.booking-list { display: grid; gap: 8px; }
+.booking-card { padding: 0; display: grid; border-radius: var(--r-md); }
+/* 一行摘要：日期時間｜客人與項目｜金額、狀態、展開箭頭 */
+.bc-summary {
+  display: grid; grid-template-columns: 12.5rem minmax(0, 1fr) auto; align-items: center; gap: .4rem 1rem;
+  width: 100%; padding: .75rem 1rem .75rem 1.1rem; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: var(--r-md);
+}
+.bc-summary .time { cursor: inherit; }
+.bc-summary:focus-visible { outline: 2px solid var(--button); outline-offset: -2px; }
+.bc-when { display: flex; align-items: baseline; gap: .5rem; white-space: nowrap; }
+.bc-when .time { font-variant-numeric: tabular-nums; font-size: var(--step--1); color: var(--ink-soft); }
+.bc-when .bc-date { color: var(--ink); font-size: var(--step-0); font-variant-numeric: tabular-nums; }
+.bc-who { display: flex; align-items: baseline; gap: .6rem; min-width: 0; }
+.bc-who strong { flex: none; }
+.bc-svc { color: var(--ink-soft); font-size: var(--step--1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.bc-side { display: flex; align-items: center; gap: .5rem; justify-content: flex-end; }
+.bc-amount { font-size: var(--step--1); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bc-side .src-tag { margin-left: 0; }
+.bc-chev { width: 18px; height: 18px; color: var(--ink-soft); transition: transform .2s; flex: none; }
+.bc-summary[aria-expanded="true"] .bc-chev { transform: rotate(180deg); }
+.bc-body { display: grid; gap: .6rem; padding: .2rem 1.1rem 1rem; border-top: 1px solid var(--line); margin: 0 .6rem; padding-top: .8rem; }
+.bc-body[hidden] { display: none; }
 .bc-date { font-size: var(--step--1); color: var(--ink-soft); }
 .bc-main { font-size: var(--step-0); }
+@media (max-width: 560px) {
+  /* 手機：第一行 日期時間｜狀態 箭頭；第二行 客人與項目｜金額 */
+  .bc-summary { grid-template-columns: minmax(0, 1fr) auto auto; gap: .35rem .5rem; padding: .7rem .8rem .7rem .95rem; }
+  .bc-side { display: contents; }
+  .bc-when { grid-column: 1; grid-row: 1; min-width: 0; overflow: hidden; }
+  .bc-side .pill { grid-column: 2; grid-row: 1; }
+  .bc-chev { grid-column: 3; grid-row: 1; }
+  .bc-who { grid-column: 1; grid-row: 2; }
+  .bc-amount { grid-column: 2 / 4; grid-row: 2; justify-self: end; }
+  .bc-side .src-tag { display: none; }
+}
 .bc-pay { font-size: var(--step--1); color: var(--button); background: var(--tint); padding: .5rem .8rem; border-radius: var(--r-sm); }
 .bc-details summary { cursor: pointer; color: var(--ink-soft); font-size: var(--step--1); min-height: 32px; display: flex; align-items: center; }
 .bc-details .summary { margin-top: .4rem; }

@@ -131,23 +131,56 @@
     dl.appendChild(w);
   }
 
+  // 每筆預約平常只顯示一行摘要，點一下展開細節（展開狀態在重新整理列表時保留）
+  var expanded = {};
+  function shortDate(date, weekday) {
+    var p = date.split("-");
+    return Number(p[1]) + "/" + Number(p[2]) + "（" + weekday + "）";
+  }
+
   function card(b) {
-    var c = el("article", "booking-card glass" + (b.status === "cancelled" ? " is-closed" : ""));
-    var head = el("div", "bc-head");
-    var when = el("div", "bc-when");
+    var wrap = el("article", "booking-card glass" + (b.status === "cancelled" ? " is-closed" : ""));
     var manual = b.source === "manual";
-    var timeText = b.start ? b.start + (b.end ? "–" + b.end : "") : b.mode === "async" ? "不需時段" : "未定時間";
-    when.appendChild(el("span", "time", timeText));
-    when.appendChild(el("span", "bc-date", (b.mode === "async" && !manual ? "預約於 " : "") + prettyDate(b.date, b.weekday)));
+    var open = !!expanded[b.id];
+
+    var head = el("button", "bc-summary");
+    head.type = "button";
+    head.setAttribute("aria-expanded", String(open));
+    var when = el("span", "bc-when");
+    when.appendChild(el("span", "bc-date", shortDate(b.date, b.weekday)));
+    when.appendChild(el("span", "time", b.start ? b.start + (b.end ? "–" + b.end : "") : b.mode === "async" ? "不需時段" : "未定時間"));
     head.appendChild(when);
+    var who = el("span", "bc-who");
+    who.appendChild(el("strong", null, b.name));
+    who.appendChild(el("span", "bc-svc", b.serviceName + (b.mode === "onsite" ? "（現場）" : "")));
+    head.appendChild(who);
+    var side = el("span", "bc-side");
+    side.appendChild(el("span", "bc-amount", money(b.amount, b.currency, b.priceMode)));
+    if (manual) side.appendChild(el("span", "src-tag", "手動"));
     var st = STATUS[b.status] || [b.status, "closed"];
-    head.appendChild(el("span", "pill " + st[1], st[0]));
-    c.appendChild(head);
+    side.appendChild(el("span", "pill " + st[1], st[0]));
+    var chev = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    chev.setAttribute("viewBox", "0 0 24 24");
+    chev.setAttribute("class", "bc-chev");
+    chev.setAttribute("aria-hidden", "true");
+    chev.innerHTML = '<path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>';
+    side.appendChild(chev);
+    head.appendChild(side);
+    wrap.appendChild(head);
+
+    var c = el("div", "bc-body");
+    c.hidden = !open;
+    wrap.appendChild(c);
+    head.addEventListener("click", function () {
+      open = !open;
+      if (open) expanded[b.id] = true; else delete expanded[b.id];
+      head.setAttribute("aria-expanded", String(open));
+      c.hidden = !open;
+    });
 
     var main = el("p", "bc-main");
-    main.appendChild(el("strong", null, b.name));
-    main.appendChild(document.createTextNode("　" + b.serviceName + (b.mode === "onsite" ? "（現場）" : b.mode === "async" ? "（不需視訊）" : "") + "　" + money(b.amount, b.currency, b.priceMode)));
-    if (manual) main.appendChild(el("span", "src-tag", "手動新增"));
+    main.appendChild(document.createTextNode(b.serviceName + (b.mode === "onsite" ? "（現場）" : b.mode === "async" ? "（不需視訊）" : "")));
+    main.appendChild(el("span", "bc-date", "　" + prettyDate(b.date, b.weekday) + (b.mode === "async" && !manual ? " 預約" : "") + (manual ? "・手動新增" : "")));
     c.appendChild(main);
 
     if (b.status === "confirmed") {
@@ -247,7 +280,7 @@
       c.appendChild(actions);
       c.appendChild(payForm);
     }
-    return c;
+    return wrap;
   }
 
   // 確認收款時填實收金額（記帳用）；有固定價格就先帶入
@@ -386,6 +419,7 @@
       if (r.status === 401) return A.checkSession();
       if (!r.ok) { msg.textContent = r.message || "新增失敗，請再試一次。"; return; }
       items.push(r.item);
+      expanded[r.item.id] = true; // 新增後直接展開，方便寫筆記
       items.sort(function (a, b) { return String(a.startAt).localeCompare(String(b.startAt)); });
       // 切到能看到這筆的分類
       filter = r.item.status === "confirmed" ? "confirmed" : "todo";

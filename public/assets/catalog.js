@@ -152,6 +152,26 @@
         dl.appendChild(wrap);
       });
       sec.appendChild(dl);
+      // 收款碼（例如 TNG）：手機上沒辦法掃自己的螢幕，所以提供下載，再用 App 從相簿掃描
+      if (m.qr) {
+        var qr = el("figure", "pay-qr");
+        var img = el("img");
+        img.src = m.qr;
+        img.alt = m.name + " 收款碼";
+        img.loading = "lazy";
+        qr.appendChild(img);
+        var cap = el("figcaption");
+        var dl2 = el("a", "btn btn-ghost pay-link", "下載收款碼");
+        dl2.href = m.qr;
+        dl2.download = (m.name || "收款碼").replace(/[\\/:*?"<>|\s]+/g, "_") + "_收款碼";
+        cap.appendChild(dl2);
+        var steps = el("ol", "pay-qr-steps");
+        ["按「下載收款碼」存到手機相簿", "打開 " + m.name + " 或銀行 App，點「掃描」", "選右上角的「相簿／Gallery」，選這張圖片付款"].forEach(function (t) { steps.appendChild(el("li", null, t)); });
+        cap.appendChild(steps);
+        cap.appendChild(el("p", "pay-qr-tip", "用電腦看這個頁面的話，直接拿手機掃上面的收款碼也可以。"));
+        qr.appendChild(cap);
+        sec.appendChild(qr);
+      }
       if (m.link) {
         var a = el("a", "btn btn-ghost pay-link", m.link.label);
         a.href = m.link.url; a.target = "_blank"; a.rel = "noopener";

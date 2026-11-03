@@ -839,3 +839,9 @@ div.ov-line:hover .ov-main strong { color: inherit; }
 .booking-card .bc-menu .danger.confirm { background: #9B2C4A; color: #fff; }
 /* 打開「更多」的那張卡片要在下一張卡片之上，選單才不會被蓋住 */
 .booking-card:has(.bc-more[open]) { position: relative; z-index: 6; overflow: visible; }
+
+/* 匯款方式：收款碼上傳 */
+.pay-qr-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; }
+.pay-qr-thumb { width: 120px; height: auto; border-radius: var(--r-sm); border: 1px solid var(--line); background: #fff; }
+.pay-qr-acts { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; flex: 1 1 200px; }
+.pay-qr-acts .hint { flex: 1 1 100%; margin: 0; }

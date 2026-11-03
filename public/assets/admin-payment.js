@@ -39,6 +39,71 @@
     return c;
   }
 
+  // 收款碼圖片（例如 TNG）：縮到長邊 1200px 內，盡量存 PNG 讓 QR 保持清楚
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var scale = Math.min(1, 1200 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement("canvas");
+        c.width = Math.round(img.naturalWidth * scale);
+        c.height = Math.round(img.naturalHeight * scale);
+        var ctx = c.getContext("2d");
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        var out = c.toDataURL("image/png");
+        if (out.length * 0.75 > 800 * 1024) out = c.toDataURL("image/jpeg", 0.92);
+        resolve(out);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
+  }
+
+  function qrField(m) {
+    var f = el("div", "field wide pay-qr-field");
+    f.appendChild(el("span", null, "收款碼圖片（選填，例如 TNG）"));
+    var row = el("div", "pay-qr-row");
+    if (m.qrKey) {
+      var img = el("img", "pay-qr-thumb");
+      img.src = "/api/photos/" + m.qrKey;
+      img.alt = (m.name || "") + " 收款碼";
+      row.appendChild(img);
+    }
+    var acts = el("div", "pay-qr-acts");
+    var input = el("input");
+    input.type = "file"; input.accept = "image/png,image/jpeg,image/webp"; input.id = "pay-" + (++uid);
+    input.className = "sr-only";
+    var pick = el("label", "btn btn-ghost btn-small", m.qrKey ? "換一張" : "上傳收款碼");
+    pick.htmlFor = input.id;
+    acts.appendChild(input);
+    acts.appendChild(pick);
+    if (m.qrKey) acts.appendChild(button("移除", "mini danger", function () { m.qrKey = ""; render(); }));
+    var msg = el("p", "hint", m.qrKey ? "客人會看到這張收款碼和「下載收款碼」按鈕。改完記得按下方「儲存」。" : "上傳後，客人預約完成時會看到收款碼，可以下載後用 App 從相簿掃描。");
+    acts.appendChild(msg);
+    row.appendChild(acts);
+    f.appendChild(row);
+    input.addEventListener("change", function () {
+      var file = input.files && input.files[0];
+      input.value = "";
+      if (!file) return;
+      msg.textContent = "上傳中…";
+      shrink(file).then(function (dataUrl) {
+        return A.api("/api/admin/payment/qr", { method: "POST", body: { dataUrl: dataUrl } });
+      }).then(function (r) {
+        if (r.status === 401) return A.checkSession();
+        if (!r.ok) { msg.textContent = r.message || "上傳失敗，請再試一次。"; return; }
+        m.qrKey = r.qrKey;
+        render();
+        A.toast("收款碼已上傳，記得按「儲存」");
+      }, function () { msg.textContent = "這張圖片讀不出來，請換一張。"; });
+    });
+    return f;
+  }
+
   function methodCard(region, list, m, i) {
     var hidden = m.enabled === false;
     var card = el("fieldset", "pay-card glass" + (hidden ? " is-off" : ""));
@@ -51,6 +116,7 @@
     grid.appendChild(field("內容（一行一項，「標籤：內容」）", control("textarea", m.details, { rows: "4", maxlength: "600", placeholder: "銀行：玉山銀行（代碼 808）\n帳號：0417968137184\n戶名：朱〇綸" }, function (v) { m.details = v; }), "wide"));
     grid.appendChild(field("按鈕文字（選填）", control("input", m.linkLabel, { maxlength: "20", placeholder: "例如 加入 LINE 好友" }, function (v) { m.linkLabel = v; })));
     grid.appendChild(field("按鈕連結（選填）", control("input", m.linkUrl, { maxlength: "300", inputmode: "url", placeholder: "https://…" }, function (v) { m.linkUrl = v.trim(); })));
+    grid.appendChild(qrField(m));
     var on = el("input");
     on.type = "checkbox"; on.id = "pay-" + (++uid); on.checked = m.enabled !== false;
     on.addEventListener("change", function () { m.enabled = on.checked; render(); });

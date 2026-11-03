@@ -698,3 +698,17 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
   background: #D2608A; color: #fff; font-size: var(--step--2); font-weight: 600; letter-spacing: .06em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 4px 10px -4px rgba(176, 70, 106, .6);
 }
+
+/* 匯款方式的收款碼（例如 TNG） */
+.pay-qr { margin: .6rem 0 0; display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.pay-qr img { width: 100%; height: auto; border-radius: var(--r-sm); background: #fff; border: 1px solid var(--line); }
+.pay-qr figcaption { display: grid; gap: .6rem; justify-items: start; font-size: var(--step--1); color: var(--ink); }
+.pay-qr .pay-link { margin: 0; }
+.pay-qr-steps { margin: 0; padding-left: 1.2em; display: grid; gap: .25rem; line-height: 1.6; }
+.pay-qr-tip { margin: 0; color: var(--ink-soft); font-size: var(--step--2); }
+@media (max-width: 520px) {
+  .pay-qr { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .pay-qr img { max-width: 240px; }
+  .pay-qr figcaption { justify-items: stretch; }
+  .pay-qr .pay-link { justify-content: center; }
+}

@@ -10,6 +10,14 @@ export const REGIONS = {
   MY: { label: "馬來西亞匯款", name: "馬來西亞", currency: "MYR" },
 };
 const MAX_METHODS = 8;
+const QR_KEY_RE = /^[a-z2-9]{16}$/;
+const MAX_QR_BYTES = 900 * 1024; // 後台會先縮小，收款碼通常 100–300 KB
+
+function randomKey(len) {
+  const abc = "23456789abcdefghjkmnpqrstuvwxyz";
+  const bytes = crypto.getRandomValues(new Uint8Array(len));
+  return Array.from(bytes, (b) => abc[b % abc.length]).join("");
+}
 
 const bad = (c, message, status = 400) => c.json({ ok: false, message }, status);
 const str = (v, max) => (v == null ? "" : String(v).trim().slice(0, max));
@@ -47,6 +55,8 @@ export function publicPayment(regions, region) {
     name: m.name,
     lines: lines(m.details),
     link: m.linkUrl ? { label: m.linkLabel || "前往", url: m.linkUrl } : null,
+    // 收款碼圖片（例如 TNG／DuitNow QR）：圖片存在 photos，網址跟工作坊照片同一條路
+    qr: m.qrKey ? `/api/photos/${m.qrKey}` : null,
   }));
   return { label: r.label, currency: r.currency, methods };
 }
@@ -64,6 +74,7 @@ function cleanRegions(input) {
         linkLabel: str(m?.linkLabel, 20),
         linkUrl: str(m?.linkUrl, 300),
         enabled: m?.enabled !== false,
+        qrKey: QR_KEY_RE.test(m?.qrKey || "") ? m.qrKey : "",
       };
       const where = `${REGIONS[region].name}第 ${i + 1} 個`;
       if (!item.name) errors.push(`${where}匯款方式請填寫名稱。`);
@@ -76,6 +87,22 @@ function cleanRegions(input) {
 
 export function mountPayment(app) {
   app.use("/api/admin/payment", requireAdmin);
+  app.use("/api/admin/payment/*", requireAdmin);
+
+  // 上傳收款碼圖片：先存起來拿到代碼，按「儲存」時才會掛到匯款方式上
+  app.post("/api/admin/payment/qr", async (c) => {
+    let body;
+    try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
+    const m = /^data:(image\/(?:jpeg|webp|png));base64,([A-Za-z0-9+/=]+)$/.exec(body?.dataUrl || "");
+    if (!m) return bad(c, "請選擇 JPG、PNG 或 WebP 圖片。");
+    const bytes = Uint8Array.from(atob(m[2]), (ch) => ch.charCodeAt(0));
+    if (bytes.length > MAX_QR_BYTES) return bad(c, "圖片太大了，請換一張或裁小一點再上傳。", 413);
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const key = randomKey(16);
+      await db.collection("photos").insertOne({ _id: key, kind: "payment-qr", type: m[1], data: bytes, createdAt: new Date() });
+      return c.json({ ok: true, qrKey: key, url: `/api/photos/${key}` });
+    });
+  });
 
   app.get("/api/admin/payment", (c) =>
     withDb(c.env, c.executionCtx, async (db) => c.json({ ok: true, regions: await getPayment(db) }))
@@ -88,6 +115,9 @@ export function mountPayment(app) {
     if (errors.length) return bad(c, errors.join(" "));
     return withDb(c.env, c.executionCtx, async (db) => {
       await db.collection("settings").updateOne({ _id: KEY }, { $set: { regions, updatedAt: new Date() } }, { upsert: true });
+      // 換掉或移除的收款碼圖片一起刪掉（上傳了但沒儲存的也一樣）
+      const used = Object.values(regions).flat().map((x) => x.qrKey).filter(Boolean);
+      await db.collection("photos").deleteMany({ kind: "payment-qr", _id: { $nin: used } });
       return c.json({ ok: true, regions });
     });
   });

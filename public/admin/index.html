@@ -171,6 +171,7 @@
           <button class="chip" type="button" data-bstatus="cancelled" aria-pressed="false">已取消</button>
           <button class="chip" type="button" data-bstatus="all" aria-pressed="false">全部</button>
         </div>
+        <button class="chip manual-open" type="button" id="manualOpen" aria-haspopup="dialog">＋ 手動新增</button>
         <button class="chip slot-open" type="button" id="slotOpen" aria-haspopup="dialog">可預約時段<span class="slot-open-n" id="slotOpenN"></span></button>
       </div>
       <div class="booking-list" id="bookingList" aria-live="polite"></div>
@@ -268,6 +269,44 @@
 </main>
 
 <!-- 打開後台時的提醒 -->
+<!-- 手動新增個案：IG 私訊等管道接到的客人 -->
+<div class="ws-modal" id="manualModal" hidden>
+  <div class="ws-modal-panel manual-panel" role="dialog" aria-modal="true" aria-labelledby="manualTitle">
+    <div class="ws-modal-bar"><button class="ws-back" type="button" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>關閉</button></div>
+    <section class="glass form-card">
+      <h2 id="manualTitle">手動新增個案</h2>
+      <p class="hint">IG 私訊或其他管道接到的客人。不會寄信給客人，也不會佔用可預約時段；已收款的話，收入會自動算進收支報表（不用再到收銀記一次）。</p>
+      <form id="manualForm" novalidate>
+        <div class="field-grid">
+          <label class="field" for="mbName"><span>客人名字</span><input id="mbName" maxlength="40" required></label>
+          <label class="field" for="mbIg"><span>IG 帳號（選填）</span><input id="mbIg" maxlength="60" placeholder="@" autocapitalize="off" spellcheck="false"></label>
+          <label class="field" for="mbPhone"><span>電話／LINE（選填）</span><input id="mbPhone" maxlength="30"></label>
+          <label class="field" for="mbEmail"><span>Email（選填）</span><input id="mbEmail" type="email" maxlength="120" autocapitalize="off" spellcheck="false"></label>
+          <label class="field wide" for="mbService"><span>療癒項目</span><select id="mbService" required></select></label>
+          <label class="field" for="mbMode"><span>進行方式</span>
+            <select id="mbMode">
+              <option value="remote">IG 視訊遠距</option>
+              <option value="onsite">現場</option>
+              <option value="async">線上完成・不需視訊</option>
+            </select>
+          </label>
+          <label class="field" for="mbDate"><span>日期</span><input id="mbDate" type="date" required></label>
+          <label class="field" for="mbStart"><span>開始時間（選填）</span><input id="mbStart" type="time" step="300"></label>
+          <label class="field" for="mbEnd"><span>結束時間（選填）</span><input id="mbEnd" type="time" step="300"></label>
+          <label class="field" for="mbCurrency"><span>幣別</span>
+            <select id="mbCurrency"><option value="TWD">新台幣 NT$</option><option value="MYR">馬幣 RM</option></select>
+          </label>
+          <label class="field" for="mbAmount"><span>金額</span><input id="mbAmount" type="number" inputmode="numeric" min="0" step="1"></label>
+          <label class="field check" for="mbPaid"><input id="mbPaid" type="checkbox" checked> 已經收款（直接成立）</label>
+          <label class="field wide" for="mbNote"><span>備註（選填）</span><textarea id="mbNote" rows="2" maxlength="1000"></textarea></label>
+        </div>
+        <p class="form-msg" id="mbMsg" role="alert"></p>
+        <button class="btn btn-primary btn-block" id="mbBtn" type="submit">新增個案</button>
+      </form>
+    </section>
+  </div>
+</div>
+
 <!-- 可預約時段：從預約分頁的按鈕打開 -->
 <div class="ws-modal" id="slotModal" hidden>
   <div class="ws-modal-panel slot-panel" role="dialog" aria-modal="true" aria-label="可預約時段">

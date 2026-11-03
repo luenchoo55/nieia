@@ -37,6 +37,11 @@
 
 .chip-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
 .chip-row .chips { min-width: 0; }
+.manual-open { margin-left: auto; }
+.manual-open + .slot-open { margin-left: 0; }
+.manual-panel { width: min(100%, 760px); }
+.manual-panel .hint { margin: .2rem 0 1rem; }
+.src-tag { display: inline-block; margin-left: .5rem; padding: .05rem .55rem; border-radius: 999px; background: var(--tint); color: var(--button); font-size: var(--step--2); letter-spacing: .04em; vertical-align: middle; }
 .slot-open { margin-left: auto; display: inline-flex; align-items: center; gap: .45rem; background: var(--button); border-color: var(--button); color: #fff; }
 .slot-open:hover { filter: brightness(1.08); }
 .slot-open-n:not(:empty) { min-width: 1.4em; padding: 0 .4em; border-radius: 999px; background: rgba(255, 255, 255, .25); font-size: var(--step--2); font-variant-numeric: tabular-nums; line-height: 1.5; text-align: center; }

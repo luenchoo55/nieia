@@ -16,6 +16,7 @@ const REASONS = ["身體放鬆", "情緒梳理", "關係和諧", "個人成長",
 const STATUS = ["pending_payment", "payment_reported", "confirmed", "cancelled"];
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
 const bad = (c, message, status = 400) => c.json({ ok: false, message }, status);
@@ -260,6 +261,67 @@ export function mountBookings(app) {
       return c.json({ ok: true, items: docs.map(adminView) });
     })
   );
+
+  // 手動新增個案：IG 私訊等管道接到的客人，由阿綸自己輸入。
+  // 不佔時段、不寄信；有收款就直接成立（收入自動進收支報表），之後可以寫個案筆記。
+  app.post("/api/admin/bookings", async (c) => {
+    let body;
+    try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
+    const name = str(body.name, 40);
+    const instagram = str(body.instagram, 60).replace(/^@+/, "");
+    const email = str(body.email, 120);
+    const phone = str(body.phone, 30);
+    const note = str(body.note, 1000);
+    const date = str(body.date, 10);
+    const start = str(body.start, 5);
+    const end = str(body.end, 5);
+    const currency = body.currency === "MYR" ? "MYR" : "TWD";
+    const amount = cleanAmount(body.amount);
+    const paid = body.paid === true;
+    const mode = ["remote", "onsite", "async"].includes(body.mode) ? body.mode : null;
+
+    const errors = [];
+    if (!ObjectId.isValid(body.serviceId)) errors.push("請選擇療癒項目。");
+    if (!name) errors.push("請填寫客人名字。");
+    if (!DATE_RE.test(date) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date) errors.push("請選擇日期。");
+    if (start && !TIME_RE.test(start)) errors.push("開始時間不正確。");
+    if (end && (!start || !TIME_RE.test(end) || end <= start)) errors.push("結束時間要晚於開始時間。");
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("Email 格式不正確。");
+    if (!mode) errors.push("請選擇進行方式。");
+    if (amount === undefined) errors.push("金額請填整數。");
+    if (paid && amount == null) errors.push("已收款的話請填金額。");
+    if (errors.length) return bad(c, errors.join(" "));
+
+    return withDb(c.env, c.executionCtx, async (db) => {
+      await ensureIndexes(db);
+      const service = await db.collection("services").findOne({ _id: new ObjectId(body.serviceId) });
+      if (!service) return bad(c, "找不到這個療癒項目。", 404);
+      const now = new Date();
+      const startAt = new Date(`${date}T${start || "00:00"}:00+08:00`);
+      const booking = {
+        ref: newRef(),
+        token: newToken(),
+        source: "manual",
+        status: paid ? "confirmed" : "pending_payment",
+        serviceId: service._id,
+        serviceName: service.name,
+        extraKind: "none",
+        date, start, end: start ? end : "", startAt,
+        region: currency === "MYR" ? "MY" : "TW",
+        currency,
+        amount,
+        priceMode: service.priceMode || "fixed",
+        mode,
+        name, email, instagram, phone, note,
+        age: "", gender: "", reasons: [], otherReason: "", extra: {},
+        ...(paid ? { paidAmount: amount, confirmedAt: now } : {}),
+        createdAt: now,
+        updatedAt: now,
+      };
+      const r = await db.collection("bookings").insertOne(booking);
+      return c.json({ ok: true, item: adminView({ ...booking, _id: r.insertedId }) });
+    });
+  });
 
   app.patch("/api/admin/bookings/:id", async (c) => {
     const id = ObjectId.isValid(c.req.param("id")) ? new ObjectId(c.req.param("id")) : null;

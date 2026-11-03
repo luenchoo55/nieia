@@ -135,8 +135,10 @@
     var c = el("article", "booking-card glass" + (b.status === "cancelled" ? " is-closed" : ""));
     var head = el("div", "bc-head");
     var when = el("div", "bc-when");
-    when.appendChild(el("span", "time", b.mode === "async" ? "不需時段" : b.start + "–" + b.end));
-    when.appendChild(el("span", "bc-date", (b.mode === "async" ? "預約於 " : "") + prettyDate(b.date, b.weekday)));
+    var manual = b.source === "manual";
+    var timeText = b.start ? b.start + (b.end ? "–" + b.end : "") : b.mode === "async" ? "不需時段" : "未定時間";
+    when.appendChild(el("span", "time", timeText));
+    when.appendChild(el("span", "bc-date", (b.mode === "async" && !manual ? "預約於 " : "") + prettyDate(b.date, b.weekday)));
     head.appendChild(when);
     var st = STATUS[b.status] || [b.status, "closed"];
     head.appendChild(el("span", "pill " + st[1], st[0]));
@@ -145,6 +147,7 @@
     var main = el("p", "bc-main");
     main.appendChild(el("strong", null, b.name));
     main.appendChild(document.createTextNode("　" + b.serviceName + (b.mode === "onsite" ? "（現場）" : b.mode === "async" ? "（不需視訊）" : "") + "　" + money(b.amount, b.currency, b.priceMode)));
+    if (manual) main.appendChild(el("span", "src-tag", "手動新增"));
     c.appendChild(main);
 
     if (b.status === "confirmed") {
@@ -159,12 +162,15 @@
     details.appendChild(el("summary", null, "客人資料"));
     var dl = el("dl", "summary");
     row(dl, "預約編號", b.ref);
-    var ig = el("a", null, "@" + b.instagram);
-    ig.href = "https://www.instagram.com/" + encodeURIComponent(b.instagram) + "/";
-    ig.target = "_blank"; ig.rel = "noopener";
-    row(dl, "IG", ig);
+    if (b.instagram) {
+      var ig = el("a", null, "@" + b.instagram);
+      ig.href = "https://www.instagram.com/" + encodeURIComponent(b.instagram) + "/";
+      ig.target = "_blank"; ig.rel = "noopener";
+      row(dl, "IG", ig);
+    }
+    row(dl, "電話／LINE", b.phone);
     row(dl, "Email", b.email);
-    row(dl, "居住地", REGION[b.region]);
+    if (!manual) row(dl, "居住地", REGION[b.region]);
     row(dl, "年齡", b.age);
     row(dl, "性別", b.gender);
     row(dl, "療癒原因", (b.reasons || []).concat(b.otherReason ? [b.otherReason] : []).join("、"));
@@ -173,7 +179,7 @@
       if (k === "practiced") v = v === "yes" ? "有" : "沒有";
       row(dl, EXTRA_LABELS[k] || k, v);
     });
-    row(dl, "想說的話", b.note);
+    row(dl, manual ? "備註" : "想說的話", b.note);
     details.appendChild(dl);
     c.appendChild(details);
 
@@ -208,7 +214,7 @@
     copy.addEventListener("click", function () { copyText(b.email, copy, "複製 Email"); });
     mail.appendChild(copy);
     reply.appendChild(mail);
-    c.appendChild(reply);
+    if (b.email) c.appendChild(reply); // 手動新增的個案可能沒有 Email
 
     if (b.status !== "cancelled") {
       var actions = el("div", "actions bc-status-actions");
@@ -296,6 +302,100 @@
       if (window.NieiaOverview) window.NieiaOverview.reload();
     });
   }
+
+  // ---------- 手動新增個案 ----------
+  var manualModal = null, services = null;
+  function $(id) { return document.getElementById(id); }
+  function todayLocal() {
+    return new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+  }
+  function selectedService() {
+    var id = $("mbService").value;
+    return (services || []).find(function (s) { return s.id === id; });
+  }
+  // 選了項目或換幣別：帶入進行方式與固定價格（之後仍可自己改）
+  function fillFromService() {
+    $("mbMsg").textContent = "";
+    var s = selectedService();
+    if (!s) return;
+    if (s.mode && s.mode !== "both") $("mbMode").value = s.mode;
+    if (s.priceMode === "fixed") {
+      var p = $("mbCurrency").value === "MYR" ? s.priceMyr : s.priceTwd;
+      $("mbAmount").value = p == null ? "" : p;
+    }
+  }
+  function loadServices() {
+    if (services) return Promise.resolve();
+    $("mbService").innerHTML = "<option value=\"\">載入中…</option>";
+    return A.api("/api/admin/services").then(function (r) {
+      if (r.status === 401) return A.checkSession();
+      if (!r.ok) { $("mbService").innerHTML = "<option value=\"\">無法載入，請重新整理</option>"; return; }
+      services = r.items;
+      var sel = $("mbService");
+      sel.innerHTML = "";
+      sel.appendChild(el("option", null, "請選擇")).value = "";
+      services.forEach(function (s) {
+        var o = el("option", null, s.name + (s.published ? "" : "（未上架）"));
+        o.value = s.id;
+        sel.appendChild(o);
+      });
+    });
+  }
+  function resetManual() {
+    $("manualForm").reset();
+    $("mbDate").value = todayLocal();
+    $("mbPaid").checked = true;
+    $("mbMsg").textContent = "";
+  }
+  $("manualOpen").addEventListener("click", function () {
+    if (!manualModal) manualModal = window.NieiaUI.modal("manualModal");
+    resetManual();
+    manualModal.open();
+    loadServices().then(function () { $("mbName").focus(); });
+  });
+  $("mbService").addEventListener("change", fillFromService);
+  $("mbCurrency").addEventListener("change", fillFromService);
+  $("manualForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var msg = $("mbMsg");
+    var body = {
+      name: $("mbName").value.trim(),
+      instagram: $("mbIg").value.trim(),
+      phone: $("mbPhone").value.trim(),
+      email: $("mbEmail").value.trim(),
+      serviceId: $("mbService").value,
+      mode: $("mbMode").value,
+      date: $("mbDate").value,
+      start: $("mbStart").value,
+      end: $("mbEnd").value,
+      currency: $("mbCurrency").value,
+      amount: $("mbAmount").value,
+      paid: $("mbPaid").checked,
+      note: $("mbNote").value.trim(),
+    };
+    if (!body.name) { msg.textContent = "請填寫客人名字。"; $("mbName").focus(); return; }
+    if (!body.serviceId) { msg.textContent = "請選擇療癒項目。"; $("mbService").focus(); return; }
+    if (!body.date) { msg.textContent = "請選擇日期。"; return; }
+    if (body.end && !body.start) { msg.textContent = "有結束時間的話也請填開始時間。"; return; }
+    if (body.paid && body.amount === "") { msg.textContent = "已收款的話請填金額。"; $("mbAmount").focus(); return; }
+    msg.textContent = "";
+    var btn = $("mbBtn");
+    btn.disabled = true;
+    A.api("/api/admin/bookings", { method: "POST", body: body }).then(function (r) {
+      btn.disabled = false;
+      if (r.status === 401) return A.checkSession();
+      if (!r.ok) { msg.textContent = r.message || "新增失敗，請再試一次。"; return; }
+      items.push(r.item);
+      items.sort(function (a, b) { return String(a.startAt).localeCompare(String(b.startAt)); });
+      // 切到能看到這筆的分類
+      filter = r.item.status === "confirmed" ? "confirmed" : "todo";
+      document.querySelectorAll("#bookingFilter [data-bstatus]").forEach(function (x) { x.setAttribute("aria-pressed", String(x.getAttribute("data-bstatus") === filter)); });
+      render();
+      manualModal.close();
+      A.toast("已新增 " + r.item.name + " 的個案");
+      if (window.NieiaOverview) window.NieiaOverview.reload();
+    });
+  });
 
   document.getElementById("bookingFilter").addEventListener("click", function (e) {
     var btn = e.target.closest("[data-bstatus]");

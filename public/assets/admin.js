@@ -140,14 +140,21 @@
     var start = $("slotStart").value;
     var len = $("slotLength").value;
     if (!start) return null;
-    if (len === "custom") return $("slotEnd").value || null;
-    return plusMinutes(start, Number(len));
+    var mins = len === "custom" ? customMinutes() : Number(len);
+    if (!mins) return null;
+    return plusMinutes(start, mins);
+  }
+
+  function customMinutes() {
+    var n = Number($("slotMinutes").value);
+    return Number.isInteger(n) && n >= 5 && n <= 720 ? n : 0;
   }
 
   function updatePreview() {
     var custom = $("slotLength").value === "custom";
-    $("endField").hidden = !custom;
+    $("minutesField").hidden = !custom;
     var date = dateInput.value, start = $("slotStart").value, end = currentEnd();
+    $("slotEndHint").textContent = custom && start && end && end > start ? "結束時間 " + end : "";
     var weeks = Number($("slotWeeks").value);
     var out = "";
     if (date && start && end && end > start) {
@@ -156,7 +163,10 @@
     }
     $("slotPreview").textContent = out;
   }
-  ["slotDate", "slotStart", "slotLength", "slotEnd", "slotWeeks"].forEach(function (id) {
+  $("slotLength").addEventListener("change", function () {
+    if ($("slotLength").value === "custom") $("slotMinutes").focus();
+  });
+  ["slotDate", "slotStart", "slotLength", "slotMinutes", "slotWeeks"].forEach(function (id) {
     $(id).addEventListener("input", updatePreview);
     $(id).addEventListener("change", updatePreview);
   });
@@ -168,7 +178,8 @@
     var date = dateInput.value, start = $("slotStart").value, end = currentEnd();
     if (!date) { msg.textContent = "請選擇日期。"; return; }
     if (!start) { msg.textContent = "請選擇開始時間。"; return; }
-    if (!end) { msg.textContent = $("slotLength").value === "custom" ? "請選擇結束時間。" : "療程會超過午夜，請選擇早一點的開始時間。"; return; }
+    if ($("slotLength").value === "custom" && !customMinutes()) { msg.textContent = "請輸入療程分鐘數（5 到 720 分鐘）。"; return; }
+    if (!end) { msg.textContent = "療程會超過午夜，請選擇早一點的開始時間。"; return; }
     if (end <= start) { msg.textContent = "結束時間要晚於開始時間。"; return; }
     msg.textContent = "";
     busy($("slotBtn"), true, "新增中…");

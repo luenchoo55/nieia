@@ -287,15 +287,24 @@
           <label class="field" for="slotLength">
             <span>療程長度</span>
             <select id="slotLength">
+              <option value="10">10 分鐘</option>
+              <option value="15">15 分鐘</option>
+              <option value="20">20 分鐘</option>
+              <option value="30">30 分鐘</option>
+              <option value="40">40 分鐘</option>
+              <option value="45">45 分鐘</option>
+              <option value="50">50 分鐘</option>
+              <option value="55">55 分鐘</option>
               <option value="60" selected>60 分鐘</option>
               <option value="90">90 分鐘</option>
               <option value="120">120 分鐘</option>
-              <option value="custom">自訂結束時間</option>
+              <option value="custom">自訂分鐘數</option>
             </select>
           </label>
-          <label class="field" for="slotEnd" id="endField" hidden>
-            <span>結束時間</span>
-            <input id="slotEnd" type="time" step="900">
+          <label class="field" for="slotMinutes" id="minutesField" hidden>
+            <span>療程分鐘數</span>
+            <input id="slotMinutes" type="number" inputmode="numeric" min="5" max="720" step="5" placeholder="例如 75">
+            <span class="end-hint" id="slotEndHint" aria-live="polite"></span>
           </label>
           <label class="field" for="slotWeeks">
             <span>重複</span>

@@ -41,6 +41,7 @@
 .slot-open:hover { filter: brightness(1.08); }
 .slot-open-n:not(:empty) { min-width: 1.4em; padding: 0 .4em; border-radius: 999px; background: rgba(255, 255, 255, .25); font-size: var(--step--2); font-variant-numeric: tabular-nums; line-height: 1.5; text-align: center; }
 .slot-panel { width: min(100%, 760px); display: grid; gap: 1.2rem; }
+.end-hint { color: var(--button); font-variant-numeric: tabular-nums; }
 .day-list { display: grid; gap: .8rem; }
 .day { display: grid; padding: .7rem 1rem .4rem; border-radius: var(--r-md); }
 .day h3 {

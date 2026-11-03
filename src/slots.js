@@ -61,7 +61,7 @@ export function mountSlots(app) {
 
   app.get("/api/admin/slots", (c) =>
     withDb(c.env, c.executionCtx, async (db) => {
-      const from = new Date(Date.now() - 24 * 3600 * 1000);
+      const from = new Date();
       const docs = await db.collection("availability")
         .find({ startAt: { $gte: from } })
         .sort({ startAt: 1 })
@@ -109,7 +109,7 @@ export function mountSlots(app) {
       if (!created.length) {
         return bad(c, "沒有新增任何時段，因為都和已有的時段重疊：" + skipped.join("、"), 409);
       }
-      const from = new Date(Date.now() - 24 * 3600 * 1000);
+      const from = new Date();
       const all = await col.find({ startAt: { $gte: from } }).sort({ startAt: 1 }).limit(500).toArray();
       return c.json({ ok: true, created, skipped, slots: all.map(present) });
     });

@@ -164,66 +164,16 @@
     <div class="panel-stack" id="panel-bookings" role="tabpanel" aria-labelledby="tab-bookings">
     <section class="block" aria-labelledby="booking-title">
       <div class="block-head"><h2 id="booking-title">預約</h2><span class="count" id="bookingCount"></span></div>
-      <div class="chips" role="group" aria-label="依狀態篩選" id="bookingFilter">
-        <button class="chip" type="button" data-bstatus="todo" aria-pressed="true">待處理</button>
-        <button class="chip" type="button" data-bstatus="confirmed" aria-pressed="false">已成立</button>
-        <button class="chip" type="button" data-bstatus="cancelled" aria-pressed="false">已取消</button>
-        <button class="chip" type="button" data-bstatus="all" aria-pressed="false">全部</button>
+      <div class="chip-row">
+        <div class="chips" role="group" aria-label="依狀態篩選" id="bookingFilter">
+          <button class="chip" type="button" data-bstatus="todo" aria-pressed="true">待處理</button>
+          <button class="chip" type="button" data-bstatus="confirmed" aria-pressed="false">已成立</button>
+          <button class="chip" type="button" data-bstatus="cancelled" aria-pressed="false">已取消</button>
+          <button class="chip" type="button" data-bstatus="all" aria-pressed="false">全部</button>
+        </div>
+        <button class="chip slot-open" type="button" id="slotOpen" aria-haspopup="dialog">可預約時段<span class="slot-open-n" id="slotOpenN"></span></button>
       </div>
       <div class="booking-list" id="bookingList" aria-live="polite"></div>
-    </section>
-
-    <section class="glass form-card" aria-labelledby="add-title">
-      <h2 id="add-title">新增可預約時段</h2>
-      <form id="slotForm" novalidate>
-        <div class="field-grid">
-          <label class="field" for="slotDate">
-            <span>日期</span>
-            <input id="slotDate" type="date" required>
-          </label>
-          <label class="field" for="slotStart">
-            <span>開始時間</span>
-            <input id="slotStart" type="time" step="900" value="19:00" required>
-          </label>
-          <label class="field" for="slotLength">
-            <span>療程長度</span>
-            <select id="slotLength">
-              <option value="60" selected>60 分鐘</option>
-              <option value="90">90 分鐘</option>
-              <option value="120">120 分鐘</option>
-              <option value="custom">自訂結束時間</option>
-            </select>
-          </label>
-          <label class="field" for="slotEnd" id="endField" hidden>
-            <span>結束時間</span>
-            <input id="slotEnd" type="time" step="900">
-          </label>
-          <label class="field" for="slotWeeks">
-            <span>重複</span>
-            <select id="slotWeeks">
-              <option value="1" selected>只有這一次</option>
-              <option value="2">每週同一時間，共 2 週</option>
-              <option value="4">每週同一時間，共 4 週</option>
-              <option value="8">每週同一時間，共 8 週</option>
-              <option value="12">每週同一時間，共 12 週</option>
-            </select>
-          </label>
-        </div>
-        <p class="preview" id="slotPreview" aria-live="polite"></p>
-        <p class="form-msg" id="slotMsg" role="alert"></p>
-        <button class="btn btn-primary btn-block" id="slotBtn" type="submit">新增時段</button>
-      </form>
-    </section>
-
-    <section class="block" aria-labelledby="list-title">
-      <div class="block-head"><h2 id="list-title">接下來的時段</h2><span class="count" id="slotCount"></span></div>
-      <div class="chips" role="group" aria-label="依狀態篩選" id="statusFilter">
-        <button class="chip" type="button" data-status="all" aria-pressed="true">全部</button>
-        <button class="chip" type="button" data-status="open" aria-pressed="false">可預約</button>
-        <button class="chip" type="button" data-status="closed" aria-pressed="false">暫停</button>
-        <button class="chip" type="button" data-status="booked" aria-pressed="false">已預約</button>
-      </div>
-      <div id="slotList" class="day-list" aria-live="polite"></div>
     </section>
     </div>
 
@@ -318,6 +268,65 @@
 </main>
 
 <!-- 打開後台時的提醒 -->
+<!-- 可預約時段：從預約分頁的按鈕打開 -->
+<div class="ws-modal" id="slotModal" hidden>
+  <div class="ws-modal-panel slot-panel" role="dialog" aria-modal="true" aria-label="可預約時段">
+    <div class="ws-modal-bar"><button class="ws-back" type="button" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>關閉</button></div>
+    <section class="glass form-card" aria-labelledby="add-title">
+      <h2 id="add-title">新增可預約時段</h2>
+      <form id="slotForm" novalidate>
+        <div class="field-grid">
+          <label class="field" for="slotDate">
+            <span>日期</span>
+            <input id="slotDate" type="date" required>
+          </label>
+          <label class="field" for="slotStart">
+            <span>開始時間</span>
+            <input id="slotStart" type="time" step="900" value="19:00" required>
+          </label>
+          <label class="field" for="slotLength">
+            <span>療程長度</span>
+            <select id="slotLength">
+              <option value="60" selected>60 分鐘</option>
+              <option value="90">90 分鐘</option>
+              <option value="120">120 分鐘</option>
+              <option value="custom">自訂結束時間</option>
+            </select>
+          </label>
+          <label class="field" for="slotEnd" id="endField" hidden>
+            <span>結束時間</span>
+            <input id="slotEnd" type="time" step="900">
+          </label>
+          <label class="field" for="slotWeeks">
+            <span>重複</span>
+            <select id="slotWeeks">
+              <option value="1" selected>只有這一次</option>
+              <option value="2">每週同一時間，共 2 週</option>
+              <option value="4">每週同一時間，共 4 週</option>
+              <option value="8">每週同一時間，共 8 週</option>
+              <option value="12">每週同一時間，共 12 週</option>
+            </select>
+          </label>
+        </div>
+        <p class="preview" id="slotPreview" aria-live="polite"></p>
+        <p class="form-msg" id="slotMsg" role="alert"></p>
+        <button class="btn btn-primary btn-block" id="slotBtn" type="submit">新增時段</button>
+      </form>
+    </section>
+  
+    <section class="block" aria-labelledby="list-title">
+      <div class="block-head"><h2 id="list-title">接下來的時段</h2><span class="count" id="slotCount"></span></div>
+      <div class="chips" role="group" aria-label="依狀態篩選" id="statusFilter">
+        <button class="chip" type="button" data-status="all" aria-pressed="true">全部</button>
+        <button class="chip" type="button" data-status="open" aria-pressed="false">可預約</button>
+        <button class="chip" type="button" data-status="closed" aria-pressed="false">暫停</button>
+        <button class="chip" type="button" data-status="booked" aria-pressed="false">已預約</button>
+      </div>
+      <div id="slotList" class="day-list" aria-live="polite"></div>
+    </section>
+  </div>
+</div>
+
 <!-- 收銀結帳後的收據：圖片＋可以貼給客人的文字 -->
 <div class="ws-modal" id="receiptModal" hidden>
   <div class="ws-modal-panel receipt-panel" role="dialog" aria-modal="true" aria-labelledby="receiptTitle">

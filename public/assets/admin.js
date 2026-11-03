@@ -186,6 +186,13 @@
     });
   });
 
+  // ---------- 時段彈窗（預約分頁的「可預約時段」按鈕） ----------
+  var slotModal = null;
+  $("slotOpen").addEventListener("click", function () {
+    if (!slotModal) slotModal = window.NieiaUI.modal("slotModal");
+    slotModal.open();
+  });
+
   // ---------- 時段列表 ----------
   function loadSlots() {
     $("slotList").innerHTML = '<p class="empty glass">載入中…</p>';
@@ -210,6 +217,7 @@
     var shown = slots.filter(function (s) { return filter === "all" || s.status === filter; });
     var openCount = slots.filter(function (s) { return s.status === "open"; }).length;
     $("slotCount").textContent = slots.length ? "共 " + slots.length + " 個，可預約 " + openCount + " 個" : "";
+    $("slotOpenN").textContent = openCount ? String(openCount) : "";
 
     if (!shown.length) {
       list.appendChild(emptyNote(slots.length ? "這個分類目前沒有時段。" : "還沒有任何時段。用上面的表單新增第一個可預約時段吧。"));
@@ -225,9 +233,13 @@
 
     order.forEach(function (date) {
       var day = document.createElement("div");
-      day.className = "day";
+      day.className = "day glass";
       var h = document.createElement("h3");
       h.textContent = prettyDate(date);
+      var n = document.createElement("span");
+      n.className = "day-count";
+      n.textContent = byDate[date].length + " 個";
+      h.appendChild(n);
       day.appendChild(h);
       byDate[date].forEach(function (s) { day.appendChild(slotRow(s)); });
       list.appendChild(day);
@@ -236,7 +248,7 @@
 
   function slotRow(s) {
     var row = document.createElement("div");
-    row.className = "slot glass" + (s.status === "closed" ? " is-closed" : "");
+    row.className = "slot" + (s.status === "closed" ? " is-closed" : "");
 
     var info = document.createElement("div");
     info.className = "info";

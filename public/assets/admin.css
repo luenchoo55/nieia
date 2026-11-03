@@ -35,21 +35,31 @@
 
 .count { font-size: var(--step--1); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 
-.day-list { display: grid; gap: 1.2rem; }
-.day { display: grid; gap: .5rem; }
-.day h3 { font-size: var(--step--1); color: var(--ink-soft); letter-spacing: .08em; font-family: var(--body); font-weight: 500; }
+.chip-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.chip-row .chips { min-width: 0; }
+.slot-open { margin-left: auto; display: inline-flex; align-items: center; gap: .45rem; background: var(--button); border-color: var(--button); color: #fff; }
+.slot-open:hover { filter: brightness(1.08); }
+.slot-open-n:not(:empty) { min-width: 1.4em; padding: 0 .4em; border-radius: 999px; background: rgba(255, 255, 255, .25); font-size: var(--step--2); font-variant-numeric: tabular-nums; line-height: 1.5; text-align: center; }
+.slot-panel { width: min(100%, 760px); display: grid; gap: 1.2rem; }
+.day-list { display: grid; gap: .8rem; }
+.day { display: grid; padding: .7rem 1rem .4rem; border-radius: var(--r-md); }
+.day h3 {
+  display: flex; justify-content: space-between; align-items: baseline; gap: .6rem; padding-bottom: .4rem;
+  font-size: var(--step--1); color: var(--ink-soft); letter-spacing: .08em; font-family: var(--body); font-weight: 500;
+}
+.day-count { font-size: var(--step--2); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
 .slot {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .8rem;
-  padding: .8rem .9rem .8rem 1.1rem; border-radius: var(--r-md);
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .6rem;
+  padding: .45rem 0; border-top: 1px solid var(--line);
 }
 /* 前台 .time 是選時段的按鈕樣式，後台這裡只是文字 */
 .slot .time, .bc-when .time { min-height: 0; border: 0; border-radius: 0; background: none; cursor: default; }
-.slot .time { font-variant-numeric: tabular-nums; font-size: var(--step-1); font-family: var(--display); letter-spacing: .04em; }
+.slot .time { font-variant-numeric: tabular-nums; font-size: var(--step-0); font-family: var(--display); letter-spacing: .04em; }
 .slot .info { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem .8rem; min-width: 0; }
 .slot .actions { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
 .slot .actions button {
   border: 1px solid var(--line); background: rgba(255, 255, 255, .6); border-radius: 999px;
-  padding: .35rem .9rem; font-size: var(--step--1); cursor: pointer; min-height: 38px; color: var(--ink);
+  padding: .2rem .8rem; font-size: var(--step--1); cursor: pointer; min-height: 32px; color: var(--ink);
 }
 .slot .actions button:hover { border-color: var(--button); color: var(--button); }
 .slot .actions .danger { color: #9B2C4A; }
@@ -73,8 +83,7 @@
 }
 
 @media (max-width: 480px) {
-  .slot { grid-template-columns: minmax(0, 1fr); }
-  .slot .actions { justify-content: flex-start; }
+  .slot { gap: .4rem; }
 }
 
 /* ---------- 分頁與療癒項目／商品 ---------- */

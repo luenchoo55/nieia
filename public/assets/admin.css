@@ -443,6 +443,11 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .pay-region > .btn { justify-self: start; }
 .pay-card { border: 0; margin: 0; padding: 1rem 1.1rem; display: grid; gap: .8rem; min-width: 0; }
 .pay-card legend { float: left; width: 100%; padding: 0; margin-bottom: .2rem; font-weight: 600; color: var(--ink); }
+.pay-card legend.sr-only { float: none; width: 1px; margin: 0; }
+.pay-card .pay-name input:not([type="checkbox"]):not([type="radio"]) { font-size: var(--step-0); font-weight: 600; color: var(--ink); }
+.pay-name > span:first-child { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.pay-off-tag { padding: .05rem .55rem; border-radius: 999px; background: rgba(155, 44, 74, .1); color: #9B2C4A; font-size: var(--step--2); letter-spacing: .04em; }
+.pay-card.is-off { opacity: .72; }
 .pay-card .editor-actions { gap: .4rem; }
 
 /* 已結束的工作坊：收起／展開 */

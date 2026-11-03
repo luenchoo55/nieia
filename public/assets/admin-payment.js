@@ -40,10 +40,14 @@
   }
 
   function methodCard(region, list, m, i) {
-    var card = el("fieldset", "pay-card glass");
-    card.appendChild(el("legend", null, (m.name || "新的匯款方式") + (m.enabled ? "" : "（不顯示）")));
+    var hidden = m.enabled === false;
+    var card = el("fieldset", "pay-card glass" + (hidden ? " is-off" : ""));
+    // 名稱欄位本身就是這張卡的標題，legend 只留給螢幕閱讀器
+    card.appendChild(el("legend", "sr-only", (m.name || "新的匯款方式") + (hidden ? "（不顯示）" : "")));
     var grid = el("div", "field-grid");
-    grid.appendChild(field("名稱", control("input", m.name, { maxlength: "40", placeholder: "例如 銀行轉帳、iPass Money 或 LINE Pay" }, function (v) { m.name = v; }), "wide"));
+    var nameField = field("名稱", control("input", m.name, { maxlength: "40", placeholder: "例如 銀行轉帳、iPass Money 或 LINE Pay" }, function (v) { m.name = v; }), "wide pay-name");
+    if (hidden) nameField.firstChild.appendChild(el("span", "pay-off-tag", "不顯示給客人"));
+    grid.appendChild(nameField);
     grid.appendChild(field("內容（一行一項，「標籤：內容」）", control("textarea", m.details, { rows: "4", maxlength: "600", placeholder: "銀行：玉山銀行（代碼 808）\n帳號：0417968137184\n戶名：朱〇綸" }, function (v) { m.details = v; }), "wide"));
     grid.appendChild(field("按鈕文字（選填）", control("input", m.linkLabel, { maxlength: "20", placeholder: "例如 加入 LINE 好友" }, function (v) { m.linkLabel = v; })));
     grid.appendChild(field("按鈕連結（選填）", control("input", m.linkUrl, { maxlength: "300", inputmode: "url", placeholder: "https://…" }, function (v) { m.linkUrl = v.trim(); })));

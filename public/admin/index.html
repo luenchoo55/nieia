@@ -16,6 +16,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=Noto+Sans+TC:wght@400;500;600&family=LXGW+WenKai+TC:wght@400;700&display=swap">
+<!-- 收據：復古打字機風格（英數字 Special Elite、中文宋體、標題粗宋體） -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Special+Elite&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&text=%E9%98%BF%E7%B6%B8%E6%B6%85%E4%BA%9E&display=swap">
 <link rel="stylesheet" href="/assets/site.css">
 <link rel="stylesheet" href="/assets/admin.css">
 </head>
@@ -275,7 +278,7 @@
     <div class="ws-modal-bar"><button class="ws-back" type="button" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>關閉</button></div>
     <section class="glass form-card">
       <h2 id="manualTitle">手動新增個案</h2>
-      <p class="hint">IG 私訊或其他管道接到的客人。不會寄信給客人，也不會佔用可預約時段；已收款的話，收入會自動算進收支報表（不用再到收銀記一次）。</p>
+      <p class="hint" id="manualHint">IG 私訊或其他管道接到的客人。不會寄信給客人，也不會佔用可預約時段；已收款的話，收入會自動算進收支報表（不用再到收銀記一次）。</p>
       <form id="manualForm" novalidate>
         <div class="field-grid">
           <label class="field" for="mbName"><span>客人名字</span><input id="mbName" maxlength="40" required></label>
@@ -297,11 +300,39 @@
             <select id="mbCurrency"><option value="TWD">新台幣 NT$</option><option value="MYR">馬幣 RM</option></select>
           </label>
           <label class="field" for="mbAmount"><span>金額</span><input id="mbAmount" type="number" inputmode="numeric" min="0" step="1"></label>
-          <label class="field check" for="mbPaid"><input id="mbPaid" type="checkbox" checked> 已經收款（直接成立）</label>
+          <label class="field check" for="mbPaid" id="mbPaidRow"><input id="mbPaid" type="checkbox" checked> 已經收款（直接成立）</label>
           <label class="field wide" for="mbNote"><span>備註（選填）</span><textarea id="mbNote" rows="2" maxlength="1000"></textarea></label>
         </div>
         <p class="form-msg" id="mbMsg" role="alert"></p>
         <button class="btn btn-primary btn-block" id="mbBtn" type="submit">新增個案</button>
+      </form>
+    </section>
+  </div>
+</div>
+
+<!-- 編輯客人自己預約的個案：改寫錯的資料或換時段 -->
+<div class="ws-modal" id="webEditModal" hidden>
+  <div class="ws-modal-panel manual-panel" role="dialog" aria-modal="true" aria-labelledby="weTitle">
+    <div class="ws-modal-bar"><button class="ws-back" type="button" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>關閉</button></div>
+    <section class="glass form-card">
+      <h2 id="weTitle">編輯預約</h2>
+      <p class="hint">客人寫錯的資料可以在這裡改，也可以幫客人換時段。換時段時原本的時段會重新開放給別人預約。改了時間不會自動通知客人，記得用 Gmail 寫信告訴他。</p>
+      <form id="webEditForm" novalidate>
+        <div class="field-grid">
+          <label class="field" for="weName"><span>客人名字</span><input id="weName" maxlength="40" required></label>
+          <label class="field" for="weIg"><span>IG 帳號</span><input id="weIg" maxlength="60" placeholder="@" autocapitalize="off" spellcheck="false"></label>
+          <label class="field" for="weEmail"><span>Email</span><input id="weEmail" type="email" maxlength="120" autocapitalize="off" spellcheck="false" required></label>
+          <label class="field" for="weMode" id="weModeRow"><span>進行方式</span>
+            <select id="weMode"><option value="remote">IG 視訊遠距</option><option value="onsite">現場</option></select>
+          </label>
+          <label class="field wide" for="weSlot" id="weSlotRow"><span>時段</span><select id="weSlot"></select></label>
+          <label class="field we-custom" for="weDate"><span>日期</span><input id="weDate" type="date"></label>
+          <label class="field we-custom" for="weStart"><span>開始時間</span><input id="weStart" type="time" step="300"></label>
+          <label class="field we-custom" for="weEnd"><span>結束時間（選填）</span><input id="weEnd" type="time" step="300"></label>
+          <label class="field wide" for="weNote"><span>想說的話</span><textarea id="weNote" rows="3" maxlength="1000"></textarea></label>
+        </div>
+        <p class="form-msg" id="weMsg" role="alert"></p>
+        <button class="btn btn-primary btn-block" id="weBtn" type="submit">儲存修改</button>
       </form>
     </section>
   </div>
@@ -384,6 +415,7 @@
       <button class="btn btn-primary btn-small" type="button" id="receiptDownload">下載圖片</button>
       <button class="btn btn-ghost btn-small" type="button" id="receiptShare" hidden>分享圖片</button>
       <button class="btn btn-ghost btn-small" type="button" id="receiptCopyImg" hidden>複製圖片</button>
+      <button class="btn btn-ghost btn-small" type="button" id="receiptPrint">列印／存 PDF</button>
     </div>
     <label class="field receipt-text" for="receiptText"><span>文字訊息（可以直接貼給客人）</span><textarea id="receiptText" rows="10" readonly></textarea></label>
     <button class="btn btn-ghost btn-small btn-block" type="button" id="receiptCopy">複製文字</button>

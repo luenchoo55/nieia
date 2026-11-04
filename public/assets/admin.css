@@ -157,7 +157,7 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .bc-chev { width: 18px; height: 18px; color: var(--ink-soft); transition: transform .2s; flex: none; }
 .bc-summary[aria-expanded="true"] .bc-chev { transform: rotate(180deg); }
 .bc-body { display: grid; gap: .6rem; padding: .2rem 1.1rem 1rem; border-top: 1px solid var(--line); margin: 0 .6rem; padding-top: .8rem; }
-.bc-body[hidden] { display: none; }
+.bc-body[hidden], #mbPaidRow[hidden], #webEditModal .field[hidden] { display: none; }
 .bc-date { font-size: var(--step--1); color: var(--ink-soft); }
 .bc-main { font-size: var(--step-0); }
 @media (max-width: 560px) {

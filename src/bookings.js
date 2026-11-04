@@ -92,6 +92,34 @@ function adminView(b) {
   return { id: _id.toString(), ...rest, weekday: weekday(b.date), slotId: b.slotId?.toString() };
 }
 
+// 手動新增／編輯個案共用的欄位檢查
+function readManual(body) {
+  const name = str(body.name, 40);
+  const instagram = str(body.instagram, 60).replace(/^@+/, "");
+  const email = str(body.email, 120);
+  const phone = str(body.phone, 30);
+  const note = str(body.note, 1000);
+  const date = str(body.date, 10);
+  const start = str(body.start, 5);
+  const end = str(body.end, 5);
+  const currency = body.currency === "MYR" ? "MYR" : "TWD";
+  const amount = cleanAmount(body.amount);
+  const paid = body.paid === true;
+  const mode = ["remote", "onsite", "async"].includes(body.mode) ? body.mode : null;
+
+  const errors = [];
+  if (!ObjectId.isValid(body.serviceId)) errors.push("請選擇療癒項目。");
+  if (!name) errors.push("請填寫客人名字。");
+  if (!DATE_RE.test(date) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date) errors.push("請選擇日期。");
+  if (start && !TIME_RE.test(start)) errors.push("開始時間不正確。");
+  if (end && (!start || !TIME_RE.test(end) || end <= start)) errors.push("結束時間要晚於開始時間。");
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("Email 格式不正確。");
+  if (!mode) errors.push("請選擇進行方式。");
+  if (amount === undefined) errors.push("金額請填整數。");
+  if (paid && amount == null) errors.push("已收款的話請填金額。");
+  return { errors, name, instagram, email, phone, note, date, start, end, currency, amount, paid, mode };
+}
+
 export function mountBookings(app) {
   // ---------- 客人：建立預約 ----------
   app.post("/api/bookings", async (c) => {
@@ -267,29 +295,7 @@ export function mountBookings(app) {
   app.post("/api/admin/bookings", async (c) => {
     let body;
     try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
-    const name = str(body.name, 40);
-    const instagram = str(body.instagram, 60).replace(/^@+/, "");
-    const email = str(body.email, 120);
-    const phone = str(body.phone, 30);
-    const note = str(body.note, 1000);
-    const date = str(body.date, 10);
-    const start = str(body.start, 5);
-    const end = str(body.end, 5);
-    const currency = body.currency === "MYR" ? "MYR" : "TWD";
-    const amount = cleanAmount(body.amount);
-    const paid = body.paid === true;
-    const mode = ["remote", "onsite", "async"].includes(body.mode) ? body.mode : null;
-
-    const errors = [];
-    if (!ObjectId.isValid(body.serviceId)) errors.push("請選擇療癒項目。");
-    if (!name) errors.push("請填寫客人名字。");
-    if (!DATE_RE.test(date) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date) errors.push("請選擇日期。");
-    if (start && !TIME_RE.test(start)) errors.push("開始時間不正確。");
-    if (end && (!start || !TIME_RE.test(end) || end <= start)) errors.push("結束時間要晚於開始時間。");
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("Email 格式不正確。");
-    if (!mode) errors.push("請選擇進行方式。");
-    if (amount === undefined) errors.push("金額請填整數。");
-    if (paid && amount == null) errors.push("已收款的話請填金額。");
+    const { errors, name, instagram, email, phone, note, date, start, end, currency, amount, paid, mode } = readManual(body);
     if (errors.length) return bad(c, errors.join(" "));
 
     return withDb(c.env, c.executionCtx, async (db) => {
@@ -320,6 +326,116 @@ export function mountBookings(app) {
       };
       const r = await db.collection("bookings").insertOne(booking);
       return c.json({ ok: true, item: adminView({ ...booking, _id: r.insertedId }) });
+    });
+  });
+
+  // ---------- 編輯客人自己預約的個案：改客人寫錯的資料，或幫客人換時段 ----------
+  app.put("/api/admin/bookings/:id/web", async (c) => {
+    const id = ObjectId.isValid(c.req.param("id")) ? new ObjectId(c.req.param("id")) : null;
+    if (!id) return bad(c, "找不到這筆預約。", 404);
+    let body;
+    try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
+    const name = str(body.name, 40);
+    const email = str(body.email, 120);
+    const instagram = str(body.instagram, 60).replace(/^@+/, "");
+    const note = str(body.note, 1000);
+    const time = body.time || { kind: "keep" };
+    const errors = [];
+    if (!name) errors.push("請填寫客人名字。");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("請填寫正確的 Email。");
+    if (instagram && !/^[A-Za-z0-9._]{1,30}$/.test(instagram)) errors.push("IG 帳號只能有英文、數字、底線和點。");
+    if (!["keep", "slot", "custom"].includes(time.kind)) errors.push("時段選擇不正確。");
+    if (time.kind === "slot" && !ObjectId.isValid(time.slotId)) errors.push("請選擇時段。");
+    if (time.kind === "custom") {
+      const d = str(time.date, 10), st = str(time.start, 5), en = str(time.end, 5);
+      if (!DATE_RE.test(d) || new Date(`${d}T00:00:00Z`).toISOString().slice(0, 10) !== d) errors.push("請選擇日期。");
+      if (!TIME_RE.test(st)) errors.push("請填寫開始時間。");
+      if (en && (!TIME_RE.test(en) || en <= st)) errors.push("結束時間要晚於開始時間。");
+    }
+    if (errors.length) return bad(c, errors.join(" "));
+
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const col = db.collection("bookings");
+      const slots = db.collection("availability");
+      const b = await col.findOne({ _id: id });
+      if (!b) return bad(c, "找不到這筆預約，可能已經刪除了。", 404);
+      if (b.source === "manual") return bad(c, "手動新增的個案請用另一個編輯表單。", 409);
+      if (b.status === "cancelled") return bad(c, "已取消的預約不能編輯。", 409);
+
+      const set = { name, email, instagram, note, updatedAt: new Date() };
+      // 進行方式：只能在遠距和現場之間切換（不需視訊的項目沒有時段，維持原樣）
+      if (b.mode !== "async" && ["remote", "onsite"].includes(body.mode)) set.mode = body.mode;
+
+      let unset = null, releaseOld = false;
+      if (b.mode !== "async" && time.kind === "slot" && String(b.slotId || "") !== time.slotId) {
+        const slotId = new ObjectId(time.slotId);
+        const claim = await slots.updateOne(
+          { _id: slotId, status: "open", startAt: { $gt: new Date() } },
+          { $set: { status: "booked", bookingRef: b.ref, updatedAt: new Date() } }
+        );
+        if (!claim.matchedCount) return bad(c, "這個時段已經被預約或已經過了，請選擇其他時段。", 409);
+        const slot = await slots.findOne({ _id: slotId });
+        Object.assign(set, { slotId, date: slot.date, start: slot.start, end: slot.end, startAt: slot.startAt });
+        releaseOld = !!b.slotId;
+      } else if (b.mode !== "async" && time.kind === "custom") {
+        const d = str(time.date, 10), st = str(time.start, 5), en = str(time.end, 5);
+        Object.assign(set, { date: d, start: st, end: en, startAt: new Date(`${d}T${st}:00+08:00`) });
+        if (b.slotId) { unset = { slotId: "" }; releaseOld = true; }
+      }
+      try {
+        await col.updateOne({ _id: id }, { $set: set, ...(unset ? { $unset: unset } : {}) });
+      } catch (err) {
+        if (set.slotId) await slots.updateOne({ _id: set.slotId, bookingRef: b.ref }, { $set: { status: "open" }, $unset: { bookingRef: "" } });
+        throw err;
+      }
+      // 原本的時段還沒到就重新開放給別人預約
+      let slotReopened = false;
+      if (releaseOld) {
+        const r = await slots.updateOne(
+          { _id: b.slotId, bookingRef: b.ref, startAt: { $gt: new Date() } },
+          { $set: { status: "open", updatedAt: new Date() }, $unset: { bookingRef: "" } }
+        );
+        slotReopened = r.modifiedCount > 0;
+      }
+      const next = { ...b, ...set };
+      if (unset) delete next.slotId;
+      return c.json({ ok: true, item: adminView(next), slotReopened });
+    });
+  });
+
+  // ---------- 編輯手動新增的個案（記錯名字、日期、金額時可以改） ----------
+  app.put("/api/admin/bookings/:id", async (c) => {
+    const id = ObjectId.isValid(c.req.param("id")) ? new ObjectId(c.req.param("id")) : null;
+    if (!id) return bad(c, "找不到這筆預約。", 404);
+    let body;
+    try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
+    const { errors, name, instagram, email, phone, note, date, start, end, currency, amount, mode } = readManual(body);
+    if (errors.length) return bad(c, errors.join(" "));
+
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const col = db.collection("bookings");
+      const b = await col.findOne({ _id: id });
+      if (!b) return bad(c, "找不到這筆預約，可能已經刪除了。", 404);
+      if (b.source !== "manual") return bad(c, "只有手動新增的個案可以編輯。", 409);
+      if (b.status === "cancelled") return bad(c, "已取消的個案不能編輯。", 409);
+      if (b.status === "confirmed" && amount == null) return bad(c, "已收款的個案請填金額。");
+      const service = await db.collection("services").findOne({ _id: new ObjectId(body.serviceId) });
+      if (!service) return bad(c, "找不到這個療癒項目。", 404);
+      const set = {
+        serviceId: service._id,
+        serviceName: service.name,
+        priceMode: service.priceMode || "fixed",
+        date, start, end: start ? end : "",
+        startAt: new Date(`${date}T${start || "00:00"}:00+08:00`),
+        region: currency === "MYR" ? "MY" : "TW",
+        currency, amount, mode,
+        name, email, instagram, phone, note,
+        updatedAt: new Date(),
+      };
+      // 實收金額原本就等於金額（新增時直接收款）就跟著改；另外修改過實收金額的就保留
+      if (b.status === "confirmed" && (b.paidAmount == null || b.paidAmount === b.amount)) set.paidAmount = amount;
+      await col.updateOne({ _id: id }, { $set: set });
+      return c.json({ ok: true, item: adminView({ ...b, ...set }) });
     });
   });
 

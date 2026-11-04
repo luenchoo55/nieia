@@ -292,6 +292,9 @@
       item("複製信件內容", null, function (x) { var m = letter(b); copyText(m.subject + "\n\n" + m.body, x, "複製信件內容"); });
       item("複製 Email", null, function (x) { copyText(b.email, x, "複製 Email"); });
     }
+    if (b.status !== "cancelled") {
+      item("編輯資料", null, function () { more.open = false; if (manual) openManual(b); else openWebEdit(b); });
+    }
     if (b.status === "confirmed") {
       item("修改實收金額", null, function () { more.open = false; showForm(payForm); });
       // 已收款：取消時一定要說退多少（可以是 0），收支報表才算得對
@@ -377,13 +380,26 @@
     if (!window.NieiaReceipt) { A.toast("收據還在載入，請稍候再試"); return; }
     var paid = b.paidAmount != null ? b.paidAmount : b.amount;
     if (paid == null) { A.toast("請先填寫實收金額"); return; }
-    var when = prettyDate(b.date, b.weekday) + (b.start ? " " + b.start + (b.end ? "–" + b.end : "") : "");
+    var when = b.mode === "async" && b.source !== "manual" ? "" : prettyDate(b.date, b.weekday) + (b.start ? " " + b.start + (b.end ? "–" + b.end : "") : "");
+    var BOOKING_STATUS = { pending_payment: "待確認", payment_reported: "待確認", confirmed: "已成立", cancelled: "已取消" };
+    var isPaid = b.status === "confirmed" || (b.status === "cancelled" && b.paidAmount != null);
+    var payStatus = b.status === "cancelled" && b.refund
+      ? "已退款 " + money(b.refund.amount, b.currency)
+      : isPaid ? "已付款" : b.status === "payment_reported" ? "已回報匯款，待確認" : "尚未付款";
+    var method = b.paymentReport && b.paymentReport.last5 ? "匯款（末五碼 " + b.paymentReport.last5 + "）" : "";
     window.NieiaReceipt.show({
       no: b.ref,
       at: b.confirmedAt || b.updatedAt || b.createdAt,
-      method: "",
+      method: method,
       currency: b.currency,
-      rows: [["客人", b.name], ["療程日期", when]],
+      date: when,
+      bookingStatus: BOOKING_STATUS[b.status] || "",
+      paymentStatus: payStatus,
+      paid: isPaid,
+      customer: {
+        name: b.name,
+        contacts: [["IG", b.instagram ? "@" + b.instagram : ""], ["Email", b.email], ["電話／LINE", b.phone]],
+      },
       lines: [{ name: b.serviceName, price: paid, qty: 1, amount: paid }],
       subtotal: paid,
       total: paid,
@@ -454,7 +470,8 @@
   });
 
   // ---------- 手動新增個案 ----------
-  var manualModal = null, services = null;
+  var manualModal = null, services = null, editingId = null;
+  var MANUAL_HINT = null;
   function $(id) { return document.getElementById(id); }
   function todayLocal() {
     return new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
@@ -497,12 +514,40 @@
     $("mbPaid").checked = true;
     $("mbMsg").textContent = "";
   }
-  $("manualOpen").addEventListener("click", function () {
+  // b 有值＝編輯這筆手動個案；沒有＝新增
+  function openManual(b) {
     if (!manualModal) manualModal = window.NieiaUI.modal("manualModal");
+    if (MANUAL_HINT == null) MANUAL_HINT = $("manualHint").textContent;
     resetManual();
+    editingId = b ? b.id : null;
+    $("manualTitle").textContent = b ? "編輯個案" : "手動新增個案";
+    $("manualHint").textContent = b ? "記錯了可以在這裡改。收款狀態、實收金額和取消請用卡片上的按鈕。" : MANUAL_HINT;
+    $("mbPaidRow").hidden = !!b;
+    $("mbBtn").textContent = b ? "儲存修改" : "新增個案";
     manualModal.open();
-    loadServices().then(function () { $("mbName").focus(); });
-  });
+    loadServices().then(function () {
+      if (b) {
+        $("mbName").value = b.name || "";
+        $("mbIg").value = b.instagram ? "@" + b.instagram : "";
+        $("mbPhone").value = b.phone || "";
+        $("mbEmail").value = b.email || "";
+        var sel = $("mbService");
+        if (b.serviceId && !sel.querySelector("option[value=\"" + b.serviceId + "\"]")) {
+          var o = el("option", null, (b.serviceName || "原本的項目") + "（已刪除）"); o.value = b.serviceId; sel.appendChild(o);
+        }
+        sel.value = b.serviceId || "";
+        $("mbMode").value = b.mode || "remote";
+        $("mbDate").value = b.date || "";
+        $("mbStart").value = b.start || "";
+        $("mbEnd").value = b.end || "";
+        $("mbCurrency").value = b.currency === "MYR" ? "MYR" : "TWD";
+        $("mbAmount").value = b.amount == null ? "" : b.amount;
+        $("mbNote").value = b.note || "";
+      }
+      $("mbName").focus();
+    });
+  }
+  $("manualOpen").addEventListener("click", function () { openManual(null); });
   $("mbService").addEventListener("change", fillFromService);
   $("mbCurrency").addEventListener("change", fillFromService);
   $("manualForm").addEventListener("submit", function (e) {
@@ -527,10 +572,26 @@
     if (!body.serviceId) { msg.textContent = "請選擇療癒項目。"; $("mbService").focus(); return; }
     if (!body.date) { msg.textContent = "請選擇日期。"; return; }
     if (body.end && !body.start) { msg.textContent = "有結束時間的話也請填開始時間。"; return; }
-    if (body.paid && body.amount === "") { msg.textContent = "已收款的話請填金額。"; $("mbAmount").focus(); return; }
+    if (!editingId && body.paid && body.amount === "") { msg.textContent = "已收款的話請填金額。"; $("mbAmount").focus(); return; }
     msg.textContent = "";
     var btn = $("mbBtn");
     btn.disabled = true;
+    if (editingId) {
+      var eid = editingId;
+      A.api("/api/admin/bookings/" + encodeURIComponent(eid), { method: "PUT", body: body }).then(function (r) {
+        btn.disabled = false;
+        if (r.status === 401) return A.checkSession();
+        if (!r.ok) { msg.textContent = r.message || "儲存失敗，請再試一次。"; return; }
+        items = items.map(function (x) { return x.id === eid ? r.item : x; });
+        items.sort(function (a, b) { return String(a.startAt).localeCompare(String(b.startAt)); });
+        expanded[eid] = true;
+        render();
+        manualModal.close();
+        A.toast("已更新 " + r.item.name + " 的個案");
+        if (window.NieiaOverview) window.NieiaOverview.reload();
+      });
+      return;
+    }
     A.api("/api/admin/bookings", { method: "POST", body: body }).then(function (r) {
       btn.disabled = false;
       if (r.status === 401) return A.checkSession();
@@ -545,6 +606,82 @@
       manualModal.close();
       A.toast("已新增 " + r.item.name + " 的個案");
       if (window.NieiaOverview) window.NieiaOverview.reload();
+    });
+  });
+
+  // ---------- 編輯客人自己預約的個案 ----------
+  var webModal = null, webEditing = null;
+  function slotLabel(x) {
+    var p = x.date.split("-");
+    return Number(p[1]) + "/" + Number(p[2]) + "（" + x.weekday + "）" + x.start + (x.end ? "–" + x.end : "");
+  }
+  function syncWebCustom() {
+    var custom = $("weSlot").value === "custom" && !$("weSlotRow").hidden;
+    document.querySelectorAll("#webEditModal .we-custom").forEach(function (f) { f.hidden = !custom; });
+  }
+  function openWebEdit(b) {
+    if (!webModal) webModal = window.NieiaUI.modal("webEditModal");
+    webEditing = b;
+    $("webEditForm").reset();
+    $("weMsg").textContent = "";
+    $("weName").value = b.name || "";
+    $("weIg").value = b.instagram ? "@" + b.instagram : "";
+    $("weEmail").value = b.email || "";
+    $("weNote").value = b.note || "";
+    var async = b.mode === "async";
+    $("weModeRow").hidden = async;
+    $("weSlotRow").hidden = async;
+    if (!async) $("weMode").value = b.mode === "onsite" ? "onsite" : "remote";
+    var sel = $("weSlot");
+    sel.innerHTML = "";
+    sel.appendChild(el("option", null, "維持原本：" + slotLabel(b))).value = "keep";
+    sel.appendChild(el("option", null, "自訂日期時間（不占用可預約時段）")).value = "custom";
+    $("weDate").value = b.date || "";
+    $("weStart").value = b.start || "";
+    $("weEnd").value = b.end || "";
+    syncWebCustom();
+    webModal.open();
+    $("weName").focus();
+    if (async) return;
+    var loading = el("option", null, "載入可預約時段中…"); loading.disabled = true; sel.appendChild(loading);
+    A.api("/api/admin/slots").then(function (r) {
+      loading.remove();
+      if (!r.ok || webEditing !== b) return;
+      var open = (r.slots || []).filter(function (x) { return x.status === "open"; });
+      if (!open.length) { var none = el("option", null, "（沒有其他開放中的時段）"); none.disabled = true; sel.appendChild(none); return; }
+      var g = el("optgroup"); g.label = "換到其他開放中的時段";
+      open.forEach(function (x) { var o = el("option", null, slotLabel(x)); o.value = x.id; g.appendChild(o); });
+      sel.appendChild(g);
+    });
+  }
+  $("weSlot").addEventListener("change", syncWebCustom);
+  $("webEditForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var b = webEditing, msg = $("weMsg");
+    if (!b) return;
+    var v = $("weSlot").value;
+    var time = b.mode === "async" || v === "keep" ? { kind: "keep" }
+      : v === "custom" ? { kind: "custom", date: $("weDate").value, start: $("weStart").value, end: $("weEnd").value }
+      : { kind: "slot", slotId: v };
+    var body = { name: $("weName").value.trim(), instagram: $("weIg").value.trim(), email: $("weEmail").value.trim(), note: $("weNote").value.trim(), mode: $("weMode").value, time: time };
+    if (!body.name) { msg.textContent = "請填寫客人名字。"; $("weName").focus(); return; }
+    if (!body.email) { msg.textContent = "請填寫 Email。"; $("weEmail").focus(); return; }
+    if (time.kind === "custom" && (!time.date || !time.start)) { msg.textContent = "請填寫日期和開始時間。"; return; }
+    msg.textContent = "";
+    var btn = $("weBtn");
+    btn.disabled = true;
+    A.api("/api/admin/bookings/" + encodeURIComponent(b.id) + "/web", { method: "PUT", body: body }).then(function (r) {
+      btn.disabled = false;
+      if (r.status === 401) return A.checkSession();
+      if (!r.ok) { msg.textContent = r.message || "儲存失敗，請再試一次。"; return; }
+      items = items.map(function (x) { return x.id === b.id ? r.item : x; });
+      items.sort(function (a, c) { return String(a.startAt).localeCompare(String(c.startAt)); });
+      expanded[b.id] = true;
+      render();
+      webModal.close();
+      A.toast("已更新 " + r.item.name + " 的預約" + (r.slotReopened ? "，原本的時段已重新開放" : ""));
+      if (window.NieiaOverview) window.NieiaOverview.reload();
+      document.dispatchEvent(new Event("nieia:slots"));
     });
   });
 

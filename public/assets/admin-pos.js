@@ -306,28 +306,32 @@
   }
 
   function receiptText(rc, given) {
-    var out = [
-      "【阿綸涅亞 NIEIA 收據】",
-      "單號：#" + rc.no,
-      "時間：" + stamp(rc.at),
-    ];
-    if (rc.method) out.push("付款：" + rc.method);
-    (rc.rows || []).forEach(function (r) { out.push(r[0] + "：" + r[1]); });
+    var m = function (v) { return rmoney(v, rc.currency); };
+    var out = ["【阿綸涅亞 NIEIA 療癒服務憑證】", "訂單編號：#" + rc.no, "收據建立時間：" + stamp(rc.at)];
+    if (has(rc.date)) out.push("預約日期：" + rc.date);
+    if (has(rc.bookingStatus)) out.push("預約狀態：" + rc.bookingStatus);
+    (rc.rows || []).forEach(function (r) { if (has(r[1])) out.push(r[0] + "：" + r[1]); });
+    var cust = rc.customer || {};
+    if (has(cust.name)) out.push("客戶姓名：" + cust.name);
+    (cust.contacts || []).forEach(function (c) { if (c && has(c[1])) out.push(c[0] + "：" + c[1]); });
     out.push("－－－－－－－－－－");
-    rc.lines.forEach(function (l) {
+    (rc.lines || []).forEach(function (l) {
       out.push(l.name);
-      out.push("　" + money(l.price, rc.currency) + " × " + l.qty + "　" + money(l.amount, rc.currency));
+      out.push("　" + m(l.price) + " × " + l.qty + "　" + m(l.amount));
     });
     out.push("－－－－－－－－－－");
-    if (rc.adjustments && rc.adjustments.length) {
-      out.push("小計：" + money(rc.subtotal, rc.currency));
-      rc.adjustments.forEach(function (a) { out.push(a.label + "：−" + money(a.amount, rc.currency)); });
+    var adj = rc.adjustments || [];
+    if (adj.length) {
+      out.push("小計：" + m(rc.subtotal));
+      adj.forEach(function (a) { out.push(a.label + "：−" + m(a.amount)); });
     }
-    out.push("合計：" + money(rc.total, rc.currency));
+    out.push("總金額：" + m(rc.total));
+    if (has(rc.paymentStatus)) out.push("付款狀態：" + rc.paymentStatus);
+    if (has(rc.method)) out.push("付款方式：" + rc.method);
     (rc.gifts || []).forEach(function (g) { out.push("贈品：" + g); });
     if (given != null) {
-      out.push("收現金：" + money(given, rc.currency));
-      out.push("找零：" + money(Math.max(0, given - rc.total), rc.currency));
+      out.push("收現金：" + m(given));
+      out.push("找零：" + m(Math.max(0, given - rc.total)));
     }
     out.push("");
     out.push("謝謝你的到來，願光一路陪伴你 ✦");
@@ -338,16 +342,42 @@
   // 收據圖片用 canvas 畫，配色與字體跟網站一致
   var FONT_DISPLAY = '"LXGW WenKai TC", "Noto Serif TC", serif';
   var FONT_BODY = '"Noto Sans TC", "Microsoft JhengHei", sans-serif';
+  var FONT_SONG = "\"Noto Serif TC\", \"Songti TC\", \"PMingLiU\", \"MingLiU\", serif"; // 收據標題的粗宋體
+  var FONT_TYPE = "\"Special Elite\", \"Noto Serif TC\", \"Songti TC\", \"PMingLiU\", serif"; // 復古打字機：英數字打字機字、中文宋體
   var FONT_LATIN = '"Cormorant Garamond", "Times New Roman", serif';
 
   function loadFonts(text) {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
     return Promise.all([
       document.fonts.load("700 40px " + FONT_DISPLAY, text),
+      document.fonts.load("900 34px " + FONT_SONG, "阿綸涅亞"),
+      document.fonts.load("400 14px \"Special Elite\"", "NIEIA SERVICE RECEIPT 0123456789$,.-=*#@RM"),
+      document.fonts.load("400 14px \"Noto Serif TC\"", text),
+      document.fonts.load("600 14px \"Noto Serif TC\"", text),
       document.fonts.load("400 20px " + FONT_BODY, text),
       document.fonts.load("600 20px " + FONT_BODY, text),
       document.fonts.load("500 40px " + FONT_LATIN, "NIEIA0123456789$,RM"),
     ]).catch(function () {});
+  }
+
+  // 收據右下角的紫色印章（public/assets/nieia-stamp.png，白底已去掉）
+  var stampImg = null;
+  function loadStamp() {
+    if (stampImg) return stampImg.ready;
+    stampImg = new Image();
+    stampImg.ready = new Promise(function (ok) { stampImg.onload = stampImg.onerror = function () { ok(); }; });
+    stampImg.src = "/assets/nieia-stamp.png";
+    return stampImg.ready;
+  }
+
+  // 收據的紙張底圖（public/assets/receipt-paper.jpg）
+  var paperImg = null;
+  function loadPaper() {
+    if (paperImg) return paperImg.ready;
+    paperImg = new Image();
+    paperImg.ready = new Promise(function (ok) { paperImg.onload = paperImg.onerror = function () { ok(); }; });
+    paperImg.src = "/assets/receipt-paper.jpg";
+    return paperImg.ready;
   }
 
   function fitText(ctx, s, max) {
@@ -356,163 +386,308 @@
     return s + "…";
   }
 
-  function drawReceipt(rc, given) {
-    function fitTextAt(s, max) { ctx.font = "600 14px " + FONT_BODY; return fitText(ctx, String(s), max); }
-    var W = 440, PAD = 36, S = 2;
-    var lineH = 62;
-    var H = 400 + (rc.rows || []).length * 26 + rc.lines.length * lineH + ((rc.adjustments || []).length + 1) * 26 + (rc.gifts || []).length * 30 + 260; // 先畫在夠高的畫布上，最後依實際高度裁切
+  // 收據金額：整數不顯示小數，有小數最多兩位
+  function rmoney(amount, currency) {
+    if (amount == null || amount === "") return "";
+    var n = Number(amount);
+    return (n < 0 ? "−" : "") + (currency === "MYR" ? "RM " : "NT$") + Math.abs(n).toLocaleString("en-US", Number.isInteger(n) ? {} : { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function has(v) { return v != null && String(v).trim() !== ""; }
+
+  // 自動換行：英數字以單字為單位、中文逐字；超長的單字（例如訂單編號、Email）也會切開
+  function wrap(ctx, text, max) {
+    text = String(text);
+    var tokens = text.match(/[A-Za-z0-9@._\-+#$,:/()'’]+|\s+|[\s\S]/g) || [];
+    var lines = [], cur = "";
+    function push() { lines.push(cur.replace(/\s+$/, "")); cur = ""; }
+    tokens.forEach(function (t) {
+      if (ctx.measureText(cur + t).width <= max) { cur += t; return; }
+      if (/^\s+$/.test(t)) { push(); return; }
+      if (cur) push();
+      while (ctx.measureText(t).width > max) {
+        var i = 1;
+        while (i < t.length && ctx.measureText(t.slice(0, i + 1)).width <= max) i++;
+        lines.push(t.slice(0, i));
+        t = t.slice(i);
+      }
+      cur = t;
+    });
+    if (cur || !lines.length) push();
+    return lines;
+  }
+
+  // 收據圖片用 canvas 畫，配色與字體跟網站一致；opts.print = 白底、深色字的列印／PDF 版
+  function drawReceipt(rc, given, opts) {
+    opts = opts || {};
+    // 復古打字機風格：這個函式裡所有字都換成打字機字體＋宋體
+    var FONT_BODY = FONT_TYPE, FONT_LATIN = FONT_TYPE, FONT_DISPLAY = FONT_SONG;
+    var print = !!opts.print;
+    var W = 440, PAD = 36, S = 2, CW = W - PAD * 2;
+    var lines = rc.lines || [], adj = rc.adjustments || [], gifts = rc.gifts || [];
+    var cust = rc.customer || {};
+    var contacts = (cust.contacts || []).filter(function (c) { return c && has(c[1]); });
+    // 先畫在夠高的畫布上，最後依實際高度裁切
+    var H = 1300 + lines.length * 150 + adj.length * 50 + gifts.length * 50 + contacts.length * 50 + (rc.rows || []).length * 50;
     var cv = document.createElement("canvas");
     cv.width = W * S; cv.height = H * S;
     var ctx = cv.getContext("2d");
     ctx.scale(S, S);
-    var ink = "#362F52", soft = "#625A80", btn = "#4A3F78", line = "rgba(54,47,82,.16)";
-    function spacing(px) { if ("letterSpacing" in ctx) ctx.letterSpacing = px + "px"; }
+    var ink = print ? "#1F1A33" : "#3A3160";
+    var soft = print ? "#4A4560" : "#5E5680";
+    var btn = print ? "#3A3066" : "#463C78";
+    var lav = print ? "#5B4C9E" : "#6E64B4";
+    var rule = print ? "#5B4C9E" : "#8A82C4";
+    var green = print ? "#1F5F45" : "#2F6E55";
+    var bg = "#FFFFFF";
+    var sp = 0;
+    function spacing(px) { sp = px; }
 
-    // 背景：奶白底＋上方柔和的光暈
-    ctx.fillStyle = "#FCF8F8";
+    // 打字機效果：一個字一個字打，每個字的高低、濃淡有一點點不同，偶爾有墨水暈開的重影。
+    // 用訂單編號當亂數種子，同一張收據每次畫出來都一樣
+    var seed = 0;
+    String(rc.no || "").split("").forEach(function (ch) { seed = (seed * 31 + ch.charCodeAt(0)) >>> 0; });
+    seed = seed || 1234567;
+    function rand() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+    function measure(text) {
+      var w = 0, chars = Array.from(String(text));
+      chars.forEach(function (ch, i) { w += ctx.measureText(ch).width + (i < chars.length - 1 ? sp : 0); });
+      return w;
+    }
+    function type(text, x, y0) {
+      text = String(text);
+      var align = ctx.textAlign, w = measure(text);
+      var cx = align === "center" ? x - w / 2 : align === "right" ? x - w : x;
+      var base = ctx.globalAlpha;
+      ctx.textAlign = "left";
+      Array.from(text).forEach(function (ch) {
+        var cw = ctx.measureText(ch).width;
+        if (ch.trim()) {
+          var dy = (rand() - .5) * (print ? .5 : 1.1);
+          var dx = (rand() - .5) * (print ? .2 : .5);
+          ctx.globalAlpha = base * (print ? .95 : .78 + rand() * .22);
+          ctx.fillText(ch, cx + dx, y0 + dy);
+          if (!print && rand() < .22) { // 墨水暈開的淡淡重影
+            ctx.globalAlpha = base * .18;
+            ctx.fillText(ch, cx + dx + .6, y0 + dy + .3);
+          }
+        }
+        cx += cw + sp;
+      });
+      ctx.globalAlpha = base;
+      ctx.textAlign = align;
+    }
+    function font(f) { ctx.font = f; }
+    function round(x, y0, w, h, r) {
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x, y0, w, h, r); else ctx.rect(x, y0, w, h);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
-    var g = ctx.createLinearGradient(0, 0, W, 0);
-    g.addColorStop(0, "rgba(150,152,231,.55)");
-    g.addColorStop(.4, "rgba(238,193,221,.55)");
-    g.addColorStop(.72, "rgba(244,203,146,.5)");
-    g.addColorStop(1, "rgba(166,212,240,.5)"); // 最右邊淡淡的淺藍
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, 150);
-    var fade = ctx.createLinearGradient(0, 40, 0, 150);
-    fade.addColorStop(0, "rgba(252,248,248,0)");
-    fade.addColorStop(1, "#FCF8F8");
-    ctx.fillStyle = fade;
-    ctx.fillRect(0, 40, W, 110);
+    if (!print && paperImg && paperImg.complete && paperImg.naturalWidth) {
+      // 紙張底圖：寬度貼齊收據，收據比較長時往下接（每接一次上下翻轉，接縫才不明顯）
+      var ph = W * paperImg.naturalHeight / paperImg.naturalWidth;
+      for (var py = 0, k = 0; py < H; py += ph, k++) {
+        ctx.save();
+        if (k % 2) { ctx.translate(0, py + ph); ctx.scale(1, -1); ctx.drawImage(paperImg, 0, 0, W, ph); }
+        else ctx.drawImage(paperImg, 0, py, W, ph);
+        ctx.restore();
+      }
+    }
 
+    // ---------- 1. 品牌區 ----------
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = ink;
-    spacing(6);
-    ctx.font = "700 34px " + FONT_DISPLAY;
-    ctx.fillText("阿綸涅亞", W / 2, 66);
-    spacing(8);
-    ctx.font = "500 17px " + FONT_LATIN;
+    spacing(6); font("900 34px " + FONT_SONG);
+    type("阿綸涅亞", W / 2 + 3, 66);
+    spacing(9); font("500 17px " + FONT_LATIN);
     ctx.fillStyle = soft;
-    ctx.fillText("NIEIA", W / 2, 92);
-
-    // 「收據」小膠囊
-    spacing(8);
-    ctx.font = "600 14px " + FONT_BODY;
-    var pw = 84, ph = 28, px = W / 2 - pw / 2, py = 108;
-    ctx.strokeStyle = btn; ctx.lineWidth = 1;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(px, py, pw, ph, 14); else ctx.rect(px, py, pw, ph);
-    ctx.stroke();
+    type("NIEIA", W / 2 + 4.5, 92);
+    ctx.fillStyle = lav;
+    ctx.fillRect(W / 2 - 72, 109, 56, 1);
+    ctx.fillRect(W / 2 + 16, 109, 56, 1);
+    spacing(0); font("400 11px " + FONT_BODY);
+    type("*", W / 2, 116);
+    spacing(5); font("600 13px " + FONT_LATIN);
     ctx.fillStyle = btn;
-    ctx.fillText("收據", W / 2 + 4, py + 19);
-    spacing(0);
-
-    var y = 172;
-    function row(label, value, opts) {
-      opts = opts || {};
-      ctx.textAlign = "left";
-      ctx.font = (opts.labelFont || "400 14px ") + FONT_BODY;
-      ctx.fillStyle = soft;
-      ctx.fillText(label, PAD, y);
-      ctx.textAlign = "right";
-      ctx.font = opts.valueFont || "600 14px " + FONT_BODY;
-      ctx.fillStyle = opts.color || ink;
-      ctx.fillText(value, W - PAD, y);
-    }
-    function dashed() {
-      ctx.save();
-      ctx.setLineDash([5, 5]);
-      ctx.strokeStyle = line;
-      ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke();
-      ctx.restore();
-    }
-
-    row("單號", "#" + rc.no); y += 26;
-    row("時間", stamp(rc.at)); y += 26;
-    if (rc.method) { row("付款", rc.method); y += 26; }
-    (rc.rows || []).forEach(function (r) { row(r[0], fitTextAt(r[1], W - PAD * 2 - 80)); y += 26; });
-    y -= 4;
-    dashed(); y += 34;
-
-    rc.lines.forEach(function (l) {
-      ctx.textAlign = "left";
-      ctx.font = "600 16px " + FONT_BODY;
-      ctx.fillStyle = ink;
-      ctx.fillText(fitText(ctx, l.name, W - PAD * 2 - 110), PAD, y);
-      ctx.textAlign = "right";
-      ctx.fillText(money(l.amount, rc.currency), W - PAD, y);
-      ctx.textAlign = "left";
-      ctx.font = "400 13px " + FONT_BODY;
-      ctx.fillStyle = soft;
-      ctx.fillText(money(l.price, rc.currency) + " × " + l.qty, PAD, y + 22);
-      y += lineH;
-    });
-    y -= 18;
-    dashed(); y += 30;
-
-    var count = rc.lines.reduce(function (s, l) { return s + l.qty; }, 0);
-    var adj = rc.adjustments || [];
-    row("共 " + count + " 件", money(adj.length ? rc.subtotal : rc.total, rc.currency), { color: soft, valueFont: "400 14px " + FONT_BODY }); y += 26;
-    adj.forEach(function (a) {
-      row(a.label, "−" + money(a.amount, rc.currency), { color: "#B0466A", valueFont: "600 14px " + FONT_BODY }); y += 26;
-    });
-    y -= 4;
-    ctx.fillStyle = ink;
-    ctx.fillRect(PAD, y, W - PAD * 2, 1.5);
-    y += 46;
-    row("合計", money(rc.total, rc.currency), { labelFont: "600 18px ", valueFont: "500 40px " + FONT_LATIN, color: btn });
-    y += 20;
-    ctx.fillStyle = ink;
-    ctx.fillRect(PAD, y, W - PAD * 2, 1.5);
-    y += 32;
-    if (given != null) {
-      row("收現金", money(given, rc.currency), { color: soft }); y += 26;
-      row("找零", money(Math.max(0, given - rc.total), rc.currency), { color: "#2F7A5B" }); y += 30;
-    }
-
-    // 贈品：虛線框
-    var gifts = rc.gifts || [];
-    if (gifts.length) {
-      var bh = 16 + gifts.length * 26;
-      ctx.save();
-      ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = btn;
-      ctx.fillStyle = "rgba(238,193,221,.25)";
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(PAD, y - 6, W - PAD * 2, bh, 12); else ctx.rect(PAD, y - 6, W - PAD * 2, bh);
-      ctx.fill(); ctx.stroke();
-      ctx.restore();
-      ctx.textAlign = "center";
-      ctx.font = "600 15px " + FONT_BODY;
-      ctx.fillStyle = btn;
-      gifts.forEach(function (gf, i) { ctx.fillText("✦ 贈品：" + gf, W / 2, y + 20 + i * 26); });
-      y += bh + 18;
-    }
-    y += 26;
-
-    ctx.textAlign = "center";
-    spacing(6);
-    ctx.font = "700 18px " + FONT_DISPLAY;
-    ctx.fillStyle = ink;
-    ctx.fillText("謝謝你的到來", W / 2, y); y += 26;
-    spacing(2);
-    ctx.font = "400 13px " + FONT_BODY;
+    type("SERVICE RECEIPT", W / 2 + 2.5, 138);
+    spacing(4); font("400 12px " + FONT_BODY);
     ctx.fillStyle = soft;
-    ctx.fillText("願光一路陪伴你　IG @nieia4928", W / 2, y); y += 28;
-    spacing(10);
-    ctx.fillStyle = "#9698E7";
-    ctx.font = "400 14px " + FONT_BODY;
-    ctx.fillText("✦ ✦ ✦", W / 2, y);
+    type("療癒服務憑證", W / 2 + 2, 158);
     spacing(0);
-    var outH = Math.ceil(y + 34);
+
+    var y = 200;
+    var LABEL_W = 104;
+    function dashes(y0, ch) {
+      ctx.save();
+      font("400 13px " + FONT_TYPE);
+      ctx.fillStyle = rule;
+      ctx.textAlign = "left";
+      var old = sp; sp = 0;
+      var unit = ctx.measureText(ch).width, nChars = Math.floor(CW / unit);
+      type(new Array(nChars + 1).join(ch), PAD + (CW - nChars * unit) / 2, y0);
+      sp = old;
+      ctx.restore();
+    }
+    function hr() {
+      y += 8;
+      dashes(y, "- ");
+      y += 30;
+    }
+    function heading(zh, en) {
+      ctx.textAlign = "left";
+      spacing(3); font("600 12px " + FONT_BODY);
+      ctx.fillStyle = lav;
+      type(zh, PAD, y);
+      var w = measure(zh);
+      spacing(2); font("500 12px " + FONT_LATIN);
+      type(en, PAD + w + 8, y);
+      spacing(0);
+      y += 26;
+    }
+    // 左邊標籤、右邊數值；數值太長會自動換行（靠右）。沒有資料就整列不畫
+    function kv(label, value, o) {
+      if (!has(value)) return;
+      o = o || {};
+      var lh = 21;
+      ctx.textAlign = "left";
+      font("400 13px " + FONT_BODY);
+      ctx.fillStyle = soft;
+      type(label, PAD, y);
+      font(o.valueFont || "400 15px " + FONT_BODY);
+      ctx.fillStyle = o.color || ink;
+      ctx.textAlign = "right";
+      var ls = wrap(ctx, value, CW - LABEL_W);
+      ls.forEach(function (ln, i) { type(ln, W - PAD, y + i * lh); });
+      y += (ls.length - 1) * lh + 25;
+    }
+
+    // ---------- 2. 訂單資訊 ----------
+    heading("訂單資訊", "ORDER");
+    kv("訂單編號", "#" + rc.no);
+    kv("收據建立時間", stamp(rc.at));
+    kv("預約日期", rc.date);
+    kv("預約狀態", rc.bookingStatus);
+    (rc.rows || []).forEach(function (r) { kv(r[0], r[1]); }); // 舊格式的額外資訊
+
+    // ---------- 3. 客戶資訊（沒有資料就整段不顯示） ----------
+    if (has(cust.name) || contacts.length) {
+      hr();
+      heading("客戶資訊", "CLIENT");
+      kv("客戶姓名", cust.name);
+      contacts.forEach(function (c) { kv(c[0], c[1], { valueFont: "400 15px " + FONT_BODY }); });
+    }
+
+    // ---------- 4. 服務明細 ----------
+    hr();
+    heading("服務明細", "DETAILS");
+    lines.forEach(function (l, idx) {
+      font("400 16px " + FONT_BODY);
+      var amt = rmoney(l.amount, rc.currency);
+      var amtW = ctx.measureText(amt).width;
+      ctx.fillStyle = ink;
+      ctx.textAlign = "right";
+      type(amt, W - PAD, y);
+      ctx.textAlign = "left";
+      var nameLines = wrap(ctx, l.name, CW - amtW - 18);
+      nameLines.forEach(function (ln, i) { type(ln, PAD, y + i * 22); });
+      y += (nameLines.length - 1) * 22 + 21;
+      font("400 12.5px " + FONT_BODY);
+      ctx.fillStyle = soft;
+      type("單價 " + rmoney(l.price, rc.currency) + "　×　數量 " + l.qty, PAD, y);
+      y += idx < lines.length - 1 ? 34 : 26;
+    });
+
+    // ---------- 5. 金額結算 ----------
+    hr();
+    heading("金額結算", "SUMMARY");
+    var count = lines.reduce(function (s, l) { return s + Number(l.qty || 0); }, 0);
+    var sub = rc.subtotal != null ? rc.subtotal : rc.total;
+    kv("小計（共 " + count + " 件）", rmoney(sub, rc.currency), { valueFont: "400 15px " + FONT_BODY });
+    adj.forEach(function (a) { kv(a.label, "−" + rmoney(a.amount, rc.currency), { color: print ? "#8A2F52" : "#B0466A" }); });
+    // 總金額：淡紫色底、大的襯線字
+    var boxTop = y - 2;
+    dashes(boxTop + 4, "=");
+    dashes(boxTop + 70, "=");
+    ctx.textAlign = "left";
+    spacing(2); font("600 15px " + FONT_BODY);
+    ctx.fillStyle = ink;
+    type("總金額 TOTAL", PAD + 2, boxTop + 43);
+    spacing(0);
+    var total = rmoney(rc.total, rc.currency);
+    var size = 32;
+    font("500 " + size + "px " + FONT_LATIN);
+    while (size > 18 && measure(total) > CW - 84) { size -= 2; font("500 " + size + "px " + FONT_LATIN); }
+    ctx.textAlign = "right";
+    ctx.fillStyle = btn;
+    type(total, W - PAD - 2, boxTop + 45);
+    y = boxTop + 70 + 34;
+    kv("付款狀態", rc.paymentStatus, { color: rc.paid === false ? (print ? "#8A4A1F" : "#A34D3B") : green });
+    kv("付款方式", rc.method);
+    if (given != null) {
+      kv("收現金", rmoney(given, rc.currency), { valueFont: "400 15px " + FONT_BODY });
+      kv("找零", rmoney(Math.max(0, given - rc.total), rc.currency), { color: green });
+    }
+    if (gifts.length) {
+      font("600 14px " + FONT_BODY);
+      var gl = [];
+      gifts.forEach(function (gf) { wrap(ctx, "* 贈品：" + gf, CW - 32).forEach(function (x) { gl.push(x); }); });
+      var bh = 18 + gl.length * 22;
+      ctx.fillStyle = print ? "rgba(91,76,158,.07)" : "rgba(110,100,180,.08)";
+      round(PAD, y - 6, CW, bh, 12);
+      ctx.textAlign = "center";
+      ctx.fillStyle = btn;
+      gl.forEach(function (x, i) { type(x, W / 2, y + 16 + i * 22); });
+      y += bh + 14;
+    }
+
+    // ---------- 6. 品牌結尾 ----------
+    y -= 6;
+    hr();
+    ctx.textAlign = "center";
+    spacing(5); font("600 18px " + FONT_DISPLAY);
+    ctx.fillStyle = ink;
+    type("謝謝你的到來", W / 2 + 2.5, y);
+    spacing(3); font("400 13px " + FONT_BODY);
+    ctx.fillStyle = soft;
+    type("願光一路陪伴你", W / 2 + 1.5, y + 26);
+    spacing(1.5); font("500 15px " + FONT_LATIN);
+    ctx.fillStyle = btn;
+    type("IG @nieia4928", W / 2, y + 50);
+    spacing(0);
+    y += 50 + 30;
+    if (!print) {
+      spacing(10); font("400 12px " + FONT_BODY);
+      ctx.fillStyle = "#9698E7";
+      type("*  *  *", W / 2, y);
+      spacing(0);
+      y += 6;
+    }
+    var outH = Math.ceil(y + 24);
+    // 火焰印章當水印：正放、放大、很淡，置中在品牌區下方的內容區。
+    // 用 multiply 疊上去，效果等同墊在背景，深色文字不受影響
+    if (stampImg && stampImg.complete && stampImg.naturalWidth) {
+      var bodyTop = 180, SD = Math.min(CW + 20, outH - bodyTop - 40);
+      ctx.save();
+      ctx.globalCompositeOperation = "multiply";
+      ctx.globalAlpha = print ? .07 : .1;
+      ctx.drawImage(stampImg, (W - SD) / 2, bodyTop + (outH - bodyTop - SD) / 2, SD, SD);
+      ctx.restore();
+    }
     var out = document.createElement("canvas");
     out.width = W * S; out.height = outH * S;
     out.getContext("2d").drawImage(cv, 0, 0);
     return out;
   }
 
+  var lastReceipt = null;
   function showReceipt(rc, given) {
     if (!rc) return;
+    // 收銀結帳一定是當場付清
+    if (rc.paymentStatus == null && !rc.bookingStatus) { rc.paymentStatus = "已付款"; rc.paid = true; }
+    lastReceipt = { rc: rc, given: given };
     var text = receiptText(rc, given);
     $("receiptNo").textContent = "#" + rc.no;
     $("receiptText").value = text;
@@ -520,7 +695,7 @@
     receiptBlob = null;
     receiptName = "收據_" + rc.no + ".png";
     receiptModal.open();
-    loadFonts(text + "阿綸涅亞收據單號時間付款共件小計合計收現金找零贈品謝謝你的到來願光一路陪伴你").then(function () {
+    Promise.all([loadPaper(), loadFonts(text + "阿綸涅亞療癒服務憑證訂單資訊客戶明細金額結算編號收據建立時間預約日期狀態姓名聯絡單價數量小計共件總付款方式收現金找零贈品謝謝你的到來願光一路陪伴你"), loadStamp()]).then(function () {
       var cv = drawReceipt(rc, given);
       $("receiptImg").src = cv.toDataURL("image/png");
       cv.toBlob(function (b) {
@@ -533,7 +708,7 @@
   }
 
   // 預約也用同一份收據（後台預約卡片的「收據」按鈕）
-  window.NieiaReceipt = { show: showReceipt };
+  window.NieiaReceipt = { show: showReceipt, draw: drawReceipt };
 
   function flash(btn, text) {
     var old = btn.textContent;
@@ -548,6 +723,25 @@
     if (!receiptBlob) return;
     var file = new File([receiptBlob], receiptName, { type: "image/png" });
     navigator.share({ files: [file], text: $("receiptText").value }).catch(function () {});
+  });
+  // 列印／存成 PDF：白底深色字的版本，放進隱藏的 iframe 列印
+  $("receiptPrint").addEventListener("click", function () {
+    if (!lastReceipt) return;
+    var url = drawReceipt(lastReceipt.rc, lastReceipt.given, { print: true }).toDataURL("image/png");
+    var old = document.getElementById("receiptPrintFrame");
+    if (old) old.remove();
+    var f = document.createElement("iframe");
+    f.id = "receiptPrintFrame";
+    f.setAttribute("aria-hidden", "true");
+    f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+    document.body.appendChild(f);
+    var d = f.contentWindow.document;
+    d.open();
+    d.write("<!doctype html><html><head><meta charset=\"utf-8\"><title>" + receiptName.replace(/\.png$/, "") + "</title><style>@page{margin:12mm}html,body{margin:0;background:#fff}img{display:block;width:100%;max-width:110mm;margin:0 auto}</style></head><body><img alt=\"收據\"></body></html>");
+    d.close();
+    var img = d.querySelector("img");
+    img.onload = function () { setTimeout(function () { f.contentWindow.focus(); f.contentWindow.print(); }, 50); };
+    img.src = url;
   });
   $("receiptCopyImg").addEventListener("click", function () {
     var btn = this;

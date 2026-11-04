@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>給你的一句愛｜阿綸涅亞 NIEIA</title>
+<meta name="description" content="輕觸卡片，抽一句肯定、鼓勵或陪伴的話給自己。可以存成圖片，分享到 IG 限時動態。">
+<meta property="og:title" content="給你的一句愛｜阿綸涅亞 NIEIA">
+<meta property="og:description" content="輕觸卡片，抽一句肯定、鼓勵或陪伴的話給自己。">
+<meta property="og:type" content="website">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/icons/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#9698E7">
+<meta name="apple-mobile-web-app-title" content="NIEIA">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Noto+Serif+TC:wght@900&family=Noto+Sans+TC:wght@400;500;600&family=LXGW+WenKai+TC:wght@400;700&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<div class="aura" aria-hidden="true"></div>
+<canvas id="holoA" aria-hidden="true"></canvas>
+<div class="holoB" id="holoB" aria-hidden="true" hidden></div>
+<div class="grain" aria-hidden="true"></div>
+
+<main class="app">
+  <header class="appbar centered">
+    <a class="back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>首頁</a>
+    <h1>給你的一句愛</h1>
+    <p class="sub"><span class="sent">先深呼吸一次，把注意力放回自己身上，再輕觸卡片。</span><span class="sent">今天剛好屬於你的那句話，正在等你。</span></p>
+  </header>
+
+  <section class="deck love-deck" aria-label="抽一句愛">
+    <div class="card" id="card" role="button" tabindex="0" aria-live="polite" aria-label="輕觸抽一句給你的話">
+      <div class="card-inner">
+        <div class="face face-front">
+          <div class="sigil"><svg class="love-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="愛心"><path d="M12 20.5s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.6c0 5.7-7.5 10.3-7.5 10.3z"/></svg></div>
+        </div>
+        <div class="face face-back">
+          <p class="love-text" id="loveText">你本來的樣子，就很好。</p>
+          <span class="love-sign">— 給你的一句愛 —</span>
+          <img class="love-stamp" src="/assets/nieia-stamp.png" alt="" aria-hidden="true">
+        </div>
+      </div>
+    </div>
+    <div class="love-acts">
+      <button class="btn btn-primary" id="drawBtn" type="button">抽一張</button>
+      <button class="btn btn-ghost" id="loveSave" type="button" hidden>存成圖片</button>
+    </div>
+  </section>
+
+  <!-- IG／FB／LINE 內建瀏覽器不能下載：跳出圖片讓客人長按儲存 -->
+  <div class="love-sheet" id="loveSheet" hidden role="dialog" aria-modal="true" aria-label="長按圖片儲存">
+    <div class="love-sheet-panel">
+      <img class="love-img" id="loveImg" alt="">
+      <p class="love-tip">長按圖片，選「儲存圖片」，再到 IG 限時動態選這張就能分享。</p>
+      <button class="btn btn-ghost" id="loveSheetClose" type="button">關閉</button>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <div class="links">
+      <a href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">Instagram @nieia4928</a>
+      <a href="https://linktr.ee/nieia4928" target="_blank" rel="noopener">Linktree</a>
+    </div>
+    <p>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
+  </footer>
+</main>
+
+<nav class="tabbar" aria-label="主要選單">
+  <a href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></svg><span>首頁</span></a>
+  <a href="/services"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20c-4 0-8-3-8-7 3 0 5 1 6 3-1-4 0-8 2-11 2 3 3 7 2 11 1-2 3-3 6-3 0 4-4 7-8 7z"/></svg><span>服務</span></a>
+  <a href="/oracle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 16l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/></svg><span>訊息</span></a>
+  <a href="/workshops"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5C6 4.5 9 4.5 12 6c3-1.5 6-1.5 8-.5V19c-2-1-5-1-8 .5-3-1.5-6-1.5-8-.5z"/><path d="M12 6v13.5"/></svg><span>工作坊</span></a>
+  <a href="/about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-4 4-6 7-6s6 2 7 6"/></svg><span>關於</span></a>
+</nav>
+<script src="/assets/holo.js"></script>
+<script src="/assets/site.js"></script>
+<script src="/assets/love.js"></script>
+</body>
+</html>

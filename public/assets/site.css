@@ -284,6 +284,21 @@ a.row:hover .go { background: #3a3163; }
 .card.flipped .face-front { visibility: hidden; }
 .card.flipped .face-back { visibility: visible; }
 .deck-hint { font-size: var(--step--1); color: var(--ink-soft); }
+/* ---------- 愛我（/love）---------- */
+/* 翻開的卡片：白色紙張紋理（跟收據同一張），印章當淡淡的水印放在下方中央 */
+.love-deck .face-back { gap: 1rem; padding: 2rem 1.6rem 30%; background: #fff url(/assets/receipt-paper.jpg) center / cover; }
+.love-heart { width: 36%; height: auto; color: var(--ink); position: relative; z-index: 1; }
+.love-text { font-family: "Noto Serif TC", var(--display); font-weight: 900; font-size: clamp(1.25rem, 5.4vw, 1.6rem); line-height: 1.7; letter-spacing: .06em; color: var(--ink); }
+.love-sign { font-size: var(--step--2); letter-spacing: .25em; color: var(--ink-soft); }
+.love-stamp { position: absolute; left: 50%; bottom: 7%; width: 30%; transform: translateX(-50%); opacity: .4; pointer-events: none; }
+.love-acts { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
+.love-acts [hidden] { display: none; }
+.love-acts .btn[disabled] { opacity: .55; }
+.love-sheet { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 1rem; background: rgba(40, 32, 74, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.love-sheet[hidden] { display: none; }
+.love-sheet-panel { display: grid; justify-items: center; gap: .9rem; width: min(100%, 380px); max-height: 100%; padding: 1.2rem; border-radius: 22px; background: var(--milk, #FCF8F8); }
+.love-img { width: auto; max-width: 100%; max-height: 62vh; aspect-ratio: 9 / 16; border-radius: 14px; box-shadow: var(--shadow); -webkit-touch-callout: default; }
+.love-tip { font-size: var(--step--1); color: var(--ink-soft); text-align: center; line-height: 1.8; }
 
 /* ---------- footer ---------- */
 .foot { display: grid; gap: .8rem; font-size: var(--step--2); color: var(--ink-soft); text-align: center; }

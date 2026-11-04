@@ -64,7 +64,7 @@ def appbar(title, sub, back=True, centered=False, back_href="/", back_label="首
 FOOT = '''  <footer class="foot">
     <div class="links">
       <a href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener">Instagram @nieia4928</a>
-      <a href="https://linktr.ee/nieia9319" target="_blank" rel="noopener">Linktree</a>
+      <a href="https://linktr.ee/nieia4928" target="_blank" rel="noopener">Linktree</a>
     </div>
     <p>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
   </footer>'''
@@ -359,7 +359,7 @@ links = '\n'.join([
  row("https://www.instagram.com/nieia4928/","camera","g4","Instagram","@nieia4928","私訊預約與約課","").replace('<a class="row glass" href="https://www.instagram.com/nieia4928/"','<a class="row glass" href="https://www.instagram.com/nieia4928/" target="_blank" rel="noopener"'),
  row("/shop","bag","g5","聖照選物","","紫色火焰、聖哲曼、默基瑟德等聖照卡",""),
  row("https://vocus.cc/salon/67e4f401fd897800019395cf","pen","g3","方格子文章","Vocus","阿綸的身心靈筆記","").replace('href="https://vocus','target="_blank" rel="noopener" href="https://vocus'),
- row("https://linktr.ee/nieia9319","link","g6","Linktree","","所有連結一次看","").replace('href="https://linktr','target="_blank" rel="noopener" href="https://linktr'),
+ row("https://linktr.ee/nieia4928","link","g6","Linktree","","所有連結一次看","").replace('href="https://linktr','target="_blank" rel="noopener" href="https://linktr'),
 ])
 about = f'''  <header class="appbar"><a class="back" href="/">{BACK}首頁</a></header>
 

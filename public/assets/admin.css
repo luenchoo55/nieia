@@ -95,6 +95,7 @@
 /* ---------- 分頁與療癒項目／商品 ---------- */
 .admin-tabs { margin-bottom: 1.4rem; }
 .panel-stack { display: grid; gap: 1.2rem; }
+.panel-stack .block-head { flex-wrap: wrap; align-items: center; row-gap: .6rem; }
 .panel-stack .block-head h2 { font-size: var(--step-1); letter-spacing: .08em; }
 .hint { font-size: var(--step--1); color: var(--ink-soft); }
 small.hint { font-size: var(--step--2); line-height: 1.5; }
@@ -586,8 +587,10 @@ button.ov-stat:hover { border-color: var(--lavender); }
 .pay-pills { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .2rem; }
 
 /* ---------- 收支 ---------- */
-.ld-month { display: block; }
-.ld-month input { min-height: 38px; padding: .3rem .7rem; }
+#ldHeadActs { flex-wrap: nowrap; }
+.ld-month { display: block; flex: 0 1 9.5rem; min-width: 0; }
+#ldDownload { flex: none; white-space: nowrap; }
+.ld-month input { min-height: 38px; padding: .3rem .7rem; width: 100%; }
 .ld-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px; }
 .ld-total { padding: 1rem 1.1rem; border-radius: var(--r-md, 18px); background: linear-gradient(135deg, rgba(150, 152, 231, .26), rgba(255, 255, 255, .55)); display: grid; gap: .4rem; }
 .ld-nums { display: grid; gap: .2rem; }

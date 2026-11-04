@@ -349,7 +349,8 @@ a.row:hover .go { background: #3a3163; }
 
 /* ---------- 首頁抽牌 ---------- */
 .hint-text { color: var(--ink-soft); font-size: var(--step--1); margin-top: -.4rem; }
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* 只給讀螢幕軟體看的元素；用 !important 免得被 .field input 的寬度蓋掉、把頁面撐出橫向捲動 */
+.sr-only { position: absolute !important; width: 1px !important; height: 1px !important; min-width: 0 !important; min-height: 0 !important; padding: 0 !important; margin: -1px !important; border: 0 !important; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* 只有 3 張牌，限制寬度避免在電腦上撐得太大 */
 .spread { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 540px; margin-inline: auto; width: 100%; }
 .mini-card {
@@ -510,6 +511,18 @@ fieldset.field legend { padding: 0; margin-bottom: .35rem; }
   font: inherit; font-size: var(--step-0);
 }
 .field textarea { line-height: 1.7; resize: vertical; }
+/* iPhone／iPad 的 Safari：日期、時間、月份框預設照內容撐寬、文字置中，會跑出框外蓋到旁邊 */
+input[type="date"], input[type="time"], input[type="month"], input[type="datetime-local"] {
+  -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; display: block;
+}
+input::-webkit-date-and-time-value { text-align: left; min-height: 1.5em; }
+/* 下拉選單：iPhone／iPad 預設是灰色漸層的系統樣式，跟其他輸入框對不齊；統一成自己的箭頭 */
+select:not([multiple]):not([size]) {
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 12 8%27%3E%3Cpath d=%27M1 1.5l5 5 5-5%27 fill=%27none%27 stroke=%27%236B6491%27 stroke-width=%271.6%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right .9rem center; background-size: 12px 8px;
+  padding-right: 2.4rem;
+}
 .field input:focus, .field select:focus, .field textarea:focus, .other:focus { outline: 2px solid var(--button); outline-offset: 1px; border-color: transparent; }
 
 /* ---------- 擺攤 ---------- */

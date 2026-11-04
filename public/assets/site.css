@@ -287,7 +287,8 @@ a.row:hover .go { background: #3a3163; }
 /* ---------- 愛我（/love）---------- */
 /* 翻開的卡片：白色紙張紋理（跟收據同一張），印章當淡淡的水印放在下方中央 */
 .love-deck .face-back { gap: 1rem; padding: 2rem 1.6rem 30%; background: #fff url(/assets/receipt-paper.jpg) center / cover; }
-.love-heart { width: 36%; height: auto; color: var(--ink); position: relative; z-index: 1; }
+.love-deck .face-front { background: #fff url(/assets/receipt-paper.jpg) center / cover; } /* 卡片背面也用白紙紋理 */
+.love-seal { width: 68%; height: auto; filter: drop-shadow(0 14px 22px rgba(74, 40, 110, .32)); pointer-events: none; }
 .love-text { font-family: "Noto Serif TC", var(--display); font-weight: 900; font-size: clamp(1.25rem, 5.4vw, 1.6rem); line-height: 1.7; letter-spacing: .06em; color: var(--ink); }
 .love-sign { font-size: var(--step--2); letter-spacing: .25em; color: var(--ink-soft); }
 .love-stamp { position: absolute; left: 50%; bottom: 7%; width: 30%; transform: translateX(-50%); opacity: .4; pointer-events: none; }

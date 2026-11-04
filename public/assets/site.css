@@ -721,6 +721,7 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .tile.product.on-sale { position: relative; }
 .tile.product .price .was { color: var(--ink-soft); opacity: .75; margin-right: .35em; font-size: var(--step--2); }
 .tile.product .price .now { color: #C24E7A; font-weight: 600; }
+.tile.product .price.has-sale .pc { display: block; white-space: nowrap; }
 .tile.product .sale-tag {
   position: absolute; top: 16px; left: 16px; max-width: calc(100% - 32px); padding: .15rem .65rem; border-radius: 999px;
   background: #D2608A; color: #fff; font-size: var(--step--2); font-weight: 600; letter-spacing: .06em;

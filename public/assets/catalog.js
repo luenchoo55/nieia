@@ -41,14 +41,17 @@
     var price = tile.querySelector(".price");
     if (price) {
       price.innerHTML = "";
+      // 特價時台幣、馬幣各一行（原價劃掉＋特價），不會在中間被換行切開
+      price.classList.add("has-sale");
       [["twd", "priceTwd", "NT$"], ["myr", "priceMyr", "RM "]].forEach(function (c, i) {
         if (item[c[1]] == null) return;
-        if (price.childNodes.length) price.appendChild(document.createTextNode("｜"));
+        var line = el("span", "pc");
         var now = item.sale[c[0]];
         if (now != null && now < item[c[1]]) {
-          price.appendChild(el("s", "was", c[2] + Number(item[c[1]]).toLocaleString("en-US")));
-          price.appendChild(el("strong", "now", c[2] + Number(now).toLocaleString("en-US")));
-        } else price.appendChild(document.createTextNode(c[2] + Number(item[c[1]]).toLocaleString("en-US")));
+          line.appendChild(el("s", "was", c[2] + Number(item[c[1]]).toLocaleString("en-US")));
+          line.appendChild(el("strong", "now", c[2] + Number(now).toLocaleString("en-US")));
+        } else line.appendChild(document.createTextNode(c[2] + Number(item[c[1]]).toLocaleString("en-US")));
+        price.appendChild(line);
       });
     }
     tile.classList.add("on-sale");

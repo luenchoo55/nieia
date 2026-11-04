@@ -38,6 +38,9 @@
 .chip-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
 .chip-row .chips { min-width: 0; }
 .manual-open { margin-left: auto; }
+.bk-head-r { display: flex; align-items: center; gap: .6rem; }
+.sort-toggle { display: inline-flex; align-items: center; gap: .3rem; min-height: 34px; padding: .2rem .8rem; font-size: var(--step--1); }
+.sort-arrow { font-size: 1.05em; line-height: 1; color: var(--button); }
 .manual-open + .slot-open { margin-left: 0; }
 .manual-panel { width: min(100%, 760px); }
 .manual-panel .hint { margin: .2rem 0 1rem; }
@@ -148,8 +151,9 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
 .bc-when { display: flex; align-items: baseline; gap: .5rem; white-space: nowrap; }
 .bc-when .time { font-variant-numeric: tabular-nums; font-size: var(--step--1); color: var(--ink-soft); }
 .bc-when .bc-date { color: var(--ink); font-size: var(--step-0); font-variant-numeric: tabular-nums; }
-.bc-who { display: flex; align-items: baseline; gap: .6rem; min-width: 0; }
-.bc-who strong { flex: none; }
+/* 名字優先完整顯示，剩下的空間給療癒項目；名字太長才用「…」截斷，不會壓到右邊的金額 */
+.bc-who { display: grid; grid-template-columns: minmax(2.5em, max-content) minmax(0, 1fr); align-items: baseline; column-gap: .6rem; min-width: 0; }
+.bc-who strong { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bc-svc { color: var(--ink-soft); font-size: var(--step--1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .bc-side { display: flex; align-items: center; gap: .5rem; justify-content: flex-end; }
 .bc-amount { font-size: var(--step--1); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -170,6 +174,13 @@ small.hint { font-size: var(--step--2); line-height: 1.5; }
   .bc-who { grid-column: 1; grid-row: 2; }
   .bc-amount { grid-column: 2 / 4; grid-row: 2; justify-self: end; }
   .bc-side .src-tag { display: none; }
+  .bc-when { gap: .35rem; }
+  .bc-summary .pill { font-size: var(--step--2); padding: .15rem .55rem; }
+}
+/* 很窄的手機（例如 iPhone SE）：時間放不下就換到日期下一行 */
+@media (max-width: 400px) {
+  .bc-when { flex-wrap: wrap; row-gap: 0; white-space: normal; }
+  .bc-when .bc-date, .bc-when .time { white-space: nowrap; }
 }
 .bc-pay { font-size: var(--step--1); color: var(--button); background: var(--tint); padding: .5rem .8rem; border-radius: var(--r-sm); }
 .bc-details summary { cursor: pointer; color: var(--ink-soft); font-size: var(--step--1); min-height: 32px; display: flex; align-items: center; }

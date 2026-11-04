@@ -124,11 +124,32 @@
     return b.status === filter;
   }
 
+  // 日期排序：asc＝舊到新（↑）、desc＝新到舊（↓）；記在這台裝置上
+  var sortDir = "asc";
+  try { if (localStorage.getItem("nieia-booking-sort") === "desc") sortDir = "desc"; } catch (e) {}
+  function syncSortBtn() {
+    var btn = document.getElementById("bookingSort");
+    if (!btn) return;
+    btn.querySelector(".sort-arrow").textContent = sortDir === "asc" ? "↑" : "↓";
+    btn.setAttribute("aria-label", sortDir === "asc" ? "依日期排序：舊到新，點一下改成新到舊" : "依日期排序：新到舊，點一下改成舊到新");
+    btn.title = sortDir === "asc" ? "目前：舊 → 新" : "目前：新 → 舊";
+  }
+  syncSortBtn();
+  document.getElementById("bookingSort").addEventListener("click", function () {
+    sortDir = sortDir === "asc" ? "desc" : "asc";
+    try { localStorage.setItem("nieia-booking-sort", sortDir); } catch (e) {}
+    syncSortBtn();
+    render();
+  });
+
   function render() {
     list.innerHTML = "";
     var todo = items.filter(function (b) { return b.status === "pending_payment" || b.status === "payment_reported"; }).length;
     document.getElementById("bookingCount").textContent = items.length ? "待處理 " + todo + " 筆" : "";
-    var shown = items.filter(matches);
+    var shown = items.filter(matches).sort(function (a, b) {
+      var d = String(a.startAt).localeCompare(String(b.startAt));
+      return sortDir === "asc" ? d : -d;
+    });
     if (!shown.length) {
       list.appendChild(el("p", "empty glass", items.length ? "這個分類目前沒有預約。" : "還沒有任何預約。客人在預約頁送出後，就會出現在這裡。"));
       return;

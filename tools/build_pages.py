@@ -229,6 +229,7 @@ services = f'''{appbar("療癒服務", "多種療癒方式，可透過 IG 視訊
     <h2 id="notice-title">預約須知</h2>
     <ul>
       <li>點選療癒項目即可線上預約，選擇時段並填寫資料。</li>
+      <li>每筆預約只能選一個療癒項目和一個時段，想預約多個請分開送出。</li>
       <li>療程一律先付款，完成匯款後寄出確認信。</li>
       <li>需改期請於 24 小時前告知，改期需酌收行政費用。</li>
       <li>療程前請先追蹤並私訊 @nieia4928，當天以 IG 視訊進行。</li>
@@ -413,6 +414,7 @@ booking = f'''{appbar("預約療癒", "選擇療癒項目與時段，填寫資�
   <form class="booking" id="bookForm" novalidate>
     <section class="step glass" aria-labelledby="s1">
       <h2 id="s1"><span class="num" aria-hidden="true">1</span>選擇療癒項目</h2>
+      <p class="one-note" role="note"><span aria-hidden="true">✦</span>一次只能預約<strong>一個療癒項目、一個時段</strong>。想做多個項目，請送出這筆之後再預約下一筆。</p>
       <div class="choices" id="serviceChoices" role="radiogroup" aria-labelledby="s1"><p class="muted">載入中…</p></div>
     </section>
 
@@ -484,6 +486,7 @@ booking = f'''{appbar("預約療癒", "選擇療癒項目與時段，填寫資�
         <ul>
           <li>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代正統醫療、心理諮商或法律診斷。</li>
           <li>療程一律先付款，送出後會看到匯款資訊，阿綸確認收款後預約即成立。</li>
+          <li>每筆預約只能選一個療癒項目和一個時段，想預約多個請分開送出。</li>
           <li>需改期請於 24 小時前告知，改期需酌收行政費用。若無故遲到，時間不予順延。</li>
           <li>療程前請先追蹤並私訊 IG @nieia4928，當天以 IG 視訊進行。</li>
           <li>你填寫的所有資料都會保密，只有阿綸看得到。</li>

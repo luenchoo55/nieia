@@ -421,6 +421,10 @@ a.row:hover .go { background: #3a3163; }
 .shop-size { grid-column: 1 / -1; font-size: var(--step-0); letter-spacing: .1em; color: var(--ink); margin: .8rem 0 -.2rem; display: flex; align-items: center; gap: .8rem; }
 .shop-size:first-child { margin-top: 0; }
 .shop-size::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+/* 療癒項目照片：縮圖填滿；介紹視窗裡顯示完整大圖 */
+.art.has-photo.photo-cover img { inset: 0; width: 100%; height: 100%; object-fit: cover; filter: none; }
+.detail-photo { margin: 0 0 1rem; }
+.detail-photo img { display: block; width: 100%; height: auto; border-radius: var(--r-sm); box-shadow: var(--shadow); }
 .one-note > span { color: var(--button); margin-right: .45rem; }
 .one-note strong { color: var(--button); font-weight: 600; background: linear-gradient(transparent 58%, rgba(238, 193, 221, .85) 58%); padding: 0 .15em; }
 .step .num {

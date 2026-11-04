@@ -72,7 +72,7 @@
     var b = el("button", "pos-tile glass" + (noPrice || out ? " is-off" : "") + (inCart ? " is-in" : ""));
     b.type = "button";
     b.disabled = noPrice || out;
-    b.appendChild(window.nieiaArt(x.glyph, x.palette, null, x.photo));
+    b.appendChild(window.nieiaArt(x.glyph, x.palette, kind === "service" ? "photo-cover" : null, x.photo));
     var text = el("span", "pos-tile-text");
     var sz = kind === "product" ? window.NIEIA_SIZES[window.nieiaSizeOf(x)].short : "";
     var nameEl = el("strong", null, x.name);

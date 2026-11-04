@@ -211,7 +211,7 @@
     card.appendChild(x);
 
     var head = el("header", "detail-head");
-    head.appendChild(window.nieiaArt(s.glyph, s.palette));
+    head.appendChild(window.nieiaArt(s.glyph, s.palette, "photo-cover", s.photo));
     var t = el("div", "detail-title");
     var h = el("h2", null, s.name); h.id = "detailTitle";
     t.appendChild(h);
@@ -221,6 +221,13 @@
     card.appendChild(head);
 
     var body = el("div", "detail-body");
+    if (s.photo) {
+      var fig = el("figure", "detail-photo");
+      var big = el("img");
+      big.src = s.photo; big.alt = s.name; big.decoding = "async";
+      fig.appendChild(big);
+      body.appendChild(fig);
+    }
     body.appendChild(s.detail ? richText(s.detail) : richText(s.desc || ""));
     card.appendChild(body);
 
@@ -265,7 +272,7 @@
         row.href = bookable ? "/booking?service=" + encodeURIComponent(s.id) : "#" + s.id;
         row.setAttribute("aria-haspopup", "dialog");
         row.setAttribute("data-cat", s.category);
-        row.appendChild(window.nieiaArt(s.glyph, s.palette));
+        row.appendChild(window.nieiaArt(s.glyph, s.palette, "photo-cover", s.photo));
         var text = el("div", "text");
         text.appendChild(el("h3", null, s.name));
         if (s.en) text.appendChild(el("span", "en", s.en));

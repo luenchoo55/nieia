@@ -31,7 +31,8 @@
         { key: "priceTwd", label: "台幣價格（NT$）", type: "number", min: 0, max: 1000000, showIf: function (v) { return v.priceMode === "fixed"; } },
         { key: "priceMyr", label: "馬幣價格（RM）", type: "number", min: 0, max: 100000, showIf: function (v) { return v.priceMode === "fixed"; }, hint: "沒填就不顯示馬幣價格" },
         { key: "extra", label: "預約時額外詢問", type: "select", options: [["none", "不需要"], ["magnified", "是否習修過擴大療癒"], ["departed", "亡者全名（引渡之光）"], ["soulplan", "出生日期與姓名拼音（靈魂藍圖）"], ["animal", "毛孩資料（動物溝通）"]] },
-        { key: "glyph", label: "縮圖圖案", type: "glyph" },
+        { key: "photo", label: "照片", type: "photo" },
+        { key: "glyph", label: "縮圖圖案", type: "glyph", hint: "沒有照片時顯示這個圖案" },
         { key: "palette", label: "縮圖色調", type: "palette" },
         { key: "published", label: "上架（客人看得到）", type: "check" },
       ],
@@ -101,7 +102,7 @@
     }
     items.forEach(function (item, i) {
       var row = el("div", "row glass catalog-row" + (item.published ? "" : " is-closed"));
-      row.appendChild(window.nieiaArt(item.glyph, item.palette, null, item.photo));
+      row.appendChild(window.nieiaArt(item.glyph, item.palette, kind === "services" ? "photo-cover" : null, item.photo));
       var text = el("div", "text");
       text.appendChild(el("h3", null, kind === "products" ? window.nieiaProductName(item) : item.name));
       text.appendChild(el("span", "desc", window.nieiaPrice(item, cfg.priceKind)));
@@ -197,7 +198,7 @@
 
     cfg.fields.forEach(function (f) {
       if (f.type === "photo") {
-        var pc = photoField(kind, item, values);
+        var pc = photoField(kind, item, values, f.label);
         controls.push({ f: f, node: pc });
         grid.appendChild(pc);
         return;
@@ -304,10 +305,11 @@
       img.src = url;
     });
   }
-  function photoField(kind, item, values) {
+  function photoField(kind, item, values, label) {
     var cfg = KINDS[kind];
+    var svc = kind === "services";
     var wrap = el("div", "field wide photo-field");
-    wrap.appendChild(el("span", null, "商品照片"));
+    wrap.appendChild(el("span", null, label || "照片"));
     var box = el("div", "photo-box");
     var preview = el("div", "photo-preview");
     var side = el("div", "photo-side");
@@ -329,10 +331,12 @@
 
     function draw() {
       preview.innerHTML = "";
-      preview.appendChild(window.nieiaArt(values.glyph, values.palette, null, item && item.photo));
+      preview.appendChild(window.nieiaArt(values.glyph, values.palette, svc ? "photo-cover" : null, item && item.photo));
       remove.hidden = !(item && item.photo);
       pick.firstChild.textContent = item && item.photo ? "換一張照片" : "上傳照片";
-      hint.textContent = item ? "選好照片就會自動上傳並換上。直式聖照也會完整顯示，後面是下方選的色調。" : "先按「新增商品」存好，再回來編輯就能上傳照片。";
+      hint.textContent = !item ? "先按「新增" + cfg.noun + "」存好，再回來編輯就能上傳照片。"
+        : svc ? "選好照片就會自動上傳並換上。列表縮圖會裁成正方形，客人點開介紹時會看到完整的圖。"
+        : "選好照片就會自動上傳並換上。直式聖照也會完整顯示，後面是下方選的色調。";
       pick.classList.toggle("is-disabled", !item);
       input.disabled = !item;
     }

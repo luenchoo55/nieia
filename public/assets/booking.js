@@ -89,7 +89,7 @@
       input.checked = bookable && state.service && state.service.id === s.id;
       input.addEventListener("change", function () { state.service = s; renderMode(); renderExtra(); renderSummary(); });
       label.appendChild(input);
-      label.appendChild(window.nieiaArt(s.glyph, s.palette));
+      label.appendChild(window.nieiaArt(s.glyph, s.palette, "photo-cover", s.photo));
       var text = el("span", "text");
       text.appendChild(el("strong", null, s.name));
       var meta = [];

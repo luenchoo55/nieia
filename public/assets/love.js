@@ -74,7 +74,7 @@
       });
       fitCardText(segs);
       card.classList.add("flipped");
-      card.setAttribute("aria-label", "給你的一句愛：" + pick.text);
+      card.setAttribute("aria-label", "給你的一句愛的拍拍：" + pick.text);
       drawBtn.textContent = "再抽一張";
       makeImage(pick);
     };
@@ -244,11 +244,11 @@
 
   saveBtn.addEventListener("click", function () {
     if (!blob) return;
-    var name = "給你的一句愛.png";
+    var name = "給你的一句愛的拍拍.png";
     if (inApp) {
       // IG 裡不能下載：跳出圖片，長按儲存
       img.src = url;
-      img.alt = "給你的一句愛：" + current.text;
+      img.alt = "給你的一句愛的拍拍：" + current.text;
       sheet.hidden = false;
       document.documentElement.classList.add("no-scroll");
       return;

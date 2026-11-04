@@ -38,6 +38,20 @@
 .chip-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
 .chip-row .chips { min-width: 0; }
 .manual-open { margin-left: auto; }
+/* 商品編輯：照片 */
+.photo-box { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.photo-preview .art { width: 120px; height: 120px; border-radius: 18px; }
+.photo-side { display: grid; gap: .5rem; flex: 1 1 200px; min-width: 0; }
+.photo-acts { display: flex; flex-wrap: wrap; gap: .5rem; }
+.photo-acts [hidden] { display: none; }
+.photo-pick { cursor: pointer; }
+.photo-pick.is-disabled { opacity: .5; pointer-events: none; }
+.photo-pick.is-busy { opacity: .6; pointer-events: none; }
+/* 收銀：尺寸篩選與標籤 */
+.pos-filter { margin-bottom: .8rem; }
+.pos-size { display: inline-block; margin-left: .35rem; padding: 0 .4rem; border-radius: 999px; font-size: .72em; font-weight: 600; vertical-align: .1em; line-height: 1.6; }
+.pos-size-mid { background: rgba(150, 152, 231, .25); color: #3F3580; }
+.pos-size-small { background: rgba(238, 193, 221, .45); color: #8A2F5E; }
 .bk-head-r { display: flex; align-items: center; gap: .6rem; }
 .sort-toggle { display: inline-flex; align-items: center; gap: .3rem; min-height: 34px; padding: .2rem .8rem; font-size: var(--step--1); }
 .sort-arrow { font-size: 1.05em; line-height: 1; color: var(--button); }

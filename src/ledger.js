@@ -10,6 +10,9 @@ const CURRENCIES = ["TWD", "MYR"];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH_RE = /^\d{4}-\d{2}$/;
 export const PRODUCT_CATEGORY = "商品";
+// 收據與收支紀錄上的商品名稱帶上尺寸，例如「聖哲曼聖照（小卡）」
+const SIZE_SHORT = { mid: "中卡", small: "小卡" };
+const productName = (doc) => doc.name + (SIZE_SHORT[doc.size] ? `（${SIZE_SHORT[doc.size]}）` : "");
 const SERVICE_CATEGORY = "現場服務";
 const CUSTOM_CATEGORY = "其他收入";
 const PAY_METHODS = { cash: "現金", transfer: "轉帳", linepay: "LINE Pay", tng: "TNG" };
@@ -198,7 +201,7 @@ export function mountLedger(app) {
         if (!Number.isInteger(qty) || qty < 1 || qty > 1000) return bad(c, "數量請填 1 以上的整數。");
         const p = await db.collection("products").findOne({ _id: pid });
         if (!p) return bad(c, "找不到這個商品，可能已經刪除了。", 404);
-        Object.assign(doc, { productId: pid, productName: p.name, qty, category: PRODUCT_CATEGORY });
+        Object.assign(doc, { productId: pid, productName: productName(p), qty, category: PRODUCT_CATEGORY });
         // 有記庫存的商品才扣
         if (typeof p.stock === "number") {
           await db.collection("products").updateOne({ _id: pid }, { $inc: { stock: -qty }, $set: { updatedAt: new Date() } });
@@ -234,7 +237,7 @@ export function mountLedger(app) {
           if (!doc) return bad(c, "找不到其中一個品項，可能已經刪除了，請重新整理。", 404);
           const price = doc[priceKey];
           if (price == null || (it.kind === "service" && doc.priceMode !== "fixed")) return bad(c, `「${doc.name}」沒有${currency === "MYR" ? "馬幣" : "台幣"}價格。`);
-          lines.push({ kind: it.kind, id, name: doc.name, qty, price, stocked: it.kind === "product" && typeof doc.stock === "number" });
+          lines.push({ kind: it.kind, id, name: it.kind === "product" ? productName(doc) : doc.name, qty, price, stocked: it.kind === "product" && typeof doc.stock === "number" });
         } else if (it.kind === "custom") {
           const name = str(it.name, 40);
           const price = cleanAmount(it.price);

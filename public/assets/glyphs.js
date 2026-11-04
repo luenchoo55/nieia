@@ -20,10 +20,39 @@ window.NIEIA_GLYPHS = {
  "camera": "<svg viewBox=\"0 0 100 100\" fill=\"none\" stroke=\"#fff\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"18\" y=\"26\" width=\"64\" height=\"50\" rx=\"16\" fill=\"rgba(255,255,255,.3)\"/><circle cx=\"50\" cy=\"51\" r=\"13\"/><circle cx=\"68\" cy=\"37\" r=\"2.5\" fill=\"#fff\" stroke=\"none\"/></svg>"
 };
 window.NIEIA_PALETTES = ["g1", "g2", "g3", "g4", "g5", "g6"];
-window.nieiaArt = function (glyph, palette, extraClass) {
+// 商品尺寸（後台、前台、收銀共用）
+window.NIEIA_SIZES = {
+  mid: { short: "中卡", label: "中卡 105 × 148 mm" },
+  small: { short: "小卡", label: "小卡 90 × 54 mm" },
+  none: { short: "", label: "其他商品" },
+};
+window.nieiaSizeOf = function (p) { return window.NIEIA_SIZES[p && p.size] ? p.size : "none"; };
+// 品名帶上尺寸：聖哲曼聖照（小卡）
+window.nieiaProductName = function (p) {
+  var s = window.NIEIA_SIZES[window.nieiaSizeOf(p)].short;
+  return p.name + (s ? "（" + s + "）" : "");
+};
+// 依尺寸分組（中卡 → 小卡 → 其他），只回傳有商品的組
+window.nieiaGroupBySize = function (items) {
+  return ["mid", "small", "none"].map(function (k) {
+    return { size: k, label: window.NIEIA_SIZES[k].label, items: items.filter(function (p) { return window.nieiaSizeOf(p) === k; }) };
+  }).filter(function (g) { return g.items.length; });
+};
+
+window.nieiaArt = function (glyph, palette, extraClass, photo) {
   var div = document.createElement("div");
   var p = window.NIEIA_PALETTES.indexOf(palette) >= 0 ? palette : "g1";
-  div.className = "art " + p + (extraClass ? " " + extraClass : "");
-  div.innerHTML = window.NIEIA_GLYPHS[glyph] || window.NIEIA_GLYPHS.lotus;
+  div.className = "art " + p + (extraClass ? " " + extraClass : "") + (photo ? " has-photo" : "");
+  if (photo) {
+    // 商品照片：放在原本的漸層底色上，整張照片完整顯示
+    var img = document.createElement("img");
+    img.src = photo;
+    img.alt = "";
+    img.loading = "lazy";
+    img.decoding = "async";
+    div.appendChild(img);
+  } else {
+    div.innerHTML = window.NIEIA_GLYPHS[glyph] || window.NIEIA_GLYPHS.lotus;
+  }
   return div;
 };

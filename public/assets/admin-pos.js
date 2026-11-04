@@ -72,9 +72,12 @@
     var b = el("button", "pos-tile glass" + (noPrice || out ? " is-off" : "") + (inCart ? " is-in" : ""));
     b.type = "button";
     b.disabled = noPrice || out;
-    b.appendChild(window.nieiaArt(x.glyph, x.palette));
+    b.appendChild(window.nieiaArt(x.glyph, x.palette, null, x.photo));
     var text = el("span", "pos-tile-text");
-    text.appendChild(el("strong", null, x.name));
+    var sz = kind === "product" ? window.NIEIA_SIZES[window.nieiaSizeOf(x)].short : "";
+    var nameEl = el("strong", null, x.name);
+    if (sz) nameEl.appendChild(el("span", "pos-size pos-size-" + window.nieiaSizeOf(x), sz));
+    text.appendChild(nameEl);
     var sale = noPrice ? null : window.nieiaPromo.saleOf(kind + ":" + x.id, price, promos, currency);
     var meta = [noPrice ? (currency === "MYR" ? "沒有馬幣價格" : "沒有台幣價格") : money(sale ? sale.price : price, currency)];
     if (stock != null) meta.push(stock <= 0 ? "已售完" : "剩 " + stock);
@@ -84,7 +87,7 @@
     b.appendChild(text);
     if (sale) b.appendChild(el("span", "pos-sale", sale.rule.name || "特價"));
     if (inCart) b.appendChild(el("span", "pos-badge", "× " + inCart));
-    b.setAttribute("aria-label", x.name + "，" + meta.join("，") + (inCart ? "，購物車已有 " + inCart : ""));
+    b.setAttribute("aria-label", (kind === "product" ? window.nieiaProductName(x) : x.name) + "，" + meta.join("，") + (inCart ? "，購物車已有 " + inCart : ""));
     b.addEventListener("click", function () { add(kind, x); });
     return b;
   }
@@ -99,12 +102,35 @@
     return s;
   }
 
+  // 篩選：全部／中卡／小卡／其他／療癒項目（擺攤時只看要賣的那一種，不容易按錯）
+  var posFilter = "all";
   function renderGrid() {
     var host = $("posGrid");
     host.innerHTML = "";
     if (!products) { host.appendChild(el("p", "empty glass", "載入中…")); return; }
-    host.appendChild(group("商品", products, "product", "還沒有商品，可以到「商品」分頁新增。"));
-    host.appendChild(group("療癒項目", services, "service", "還沒有定價的療癒項目。"));
+    var groups = window.nieiaGroupBySize(products);
+    var sized = groups.some(function (g) { return g.size !== "none"; });
+    if (sized) {
+      var opts = [["all", "全部"]].concat(groups.map(function (g) { return [g.size, g.size === "none" ? "其他" : window.NIEIA_SIZES[g.size].short]; }), [["service", "療癒項目"]]);
+      if (!opts.some(function (o) { return o[0] === posFilter; })) posFilter = "all";
+      var bar = el("div", "chips pos-filter");
+      bar.setAttribute("role", "group");
+      bar.setAttribute("aria-label", "篩選收銀品項");
+      opts.forEach(function (o) {
+        var c = el("button", "chip", o[1]);
+        c.type = "button";
+        c.setAttribute("aria-pressed", String(posFilter === o[0]));
+        c.addEventListener("click", function () { posFilter = o[0]; renderGrid(); });
+        bar.appendChild(c);
+      });
+      host.appendChild(bar);
+      groups.forEach(function (g) {
+        if (posFilter === "all" || posFilter === g.size) host.appendChild(group(g.label, g.items, "product", ""));
+      });
+    } else {
+      host.appendChild(group("商品", products, "product", "還沒有商品，可以到「商品」分頁新增。"));
+    }
+    if (!sized || posFilter === "all" || posFilter === "service") host.appendChild(group("療癒項目", services, "service", "還沒有定價的療癒項目。"));
   }
 
   // ---------- 購物車 ----------
@@ -115,7 +141,7 @@
       if (line.stock != null && line.qty >= line.stock) return;
       line.qty++;
     } else {
-      cart.push({ key: key, kind: kind, id: x.id, name: x.name, price: priceOf(x), qty: 1, stock: kind === "product" && typeof x.stock === "number" ? x.stock : null });
+      cart.push({ key: key, kind: kind, id: x.id, name: kind === "product" ? window.nieiaProductName(x) : x.name, price: priceOf(x), qty: 1, stock: kind === "product" && typeof x.stock === "number" ? x.stock : null });
     }
     $("posMsg").textContent = "";
     renderGrid();

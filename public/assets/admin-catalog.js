@@ -40,17 +40,19 @@
       api: "/api/admin/products",
       noun: "商品",
       priceKind: "product",
-      blank: { name: "", desc: "", priceTwd: "", priceMyr: "", url: "", glyph: "card", palette: "g2", soldOut: false, published: true, stock: "", lowStock: "" },
+      blank: { name: "", desc: "", size: "none", priceTwd: "", priceMyr: "", url: "", glyph: "card", palette: "g2", soldOut: false, published: true, stock: "", lowStock: "" },
       fields: [
         { key: "name", label: "名稱", type: "text", max: 40, required: true },
         { key: "desc", label: "介紹", type: "textarea", max: 300 },
+        { key: "size", label: "尺寸", type: "select", options: [["mid", "中卡 105 × 148 mm"], ["small", "小卡 90 × 54 mm"], ["none", "不分尺寸（其他商品）"]], hint: "前台依尺寸分區顯示；收據會寫成「品名（小卡）」" },
         { key: "priceTwd", label: "台幣價格（NT$）", type: "number", min: 0, max: 1000000 },
         { key: "priceMyr", label: "馬幣價格（RM）", type: "number", min: 0, max: 100000, hint: "沒填就不顯示馬幣價格" },
         { key: "url", label: "購買連結", type: "url", hint: "例如 7-11 賣貨便的商品網址，要以 https:// 開頭" },
         { key: "stock", label: "庫存數量", type: "number", min: -100000, max: 100000, placeholder: "不記庫存就留空", hint: "只有後台看得到。在「收支」新增商品賣出時會自動扣掉" },
         { key: "lowStock", label: "剩幾件以下要提醒", type: "number", min: 0, max: 100000, placeholder: "3", hint: "留空就是剩 3 件以下提醒" },
-        { key: "glyph", label: "縮圖圖案", type: "glyph" },
-        { key: "palette", label: "縮圖色調", type: "palette" },
+        { key: "photo", label: "商品照片", type: "photo" },
+        { key: "glyph", label: "縮圖圖案", type: "glyph", hint: "沒有照片時顯示這個圖案" },
+        { key: "palette", label: "縮圖色調", type: "palette", hint: "有照片時當作照片後面的底色" },
         { key: "soldOut", label: "已售完", type: "check" },
         { key: "published", label: "上架（客人看得到）", type: "check" },
       ],
@@ -99,9 +101,9 @@
     }
     items.forEach(function (item, i) {
       var row = el("div", "row glass catalog-row" + (item.published ? "" : " is-closed"));
-      row.appendChild(window.nieiaArt(item.glyph, item.palette));
+      row.appendChild(window.nieiaArt(item.glyph, item.palette, null, item.photo));
       var text = el("div", "text");
-      text.appendChild(el("h3", null, item.name));
+      text.appendChild(el("h3", null, kind === "products" ? window.nieiaProductName(item) : item.name));
       text.appendChild(el("span", "desc", window.nieiaPrice(item, cfg.priceKind)));
       var pills = el("div", "pills");
       pills.appendChild(el("span", "pill " + (item.published ? "open" : "closed"), item.published ? "上架中" : "已下架"));
@@ -194,6 +196,12 @@
     var controls = [];
 
     cfg.fields.forEach(function (f) {
+      if (f.type === "photo") {
+        var pc = photoField(kind, item, values);
+        controls.push({ f: f, node: pc });
+        grid.appendChild(pc);
+        return;
+      }
       var c = buildField(f, values, function () { refresh(); });
       controls.push({ f: f, node: c });
       grid.appendChild(c);
@@ -202,7 +210,7 @@
     function refresh() {
       controls.forEach(function (c) {
         if (c.f.showIf) c.node.hidden = !c.f.showIf(values);
-        if (c.f.type === "glyph" || c.f.type === "palette") c.node.update();
+        if (c.f.type === "glyph" || c.f.type === "palette" || c.f.type === "photo") c.node.update();
       });
     }
     refresh();
@@ -253,7 +261,7 @@
       if (!name) { msg.textContent = "請填寫名稱。"; return; }
       msg.textContent = "";
       var data = {};
-      Object.keys(values).forEach(function (k) { data[k] = values[k]; });
+      Object.keys(values).forEach(function (k) { if (k !== "photo") data[k] = values[k]; });
       ["priceTwd", "priceMyr", "duration"].forEach(function (k) {
         if (k in data) data[k] = data[k] === "" ? null : Number(data[k]);
       });
@@ -270,6 +278,94 @@
     card.scrollIntoView({ behavior: "smooth", block: "start" });
     var first = card.querySelector("input, textarea, select");
     if (first) first.focus({ preventScroll: true });
+  }
+
+  // 商品照片：選了就自動縮小、上傳，馬上換上；照片獨立儲存，不用再按「儲存變更」
+  function shrinkImage(file, maxSide) {
+    return new Promise(function (ok, fail) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var k = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+        var cv = document.createElement("canvas");
+        cv.width = Math.round(img.naturalWidth * k);
+        cv.height = Math.round(img.naturalHeight * k);
+        var ctx = cv.getContext("2d");
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(url);
+        // 有透明背景的 PNG 保留成 PNG，其他壓成 JPEG
+        var png = file.type === "image/png";
+        var data = cv.toDataURL(png ? "image/png" : "image/jpeg", .88);
+        if (png && data.length > 1100000) data = cv.toDataURL("image/jpeg", .88);
+        ok(data);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); fail(); };
+      img.src = url;
+    });
+  }
+  function photoField(kind, item, values) {
+    var cfg = KINDS[kind];
+    var wrap = el("div", "field wide photo-field");
+    wrap.appendChild(el("span", null, "商品照片"));
+    var box = el("div", "photo-box");
+    var preview = el("div", "photo-preview");
+    var side = el("div", "photo-side");
+    var hint = el("p", "hint");
+    var pick = el("label", "btn btn-ghost btn-small photo-pick", "上傳照片");
+    var input = el("input");
+    input.type = "file"; input.accept = "image/jpeg,image/png,image/webp"; input.className = "sr-only";
+    pick.appendChild(input);
+    var remove = el("button", "btn btn-ghost btn-small danger-btn", "移除照片");
+    remove.type = "button";
+    var acts = el("div", "photo-acts");
+    acts.appendChild(pick);
+    acts.appendChild(remove);
+    side.appendChild(acts);
+    side.appendChild(hint);
+    box.appendChild(preview);
+    box.appendChild(side);
+    wrap.appendChild(box);
+
+    function draw() {
+      preview.innerHTML = "";
+      preview.appendChild(window.nieiaArt(values.glyph, values.palette, null, item && item.photo));
+      remove.hidden = !(item && item.photo);
+      pick.firstChild.textContent = item && item.photo ? "換一張照片" : "上傳照片";
+      hint.textContent = item ? "選好照片就會自動上傳並換上。直式聖照也會完整顯示，後面是下方選的色調。" : "先按「新增商品」存好，再回來編輯就能上傳照片。";
+      pick.classList.toggle("is-disabled", !item);
+      input.disabled = !item;
+    }
+    function done(r, text) {
+      pick.classList.remove("is-busy");
+      remove.disabled = false;
+      if (r.status === 401) return A.checkSession();
+      if (!r.ok) { A.toast(r.message || "上傳失敗，請再試一次"); return; }
+      item.photo = r.item.photo;
+      applyItems(kind, r);
+      draw();
+      A.toast(text);
+    }
+    input.addEventListener("change", function () {
+      var file = input.files && input.files[0];
+      input.value = "";
+      if (!file || !item) return;
+      pick.classList.add("is-busy");
+      shrinkImage(file, 1000).then(function (dataUrl) {
+        return A.api(cfg.api + "/" + item.id + "/photo", { method: "PUT", body: { dataUrl: dataUrl } });
+      }).then(function (r) { done(r, "已換上新照片"); }, function () {
+        pick.classList.remove("is-busy");
+        A.toast("這張圖片讀不出來，請換一張");
+      });
+    });
+    remove.addEventListener("click", function () {
+      if (!item) return;
+      remove.disabled = true;
+      A.api(cfg.api + "/" + item.id + "/photo", { method: "DELETE" }).then(function (r) { done(r, "已移除照片"); });
+    });
+    wrap.update = draw;
+    draw();
+    return wrap;
   }
 
   function buildField(f, values, onChange) {

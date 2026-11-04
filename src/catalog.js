@@ -103,6 +103,8 @@ export const SCHEMAS = {
       url: F.url(),
       glyph: F.oneOf(GLYPHS, "card"),
       palette: F.oneOf(PALETTES, "g2"),
+      // 尺寸：中卡 105×148 mm、小卡 90×54 mm；前台依尺寸分區、收銀可以篩選
+      size: F.oneOf(["none", "mid", "small"], "none"),
       soldOut: F.bool(false),
       published: F.bool(true),
       // 庫存：留空代表不記庫存；低於「庫存不足」的數量時，打開後台會提醒
@@ -171,9 +173,17 @@ async function seedOnce(db, schema) {
   seeded.add(schema.seedKey);
 }
 
+// 照片網址跟工作坊照片同一條路（/api/photos/:key），換照片時代碼會跟著換
 function present(doc) {
-  const { _id, createdAt, updatedAt, ...rest } = doc;
-  return { id: _id.toString(), ...rest };
+  const { _id, createdAt, updatedAt, photoKey, ...rest } = doc;
+  return { id: _id.toString(), ...rest, photo: photoKey ? `/api/photos/${photoKey}` : null };
+}
+
+const MAX_PHOTO_BYTES = 900 * 1024; // 後台會先壓縮，正常約 100–300 KB
+function randomKey(len) {
+  const abc = "23456789abcdefghjkmnpqrstuvwxyz";
+  const bytes = crypto.getRandomValues(new Uint8Array(len));
+  return Array.from(bytes, (b) => abc[b % abc.length]).join("");
 }
 
 function publicView(schema, doc) {
@@ -281,12 +291,47 @@ function mountOne(app, publicPath, adminPath, schema) {
     });
   });
 
+  // ---------- 照片：上傳（取代舊的）與移除 ----------
+  app.put(adminPath + "/:id/photo", async (c) => {
+    const id = parseId(c.req.param("id"));
+    if (!id) return bad(c, "找不到這個項目。", 404);
+    const body = await readJson(c);
+    const m = /^data:(image\/(?:jpeg|webp|png));base64,([A-Za-z0-9+/=]+)$/.exec(body?.dataUrl || "");
+    if (!m) return bad(c, "請選擇 JPG、PNG 或 WebP 圖片。");
+    const bytes = Uint8Array.from(atob(m[2]), (ch) => ch.charCodeAt(0));
+    if (bytes.length > MAX_PHOTO_BYTES) return bad(c, "照片太大了，請換一張或裁小一點再上傳。", 413);
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const doc = await col(db).findOne({ _id: id });
+      if (!doc) return bad(c, "找不到這個項目，可能已經刪除了。", 404);
+      const key = randomKey(16);
+      await db.collection("photos").insertOne({ _id: key, kind: schema.collection + "-photo", itemId: id, type: m[1], data: bytes, createdAt: new Date() });
+      await col(db).updateOne({ _id: id }, { $set: { photoKey: key, updatedAt: new Date() } });
+      if (doc.photoKey) await db.collection("photos").deleteOne({ _id: doc.photoKey });
+      purge(c);
+      return c.json({ ok: true, item: present({ ...doc, photoKey: key }), items: await listAll(db) });
+    });
+  });
+
+  app.delete(adminPath + "/:id/photo", (c) => {
+    const id = parseId(c.req.param("id"));
+    if (!id) return bad(c, "找不到這個項目。", 404);
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const doc = await col(db).findOne({ _id: id });
+      if (!doc) return bad(c, "找不到這個項目，可能已經刪除了。", 404);
+      if (doc.photoKey) await db.collection("photos").deleteOne({ _id: doc.photoKey });
+      await col(db).updateOne({ _id: id }, { $set: { photoKey: null, updatedAt: new Date() } });
+      purge(c);
+      return c.json({ ok: true, item: present({ ...doc, photoKey: null }), items: await listAll(db) });
+    });
+  });
+
   app.delete(adminPath + "/:id", (c) => {
     const id = parseId(c.req.param("id"));
     if (!id) return bad(c, "找不到這個項目。", 404);
     return withDb(c.env, c.executionCtx, async (db) => {
       const doc = await col(db).findOne({ _id: id });
       if (!doc) return bad(c, "找不到這個項目，可能已經刪除了。", 404);
+      if (doc.photoKey) await db.collection("photos").deleteOne({ _id: doc.photoKey });
       await col(db).deleteOne({ _id: id });
       purge(c);
       return c.json({ ok: true, items: await listAll(db) });

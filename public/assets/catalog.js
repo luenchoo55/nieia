@@ -295,17 +295,24 @@
     window.nieiaLoad("/api/products", function (data) {
       if (!data.ok || !data.items) return;
       shop.innerHTML = "";
-      data.items.forEach(function (p) {
+      // 有不同尺寸時分區顯示，每區上方寫尺寸
+      var groups = window.nieiaGroupBySize(data.items);
+      var showHeads = groups.length > 1 || (groups[0] && groups[0].size !== "none");
+      groups.forEach(function (g) {
+        if (showHeads) shop.appendChild(el("h2", "shop-size", g.label));
+        g.items.forEach(function (p) { shop.appendChild(productTile(p)); });
+      });
+      function productTile(p) {
         var canBuy = p.url && !p.soldOut;
         var tile = el(canBuy ? "a" : "div", "tile product glass" + (p.soldOut ? " sold-out" : ""));
         if (canBuy) { tile.href = p.url; tile.target = "_blank"; tile.rel = "noopener"; }
-        tile.appendChild(window.nieiaArt(p.glyph, p.palette));
+        tile.appendChild(window.nieiaArt(p.glyph, p.palette, null, p.photo));
         tile.appendChild(el("span", "label", p.name));
         tile.appendChild(el("span", "price", window.nieiaPrice(p, "product")));
         if (p.desc) tile.appendChild(el("span", "pdesc", p.desc));
         window.nieiaSale(tile, p);
-        shop.appendChild(tile);
-      });
+        return tile;
+      }
       if (!data.items.length) shop.appendChild(el("p", "notice glass", "目前沒有上架的商品。"));
     }).catch(function () { /* 保留原本內容 */ });
   }

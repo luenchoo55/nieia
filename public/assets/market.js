@@ -54,8 +54,8 @@
       products.forEach(function (p) {
         var tile = document.createElement("div");
         tile.className = "tile product glass" + (p.soldOut ? " sold-out" : "");
-        tile.appendChild(window.nieiaArt(p.glyph, p.palette));
-        [["label", p.name], ["price", window.nieiaPrice(p, "product")], ["pdesc", p.desc]].forEach(function (x) {
+        tile.appendChild(window.nieiaArt(p.glyph, p.palette, null, p.photo));
+        [["label", window.nieiaProductName(p)], ["price", window.nieiaPrice(p, "product")], ["pdesc", p.desc]].forEach(function (x) {
           if (!x[1]) return;
           var s = document.createElement("span");
           s.className = x[0];

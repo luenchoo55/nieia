@@ -76,7 +76,7 @@
         "",
         "療癒後的幾天，請多喝水、好好休息，留意身心的變化。有任何感受或問題，歡迎 IG 私訊 @nieia4928。",
         "",
-        "願光一路陪伴你。",
+        "與光同在，一切如是。",
         "阿綸",
       ].filter(function (x) { return x !== null; });
     } else if (b.status === "confirmed") {
@@ -489,27 +489,16 @@
     };
   }
 
-  // 完成信附上收據：Gmail 連結沒辦法夾帶檔案，所以把收據圖片複製到剪貼簿（在信裡 Ctrl+V 貼上），同時下載一份
+  // 完成信附上收據：Gmail 連結沒辦法夾帶檔案，所以把收據圖片複製到剪貼簿（在信裡 Ctrl+V 貼上）
   function attachReceipt(b) {
     var rc = window.NieiaReceipt && window.NieiaReceipt.blob ? receiptData(b) : null;
     if (!rc) { A.toast("收據無法產生，請用「收據」按鈕下載後再附上"); return; }
-    var p = window.NieiaReceipt.blob(rc);
-    var copied = false;
+    var fail = function () { A.toast("收據沒辦法自動複製，請用「收據」按鈕存下圖片再附上"); };
     try {
-      if (navigator.clipboard && window.ClipboardItem) {
-        navigator.clipboard.write([new ClipboardItem({ "image/png": p })]).then(function () { copied = true; }, function () {});
-      }
-    } catch (e) { /* 舊瀏覽器 */ }
-    p.then(function (blob) {
-      var a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "收據_" + b.ref + ".png";
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
-      setTimeout(function () {
-        A.toast(copied ? "收據已複製：在 Gmail 信件裡按 Ctrl+V 貼上（也已下載一份）" : "收據圖片已下載，請拖進 Gmail 信件附件");
-      }, 300);
-    }, function () { A.toast("收據產生失敗，請用「收據」按鈕下載"); });
+      if (!navigator.clipboard || !window.ClipboardItem) { fail(); return; }
+      navigator.clipboard.write([new ClipboardItem({ "image/png": window.NieiaReceipt.blob(rc) })])
+        .then(function () { A.toast("收據已複製：在 Gmail 信件裡按 Ctrl+V 貼上"); }, fail);
+    } catch (e) { fail(); }
   }
 
   // 確認收款時填實收金額（記帳用）；有固定價格就先帶入

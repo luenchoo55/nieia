@@ -94,6 +94,9 @@
 .pill.open { color: #2F7A5B; }
 .pill.closed { color: #8A7F99; }
 .pill.booked { color: var(--button); background: var(--tint); }
+.pill.done { color: #2F7A5B; background: #E2F2E9; border-color: #A8D5BC; }
+.pill.done::before { background: #4FA27C; }
+.bc-pay.bc-done { color: #2F7A5B; font-weight: 600; }
 
 .empty { padding: 1.4rem 1.3rem; text-align: center; color: var(--ink-soft); font-size: var(--step--1); }
 

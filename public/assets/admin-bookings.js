@@ -7,7 +7,7 @@
   var STATUS = {
     pending_payment: ["等待匯款", "closed"],
     payment_reported: ["已回報匯款", "booked"],
-    confirmed: ["已成立", "open"],
+    confirmed: ["等待療癒", "open"],
     cancelled: ["已取消", "closed"],
   };
   var REGION = { TW: "台灣", MY: "馬來西亞" };
@@ -121,6 +121,8 @@
   function matches(b) {
     if (filter === "all") return true;
     if (filter === "todo") return b.status === "pending_payment" || b.status === "payment_reported";
+    if (filter === "confirmed") return b.status === "confirmed" && !b.completed;
+    if (filter === "completed") return b.status === "confirmed" && !!b.completed;
     return b.status === filter;
   }
 
@@ -193,7 +195,7 @@
     var side = el("span", "bc-side");
     side.appendChild(el("span", "bc-amount", b.refund && b.refund.amount > 0 ? "退 " + money(b.refund.amount, b.currency) : money(b.amount, b.currency, b.priceMode)));
     if (manual) side.appendChild(el("span", "src-tag", "手動"));
-    var st = STATUS[b.status] || [b.status, "closed"];
+    var st = b.status === "confirmed" && b.completed ? ["已完成", "done"] : STATUS[b.status] || [b.status, "closed"];
     side.appendChild(el("span", "pill " + st[1], st[0]));
     var chev = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     chev.setAttribute("viewBox", "0 0 24 24");
@@ -222,6 +224,7 @@
     if (b.status === "confirmed") {
       var paid = b.paidAmount != null ? b.paidAmount : b.amount;
       c.appendChild(el("p", "bc-pay", "實收：" + (paid == null ? "還沒填（記帳需要，請按「修改實收金額」）" : money(paid, b.currency))));
+      c.appendChild(el("p", "bc-pay" + (b.completed ? " bc-done" : ""), b.completed ? "✓ 療癒已完成（" + b.completed.date + "）" : "療癒還沒完成，做完後按「標記完成」"));
     }
     if (b.refund) {
       var kept = (b.paidAmount != null ? b.paidAmount : b.amount || 0) - b.refund.amount;
@@ -286,6 +289,12 @@
       rcBtn.type = "button";
       rcBtn.addEventListener("click", function () { showReceipt(b); });
       actions.appendChild(rcBtn);
+      if (!b.completed) {
+        var doneBtn = el("button", "primary-action", "標記完成");
+        doneBtn.type = "button";
+        doneBtn.addEventListener("click", function () { setCompleted(b, true, doneBtn); });
+        actions.appendChild(doneBtn);
+      }
     } else if (b.status !== "cancelled") {
       var ok = el("button", "primary-action", "確認收款");
       ok.type = "button";
@@ -317,6 +326,7 @@
       item("編輯資料", null, function () { more.open = false; if (manual) openManual(b); else openWebEdit(b); });
     }
     if (b.status === "confirmed") {
+      if (b.completed) item("改回還沒完成", null, function (x) { more.open = false; setCompleted(b, false, x); });
       item("修改實收金額", null, function () { more.open = false; showForm(payForm); });
       // 已收款：取消時一定要說退多少（可以是 0），收支報表才算得對
       item("取消並退款", "danger", function () { more.open = false; showForm(refundForm); });
@@ -464,6 +474,19 @@
       Object.assign(b, r.item);
       render();
       A.toast("已更新實收金額");
+    });
+  }
+
+  function setCompleted(b, done, btn) {
+    btn.disabled = true;
+    A.api("/api/admin/bookings/" + b.id + "/complete", { method: "POST", body: { done: done } }).then(function (r) {
+      btn.disabled = false;
+      if (r.status === 401) return A.checkSession();
+      if (!r.ok) { A.toast(r.message || "更新失敗"); return; }
+      if (!done) delete b.completed;
+      Object.assign(b, r.item);
+      render();
+      A.toast(done ? "已標記完成，移到「已完成」" : "已改回還沒完成");
     });
   }
 

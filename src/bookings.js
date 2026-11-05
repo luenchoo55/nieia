@@ -519,4 +519,29 @@ export function mountBookings(app) {
       return c.json({ ok: true, item: adminView({ ...b, ...set }), slotReopened });
     });
   });
+
+  // ---------- 後台：標記療癒已完成（客人先付款，做完再記一筆完成日期） ----------
+  app.post("/api/admin/bookings/:id/complete", async (c) => {
+    const id = ObjectId.isValid(c.req.param("id")) ? new ObjectId(c.req.param("id")) : null;
+    if (!id) return bad(c, "找不到這筆預約。", 404);
+    let body;
+    try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
+    const done = body.done !== false;
+    const date = done ? (DATE_RE.test(body.date || "") ? body.date : twDate(new Date())) : null;
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const col = db.collection("bookings");
+      const b = await col.findOne({ _id: id });
+      if (!b) return bad(c, "找不到這筆預約，可能已經刪除了。", 404);
+      if (b.status !== "confirmed") return bad(c, "只有已成立（已收款）的預約可以標記完成。", 409);
+      const now = new Date();
+      if (done) {
+        const completed = { date, at: now };
+        await col.updateOne({ _id: id }, { $set: { completed, updatedAt: now } });
+        return c.json({ ok: true, item: adminView({ ...b, completed, updatedAt: now }) });
+      }
+      await col.updateOne({ _id: id }, { $unset: { completed: "" }, $set: { updatedAt: now } });
+      const { completed: _c, ...rest } = b;
+      return c.json({ ok: true, item: adminView({ ...rest, updatedAt: now }) });
+    });
+  });
 }

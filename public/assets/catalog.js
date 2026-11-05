@@ -133,11 +133,39 @@
     var done = function () { btn.textContent = "已複製"; setTimeout(function () { btn.textContent = "複製"; }, 1600); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () {});
   }
-  window.nieiaPayment = function (payment) {
+  // 有兩種以上付款方式時，先讓客人選一種，只顯示那一種的資訊，頁面不會太長。
+  // onPick(method) 在客人選好時呼叫（只有一種或沒有時，一開始就呼叫）。
+  // method.group（例如「台灣」「馬來西亞」）有值時，按鈕會依 group 分組並加上小標。
+  window.nieiaPayment = function (payment, onPick) {
     var box = el("div", "pay-methods");
-    (payment && payment.methods || []).forEach(function (m) {
+    var methods = payment && payment.methods || [];
+    var secs = [], btns = [];
+    var pick = null, lastGroup = null;
+    if (methods.length > 1) {
+      box.appendChild(el("p", "pay-pick-q", "請選擇付款方式"));
+      pick = el("div", "pay-pick");
+      pick.setAttribute("role", "group");
+      pick.setAttribute("aria-label", "選擇付款方式");
+      box.appendChild(pick);
+    }
+    methods.forEach(function (m, i) {
       var sec = el("section", "pay-method");
-      sec.appendChild(el("h3", null, m.name));
+      secs.push(sec);
+      if (pick) {
+        sec.hidden = true;
+        if (m.group && m.group !== lastGroup) { pick.appendChild(el("p", "pay-pick-group", m.group)); lastGroup = m.group; }
+        var b = el("button", "pay-pick-btn", m.name);
+        b.type = "button";
+        b.setAttribute("aria-pressed", "false");
+        b.addEventListener("click", function () {
+          btns.forEach(function (x, k) { x.setAttribute("aria-pressed", k === i ? "true" : "false"); });
+          secs.forEach(function (s, k) { s.hidden = k !== i; });
+          if (onPick) onPick(m);
+        });
+        btns.push(b);
+        pick.appendChild(b);
+      }
+      if (!pick) sec.appendChild(el("h3", null, m.name)); // 有選擇按鈕時，按鈕本身就是標題
       var dl = el("dl", "pay-lines");
       m.lines.forEach(function (line) {
         var wrap = el("div", line[0] ? null : "plain");
@@ -182,7 +210,8 @@
       }
       box.appendChild(sec);
     });
-    if (!box.children.length) box.appendChild(el("p", "muted", "匯款方式會由阿綸私訊告訴你。"));
+    if (!methods.length) box.appendChild(el("p", "muted", "匯款方式會由阿綸私訊告訴你。"));
+    if (onPick && methods.length < 2) setTimeout(function () { onPick(methods[0] || null); }, 0);
     return box;
   };
 

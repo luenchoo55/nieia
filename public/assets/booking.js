@@ -36,10 +36,6 @@
     if (amount == null) return null;
     return (currency === "MYR" ? "RM " : "NT$") + Number(amount).toLocaleString("en-US");
   }
-  function region() {
-    var r = document.querySelector('input[name="region"]:checked');
-    return r ? r.value : null;
-  }
   // 進行方式：項目固定一種，或「皆可」時由客人選
   function modeOf() {
     var s = state.service;
@@ -66,10 +62,15 @@
   function needSlot() {
     return !(state.service && state.service.mode === "async");
   }
-  function priceFor(service, reg) {
+  // 預約時不問居住地，台幣與馬幣一起列出
+  function priceFor(service) {
     if (!service || service.priceMode !== "fixed") return null;
-    var v = reg === "MY" ? service.priceMyr : service.priceTwd;
-    return v == null ? null : money(v, reg === "MY" ? "MYR" : "TWD");
+    return bothPrices({ TWD: service.priceTwd, MYR: service.priceMyr });
+  }
+  function bothPrices(p) {
+    if (!p) return null;
+    var parts = [money(p.TWD, "TWD"), money(p.MYR, "MYR")].filter(Boolean);
+    return parts.length ? parts.join("／") : null;
   }
 
   // ---------- 1. 療癒項目 ----------
@@ -214,15 +215,14 @@
     });
   }
   function renderSummary() {
-    var reg = region();
     summaryRows($("summary"), [
       ["療癒項目", state.service ? state.service.name : "尚未選擇"],
       ["時段", !needSlot() ? "不需預約時段，完成後傳送作品" : state.slot ? prettyDate(state.slot.date, state.slot.weekday) + " " + state.slot.start + "–" + state.slot.end : "尚未選擇"],
-      ["費用", state.service ? (state.service.priceMode === "inquiry" ? "隨喜服務，金額依你的心意" : (priceFor(state.service, reg) || (state.service.priceMode === "fixed" && !reg ? "選擇居住地後顯示" : "阿綸會另外告知金額"))) : ""],
+      ["費用", state.service ? (state.service.priceMode === "inquiry" ? "隨喜服務，金額依你的心意" : (priceFor(state.service) || "阿綸會另外告知金額")) : ""],
       ["進行方式", state.service ? (modeText(modeOf()) || "請在上方選擇") : ""],
     ]);
   }
-  document.querySelectorAll('input[name="region"], input[name="mode"]').forEach(function (r) { r.addEventListener("change", renderSummary); });
+  document.querySelectorAll('input[name="mode"]').forEach(function (r) { r.addEventListener("change", renderSummary); });
 
   // ---------- 送出 ----------
   $("bookForm").addEventListener("submit", function (e) {
@@ -231,7 +231,6 @@
     var problems = [];
     if (!state.service) problems.push("請選擇療癒項目");
     if (needSlot() && !state.slot) problems.push("請選擇時段");
-    if (!region()) problems.push("請選擇居住地");
     if (state.service && !modeOf()) problems.push("請選擇進行方式");
     if (!$("fName").value.trim()) problems.push("請填寫姓名");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($("fEmail").value.trim())) problems.push("請填寫正確的 Email");
@@ -251,7 +250,6 @@
       body: {
         serviceId: state.service.id,
         slotId: needSlot() && state.slot ? state.slot.id : null,
-        region: region(),
         mode: modeOf(),
         name: $("fName").value,
         email: $("fEmail").value,
@@ -296,14 +294,49 @@
     var showPay = b.status === "pending_payment" || b.status === "payment_reported";
     $("payCard").hidden = !showPay;
     $("reportForm").hidden = b.status !== "pending_payment";
-    if (showPay && b.payment) {
-      $("payTitle").textContent = b.payment.label;
-      $("payAmount").textContent = b.priceMode === "inquiry"
-        ? "隨喜服務，金額依你的心意"
-        : money(b.amount, b.currency) ? "應付金額 " + money(b.amount, b.currency) : "金額將由阿綸透過 IG 私訊告知";
+    if (showPay && (b.payments || b.payment)) {
+      var amountText = function (amount, currency) {
+        return b.priceMode === "inquiry"
+          ? "隨喜服務，金額依你的心意"
+          : money(amount, currency) ? "應付金額 " + money(amount, currency) : "金額將由阿綸透過 IG 私訊告知";
+      };
       var box = $("payLines");
       box.innerHTML = "";
-      box.appendChild(window.nieiaPayment(b.payment));
+      // 客人先選付款方式，選好後才出現該方式的資訊與「回報匯款」
+      var canReport = b.status === "pending_payment";
+      $("reportForm").hidden = true;
+      $("payAfter").hidden = true;
+      var reveal = function () {
+        $("reportForm").hidden = !canReport;
+        $("payAfter").hidden = !canReport;
+      };
+      if (b.payments) {
+        // 預約時沒有問居住地：台灣、馬來西亞的付款方式一起列出，選了哪一國就用那一國的幣別
+        var cur = { region: b.regionChosen ? b.region : null };
+        $("payTitle").textContent = "付款資訊";
+        $("payAmount").textContent = cur.region
+          ? amountText(b.amount, b.currency)
+          : (b.priceMode === "fixed" && bothPrices(b.prices) ? "應付金額 " + bothPrices(b.prices) + "（依你選的付款方式）" : amountText(b.amount, b.currency));
+        var all = [];
+        [["TW", "台灣"], ["MY", "馬來西亞"]].forEach(function (r) {
+          var p = b.payments[r[0]];
+          (p && p.methods || []).forEach(function (m) { all.push(Object.assign({}, m, { group: r[1], region: r[0] })); });
+        });
+        box.appendChild(window.nieiaPayment({ methods: all }, function (m) {
+          if (!m) { reveal(); return; }
+          var currency = m.region === "MY" ? "MYR" : "TWD";
+          $("payAmount").textContent = amountText(b.priceMode === "fixed" && b.prices ? b.prices[currency] : b.amount, currency);
+          reveal();
+          if (cur.region === m.region) return;
+          cur.region = m.region;
+          api("/api/bookings/" + encodeURIComponent(b.ref) + "/region?t=" + encodeURIComponent(token), { method: "POST", body: { region: m.region } })
+            .then(function (r) { if (!r.ok && r.message) $("reportMsg").textContent = r.message; });
+        }));
+      } else {
+        $("payTitle").textContent = b.payment.label;
+        $("payAmount").textContent = amountText(b.amount, b.currency);
+        box.appendChild(window.nieiaPayment(b.payment, reveal));
+      }
     }
 
     var note = $("reportedNote");

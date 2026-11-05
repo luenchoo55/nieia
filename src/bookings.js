@@ -84,7 +84,15 @@ function publicView(b, payment) {
     mode: b.mode || "remote",
     payment: publicPayment(payment, b.region),
     paymentReport: b.paymentReport || null,
+    // 預約時不問居住地：還沒回報匯款前，客人可以在完成頁改選台灣或馬來西亞的付款方式
+    ...(canPickRegion(b)
+      ? { regionChosen: !!b.regionChosen, prices: b.prices || null, payments: { TW: publicPayment(payment, "TW"), MY: publicPayment(payment, "MY") } }
+      : {}),
   };
+}
+
+function canPickRegion(b) {
+  return b.regionChosen !== undefined && b.status === "pending_payment" && !b.paymentReport;
 }
 
 function adminView(b) {
@@ -128,7 +136,9 @@ export function mountBookings(app) {
     try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
     if (body.website) return c.json({ ok: true, ref: "N0000000" }); // 機器人陷阱欄位
 
-    const region = body.region === "MY" ? "MY" : body.region === "TW" ? "TW" : null;
+    // 居住地改成在完成頁選付款方式時決定；先記台灣，regionChosen = false
+    const askedRegion = body.region === "MY" ? "MY" : body.region === "TW" ? "TW" : null;
+    const region = askedRegion || "TW";
     const name = str(body.name, 40);
     const email = str(body.email, 120);
     const instagram = str(body.instagram, 60).replace(/^@+/, "");
@@ -140,7 +150,6 @@ export function mountBookings(app) {
 
     const errors = [];
     if (!ObjectId.isValid(body.serviceId)) errors.push("請選擇療癒項目。");
-    if (!region) errors.push("請選擇你住在台灣或馬來西亞。");
     if (!name) errors.push("請填寫姓名。");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push("請填寫正確的 Email。");
     if (!/^[A-Za-z0-9._]{1,30}$/.test(instagram)) errors.push("請填寫正確的 IG 帳號。");
@@ -208,8 +217,10 @@ export function mountBookings(app) {
           ? { slotId, date: slot.date, start: slot.start, end: slot.end, startAt: slot.startAt }
           : { date: twDate(now), start: "", end: "", startAt: now }),
         region,
+        regionChosen: !!askedRegion,
         currency: REGIONS[region].currency,
         amount,
+        prices: service.priceMode === "fixed" ? { TWD: service.priceTwd ?? null, MYR: service.priceMyr ?? null } : null,
         priceMode: service.priceMode || "coming",
         mode,
         name, email, instagram, age, gender, reasons, otherReason, note,
@@ -247,6 +258,25 @@ export function mountBookings(app) {
       return c.json({ ok: true, booking: publicView(b, await getPayment(db)) });
     })
   );
+
+  // ---------- 客人：在完成頁選了台灣或馬來西亞的付款方式 ----------
+  app.post("/api/bookings/:ref/region", async (c) => {
+    if (!sameOrigin(c)) return bad(c, "請從預約頁送出。", 403);
+    let body;
+    try { body = await c.req.json(); } catch { return bad(c, "資料格式不正確。"); }
+    const region = REGIONS[body.region] ? body.region : null;
+    if (!region) return bad(c, "請選擇付款方式。");
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const b = await findOwn(c, db);
+      if (!b) return bad(c, "找不到這筆預約，請確認網址是否完整。", 404);
+      if (!canPickRegion(b)) return bad(c, "這筆預約已經不能更改付款方式，請 IG 私訊 @nieia4928。", 409);
+      const currency = REGIONS[region].currency;
+      const amount = b.priceMode === "fixed" ? (b.prices?.[currency] ?? null) : b.amount;
+      const set = { region, currency, amount, regionChosen: true, updatedAt: new Date() };
+      await db.collection("bookings").updateOne({ _id: b._id, status: "pending_payment" }, { $set: set });
+      return c.json({ ok: true, booking: publicView({ ...b, ...set }, await getPayment(db)) });
+    });
+  });
 
   // ---------- 客人：回報匯款 ----------
   app.post("/api/bookings/:ref/payment", async (c) => {

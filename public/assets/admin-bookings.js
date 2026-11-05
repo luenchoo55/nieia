@@ -246,7 +246,7 @@
     }
     row(dl, "電話／LINE", b.phone);
     row(dl, "Email", b.email);
-    if (!manual) row(dl, "居住地", REGION[b.region]);
+    if (!manual) row(dl, "付款地區", b.regionChosen === false ? "客人還沒選付款方式" : REGION[b.region]);
     row(dl, "年齡", b.age);
     row(dl, "性別", b.gender);
     row(dl, "療癒原因", (b.reasons || []).concat(b.otherReason ? [b.otherReason] : []).join("、"));

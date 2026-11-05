@@ -427,13 +427,6 @@ booking = f'''{appbar("預約療癒", "選擇療癒項目與時段，填寫資�
     <section class="step glass" aria-labelledby="s3">
       <h2 id="s3"><span class="num" id="num3" aria-hidden="true">3</span>填寫資料</h2>
       <div class="field-grid">
-        <fieldset class="field wide">
-          <legend>你住在</legend>
-          <div class="pills-choice">
-            <label><input type="radio" name="region" value="TW" id="regionTW"><span>台灣</span></label>
-            <label><input type="radio" name="region" value="MY" id="regionMY"><span>馬來西亞</span></label>
-          </div>
-        </fieldset>
         <fieldset class="field wide" id="modeField" hidden>
           <legend>進行方式</legend>
           <div class="pills-choice">
@@ -510,7 +503,7 @@ booking = f'''{appbar("預約療癒", "選擇療癒項目與時段，填寫資�
       <h2 id="payTitle">匯款資訊</h2>
       <p class="amount" id="payAmount"></p>
       <div id="payLines"></div>
-      <p class="muted">匯款完成後，請在下方回報，方便阿綸核對。</p>
+      <p class="muted" id="payAfter">匯款完成後，請在下方回報，方便阿綸核對。</p>
     </section>
     <form class="pay glass" id="reportForm" novalidate aria-labelledby="reportTitle">
       <h2 id="reportTitle">回報匯款</h2>

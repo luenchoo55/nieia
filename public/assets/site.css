@@ -726,6 +726,11 @@ html.no-scroll, html.no-scroll body { overflow: hidden; }
 .pay-method .pay-lines > div.plain { grid-template-columns: minmax(0, 1fr); }
 .pay-method .pay-lines dd span { overflow-wrap: anywhere; }
 .pay-link { justify-self: start; margin-top: .3rem; }
+.pay-pick-q { margin: 0; font-size: var(--step--1); color: var(--ink-soft); }
+.pay-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5em, 1fr)); gap: .6rem; margin-top: -.4rem; }
+.pay-pick-group { grid-column: 1 / -1; margin: .3rem 0 -.2rem; font-size: var(--step--2); letter-spacing: .12em; color: var(--ink-soft); }
+.pay-pick-btn { min-height: 48px; padding: .6rem 1rem; border-radius: var(--r-sm); border: 1px solid var(--line); background: rgba(255, 255, 255, .55); color: var(--ink); font: inherit; letter-spacing: .06em; cursor: pointer; }
+.pay-pick-btn[aria-pressed="true"] { background: var(--button); border-color: var(--button); color: var(--button-ink); }
 .ws-pay { padding: 1rem 0 0; margin-top: 1rem; border-top: 1px solid var(--line); }
 .ws-done-acts { justify-content: center; margin-top: 1rem; }
 .ws-keep { display: grid; gap: .5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }

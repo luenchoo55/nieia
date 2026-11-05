@@ -343,6 +343,29 @@
         setStatus(b, "cancelled", x, "已取消預約");
       });
     }
+    // 永久刪除：按兩次才會刪，收支報表裡這筆收入也會一起消失
+    var delArmed = null;
+    item("刪除資料", "danger", function (x) {
+      if (!delArmed) {
+        x.classList.add("confirm");
+        x.textContent = b.status === "confirmed" ? "確定刪除？收支報表的這筆收入也會消失" : "確定永久刪除？刪除後無法復原";
+        delArmed = setTimeout(function () { delArmed = null; x.classList.remove("confirm"); x.textContent = "刪除資料"; }, 5000);
+        return;
+      }
+      clearTimeout(delArmed);
+      x.disabled = true;
+      A.api("/api/admin/bookings/" + b.id, { method: "DELETE" }).then(function (r) {
+        x.disabled = false;
+        if (r.status === 401) return A.checkSession();
+        if (!r.ok) { A.toast(r.message || "刪除失敗"); return; }
+        items = items.filter(function (it) { return it.id !== b.id; });
+        delete expanded[b.id];
+        render();
+        A.toast("已刪除這筆預約" + (r.slotReopened ? "，時段已重新開放" : ""));
+        document.dispatchEvent(new Event("nieia:slots"));
+        if (window.NieiaOverview) window.NieiaOverview.reload();
+      });
+    });
     if (menu.childNodes.length) {
       more.appendChild(menu);
       actions.appendChild(more);

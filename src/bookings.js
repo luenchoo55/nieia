@@ -520,6 +520,27 @@ export function mountBookings(app) {
     });
   });
 
+  // ---------- 後台：永久刪除一筆預約（連同個案筆記；還沒到的時段重新開放） ----------
+  app.delete("/api/admin/bookings/:id", (c) => {
+    const id = ObjectId.isValid(c.req.param("id")) ? new ObjectId(c.req.param("id")) : null;
+    if (!id) return bad(c, "找不到這筆預約。", 404);
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const b = await db.collection("bookings").findOne({ _id: id });
+      if (!b) return c.json({ ok: true });
+      await db.collection("bookings").deleteOne({ _id: id });
+      await db.collection("caseNotes").deleteMany({ bookingId: id });
+      let slotReopened = false;
+      if (b.slotId && b.status !== "cancelled") {
+        const r = await db.collection("availability").updateOne(
+          { _id: b.slotId, bookingRef: b.ref, startAt: { $gt: new Date() } },
+          { $set: { status: "open", updatedAt: new Date() }, $unset: { bookingRef: "" } }
+        );
+        slotReopened = r.modifiedCount > 0;
+      }
+      return c.json({ ok: true, slotReopened });
+    });
+  });
+
   // ---------- 後台：標記療癒已完成（客人先付款，做完再記一筆完成日期） ----------
   app.post("/api/admin/bookings/:id/complete", async (c) => {
     const id = ObjectId.isValid(c.req.param("id")) ? new ObjectId(c.req.param("id")) : null;

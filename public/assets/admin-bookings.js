@@ -76,7 +76,7 @@
         "",
         "療癒後的幾天，請多喝水、好好休息，留意身心的變化。有任何感受或問題，歡迎 IG 私訊 @nieia4928。",
         "",
-        "與光同在，一切如是。",
+        "願你與光同在，一切如是。",
         "阿綸",
       ].filter(function (x) { return x !== null; });
     } else if (b.status === "confirmed") {

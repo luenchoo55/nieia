@@ -59,6 +59,26 @@
       if (r && r.amount > 0) lines.push("退款金額：" + money(r.amount, b.currency) + "（" + r.date + " 退款）");
       if (r && r.note) lines.push("說明：" + r.note);
       lines.push("", "期待之後還有機會與你相見，有任何問題歡迎 IG 私訊 @nieia4928。", "", "阿綸");
+    } else if (b.status === "confirmed" && b.completed) {
+      var paid = b.paidAmount != null ? b.paidAmount : b.amount;
+      subject = "【阿綸涅亞 NIEIA】療癒完成與收據：" + b.serviceName;
+      lines = [
+        b.name + " 你好：",
+        "",
+        "這次的「" + b.serviceName + "」已經完成了，謝謝你的信任。",
+        "隨信附上這次的收據，請查收。",
+        "",
+        "療癒項目：" + b.serviceName,
+        async ? null : "療癒日期：" + when,
+        "完成日期：" + b.completed.date,
+        paid != null ? "實收金額：" + money(paid, b.currency) : null,
+        "收據編號：" + b.ref,
+        "",
+        "療癒後的幾天，請多喝水、好好休息，留意身心的變化。有任何感受或問題，歡迎 IG 私訊 @nieia4928。",
+        "",
+        "願光一路陪伴你。",
+        "阿綸",
+      ].filter(function (x) { return x !== null; });
     } else if (b.status === "confirmed") {
       subject = "【阿綸涅亞 NIEIA】預約確認：" + b.serviceName + " " + when;
       lines = [
@@ -99,7 +119,7 @@
   // 電腦沒有設定郵件 App 時 mailto: 會沒反應，所以直接開 Gmail 的寫信畫面
   function gmailUrl(b) {
     var m = letter(b);
-    return "https://mail.google.com/mail/?view=cm&fs=1&to=" + encodeURIComponent(b.email) +
+    return "https://mail.google.com/mail/?view=cm&fs=1&to=" + encodeURIComponent(b.email || "") +
       "&su=" + encodeURIComponent(m.subject) + "&body=" + encodeURIComponent(m.body);
   }
 
@@ -301,12 +321,15 @@
       ok.addEventListener("click", function () { showForm(payForm); });
       actions.appendChild(ok);
     }
-    if (b.email) {
-      var write = el("a", "mail-btn", "Gmail 寫信");
-      write.href = gmailUrl(b);
-      write.target = "_blank"; write.rel = "noopener";
-      actions.appendChild(write);
-    }
+    var write = el("a", "mail-btn", b.status === "confirmed" && b.completed ? "Gmail 寄收據" : "Gmail 寫信");
+    write.href = gmailUrl(b);
+    write.target = "_blank"; write.rel = "noopener";
+    if (!b.email) write.title = "這筆預約沒有 Email，收件人請自己填（或用「編輯資料」補上）";
+    write.addEventListener("click", function () {
+      if (b.status === "confirmed" && b.completed) attachReceipt(b);
+      else if (!b.email) A.toast("這筆預約沒有 Email，請在 Gmail 填收件人");
+    });
+    actions.appendChild(write);
 
     var more = el("details", "bc-more");
     more.appendChild(el("summary", null, "更多"));
@@ -318,10 +341,8 @@
       menu.appendChild(x);
       return x;
     }
-    if (b.email) {
-      item("複製信件內容", null, function (x) { var m = letter(b); copyText(m.subject + "\n\n" + m.body, x, "複製信件內容"); });
-      item("複製 Email", null, function (x) { copyText(b.email, x, "複製 Email"); });
-    }
+    item("複製信件內容", null, function (x) { var m = letter(b); copyText(m.subject + "\n\n" + m.body, x, "複製信件內容"); });
+    if (b.email) item("複製 Email", null, function (x) { copyText(b.email, x, "複製 Email"); });
     if (b.status !== "cancelled") {
       item("編輯資料", null, function () { more.open = false; if (manual) openManual(b); else openWebEdit(b); });
     }
@@ -432,16 +453,22 @@
   // 收據：用收銀台同一份收據（圖片＋文字），單號是預約編號
   function showReceipt(b) {
     if (!window.NieiaReceipt) { A.toast("收據還在載入，請稍候再試"); return; }
+    var rc = receiptData(b);
+    if (!rc) { A.toast("請先填寫實收金額"); return; }
+    window.NieiaReceipt.show(rc, null);
+  }
+
+  function receiptData(b) {
     var paid = b.paidAmount != null ? b.paidAmount : b.amount;
-    if (paid == null) { A.toast("請先填寫實收金額"); return; }
+    if (paid == null) return null;
     var when = b.mode === "async" && b.source !== "manual" ? "" : prettyDate(b.date, b.weekday) + (b.start ? " " + b.start + (b.end ? "–" + b.end : "") : "");
-    var BOOKING_STATUS = { pending_payment: "待確認", payment_reported: "待確認", confirmed: "已成立", cancelled: "已取消" };
+    var BOOKING_STATUS = { pending_payment: "待確認", payment_reported: "待確認", confirmed: b.completed ? "已完成" : "已成立", cancelled: "已取消" };
     var isPaid = b.status === "confirmed" || (b.status === "cancelled" && b.paidAmount != null);
     var payStatus = b.status === "cancelled" && b.refund
       ? "已退款 " + money(b.refund.amount, b.currency)
       : isPaid ? "已付款" : b.status === "payment_reported" ? "已回報匯款，待確認" : "尚未付款";
     var method = b.paymentReport && b.paymentReport.last5 ? "匯款（末五碼 " + b.paymentReport.last5 + "）" : "";
-    window.NieiaReceipt.show({
+    return {
       no: b.ref,
       at: b.confirmedAt || b.updatedAt || b.createdAt,
       method: method,
@@ -459,7 +486,30 @@
       total: paid,
       adjustments: [],
       gifts: [],
-    }, null);
+    };
+  }
+
+  // 完成信附上收據：Gmail 連結沒辦法夾帶檔案，所以把收據圖片複製到剪貼簿（在信裡 Ctrl+V 貼上），同時下載一份
+  function attachReceipt(b) {
+    var rc = window.NieiaReceipt && window.NieiaReceipt.blob ? receiptData(b) : null;
+    if (!rc) { A.toast("收據無法產生，請用「收據」按鈕下載後再附上"); return; }
+    var p = window.NieiaReceipt.blob(rc);
+    var copied = false;
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        navigator.clipboard.write([new ClipboardItem({ "image/png": p })]).then(function () { copied = true; }, function () {});
+      }
+    } catch (e) { /* 舊瀏覽器 */ }
+    p.then(function (blob) {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "收據_" + b.ref + ".png";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      setTimeout(function () {
+        A.toast(copied ? "收據已複製：在 Gmail 信件裡按 Ctrl+V 貼上（也已下載一份）" : "收據圖片已下載，請拖進 Gmail 信件附件");
+      }, 300);
+    }, function () { A.toast("收據產生失敗，請用「收據」按鈕下載"); });
   }
 
   // 確認收款時填實收金額（記帳用）；有固定價格就先帶入

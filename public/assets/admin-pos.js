@@ -734,7 +734,16 @@
   }
 
   // 預約也用同一份收據（後台預約卡片的「收據」按鈕）
-  window.NieiaReceipt = { show: showReceipt, draw: drawReceipt };
+  // 不開彈窗，直接產生收據圖片（例如寫完成信時附上收據）
+  function receiptBlobFor(rc) {
+    var text = receiptText(rc, null);
+    return Promise.all([loadPaper(), loadFonts(text + "阿綸涅亞療癒服務憑證訂單資訊客戶明細金額結算編號收據建立時間預約日期狀態姓名聯絡單價數量小計共件總付款方式收現金找零贈品謝謝你的到來願光一路陪伴你"), loadStamp()]).then(function () {
+      return new Promise(function (resolve, reject) {
+        drawReceipt(rc, null).toBlob(function (b) { if (b) resolve(b); else reject(new Error("收據產生失敗")); }, "image/png");
+      });
+    });
+  }
+  window.NieiaReceipt = { show: showReceipt, draw: drawReceipt, blob: receiptBlobFor };
 
   function flash(btn, text) {
     var old = btn.textContent;

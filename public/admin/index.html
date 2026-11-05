@@ -232,9 +232,10 @@
 
       <section class="glass form-card qr-card" aria-labelledby="mk-qr-title">
         <h2 id="mk-qr-title">排隊頁 QR Code</h2>
-        <p class="hint">印出來放在攤位上，客人掃描就能取號。</p>
-        <div class="qr" id="mkQr" aria-label="排隊頁 QR Code"></div>
-        <button class="btn" id="mkQrDl" type="button">下載 QR Code 圖片</button>
+        <p class="hint">印出來放在攤位上，客人掃描就能取號。可以下載單純的 QR Code，或已排版好的 A5 直式海報。</p>
+        <img class="qr-poster" src="/assets/market-poster-a5.png" alt="現場預約排隊 A5 海報預覽" width="559" height="794">
+        <p class="hint" id="mkQrMsg" hidden>QR Code 暫時無法產生，請複製網址自行製作。</p>
+        <div class="qr-dl"><button class="btn" id="mkQrDl" type="button">下載 QR Code</button><a class="btn" id="mkPosterDl" href="/assets/market-poster-a5.png" download="阿綸涅亞-現場預約排隊-A5海報.png">下載 A5 海報</a></div>
         <div class="copy-row"><input id="mkUrl" readonly aria-label="排隊頁網址"><button class="btn btn-ghost" id="mkCopy" type="button">複製網址</button></div>
       </section>
 

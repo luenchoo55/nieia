@@ -394,9 +394,8 @@
     qr = window.qrcode(0, "M");
     qr.addData(url);
     qr.make();
-    $("mkQr").innerHTML = qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
   } else {
-    $("mkQr").textContent = "QR Code 暫時無法顯示，請複製網址自行製作。";
+    $("mkQrMsg").hidden = false;
     $("mkQrDl").hidden = true;
   }
 

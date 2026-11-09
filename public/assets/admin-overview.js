@@ -39,7 +39,7 @@
     var v = el("strong", "ov-value");
     (Array.isArray(value) ? value : [value]).forEach(function (x) { v.appendChild(el("span", null, x)); });
     b.appendChild(v);
-    if (sub) b.appendChild(el("span", "ov-sub", sub));
+    (Array.isArray(sub) ? sub : sub ? [sub] : []).forEach(function (x) { b.appendChild(el("span", "ov-sub", x)); });
     return b;
   }
 
@@ -83,7 +83,7 @@
       function () { goTab("ledger"); }));
     var pendingCount = d.pendingBookings.length + d.pendingTuition.length;
     stats.appendChild(stat("待匯款", pendingCount + " 筆", "預約 " + d.pendingBookings.length + "・工作坊 " + d.pendingTuition.length, function () { goTab("bookings"); }));
-    stats.appendChild(stat("這週預約", d.week.count + " 位", U.prettyDate(d.week.start) + "–" + U.prettyDate(d.week.end), function () { goTab("bookings"); }));
+    stats.appendChild(stat("這週預約", d.week.count + " 位", [U.prettyDate(d.week.start) + "–" + U.prettyDate(d.week.end), "進行中個案 " + (d.week.active || 0) + " 位"], function () { goTab("bookings"); }));
     host.appendChild(stats);
 
     // 進行中的工作坊：列在「工作坊管理」卡片裡，沒有就不顯示

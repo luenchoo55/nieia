@@ -200,8 +200,13 @@ home = f'''  <a class="market-banner glass" id="marketBanner" href="/market" hid
 {row("/shop","bag","g5","聖照選物","","紫色火焰、聖哲曼、默基瑟德等聖照卡。","")}
 {row("/about","lotus","g1","關於阿綸","","在台灣當上班族的馬來西亞人，斜槓身心靈。","")}
     </div>
+    <div class="vocus" id="vocusBlock">
+      <div class="block-head"><h3 id="vocus-title">最新文章</h3><a href="https://vocus.cc/salon/67e4f401fd897800019395cf" target="_blank" rel="noopener">方格子沙龍</a></div>
+      <div class="vocus-list glass" id="vocusList" aria-live="polite" aria-labelledby="vocus-title"><p class="vocus-note">文章載入中…</p></div>
+      <a class="btn btn-ghost vocus-more" href="https://vocus.cc/salon/67e4f401fd897800019395cf" target="_blank" rel="noopener">看更多文章</a>
+    </div>
   </section>'''
-page('index.html', '阿綸涅亞 NIEIA', 'home', home, ['/assets/cards.js', '/assets/home-draw.js', '/assets/market-banner.js'])
+page('index.html', '阿綸涅亞 NIEIA', 'home', home, ['/assets/cards.js', '/assets/home-draw.js', '/assets/market-banner.js', '/assets/vocus.js'])
 
 # ---------------- services ----------------
 svc = [

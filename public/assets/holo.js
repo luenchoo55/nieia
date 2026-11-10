@@ -114,11 +114,30 @@
       holoB.style.setProperty("--y", (cy * window.innerHeight).toFixed(1) + "px");
       holoB.style.setProperty("--a", (reduce ? 40 : (t * 18) % 360).toFixed(1) + "deg");
     }
-    document.documentElement.style.setProperty("--spin", (reduce ? 30 : (t * 10) % 360).toFixed(1) + "deg");
+    spin(reduce ? 30 : (t * 10) % 360);
   }
+
+  // 光球與牌面的漸層慢慢轉動：只把角度設在用得到的元素上。
+  // （以前設在整個網頁上，瀏覽器每一格都要把全部元素重算一次，手機會比較耗電。）
+  // 轉得很慢，每 3 格更新一次就夠；每次都重新找元素，後來才加進頁面的光球也會跟上。
+  var spinTick = 0;
+  function spin(deg) {
+    if (spinTick++ % 3 !== 0) return;
+    var els = document.querySelectorAll(".orb, .avatar, .face-front, .mini-front");
+    var v = deg.toFixed(1) + "deg";
+    for (var i = 0; i < els.length; i++) els[i].style.setProperty("--spin", v);
+  }
+
+  // 手指或滑鼠沒在動時，背景流動得很慢，畫面更新減半（約每秒 30 格）看不出差別，比較省電
+  var skip = false;
   function loop(now) {
-    if (!document.hidden) frame(now);
     requestAnimationFrame(loop);
+    if (document.hidden) return;
+    if (now - lastMove > 4000) {
+      skip = !skip;
+      if (skip) return;
+    }
+    frame(now);
   }
 
   if (reduce) { frame(performance.now()); } else { requestAnimationFrame(loop); }

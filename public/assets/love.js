@@ -29,7 +29,7 @@
   // 字型、印章先載好，畫出來的圖片才會正確
   var stamp = new Image();
   var stampReady = new Promise(function (ok) { stamp.onload = stamp.onerror = function () { ok(); }; });
-  stamp.src = "/assets/love-seal.png"; // 落款：彩色的紫色火焰蠟封
+  stamp.src = "/assets/love-seal.webp"; // 落款：彩色的紫色火焰蠟封
   // 卡片的白色紙張紋理（跟收據同一張）
   var paper = new Image();
   var paperReady = new Promise(function (ok) { paper.onload = paper.onerror = function () { ok(); }; });

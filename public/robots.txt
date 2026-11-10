@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin
+Disallow: /api/
+Disallow: /checkin
+Disallow: /cert
+
+Sitemap: https://nieia.luenchoo55.workers.dev/sitemap.xml

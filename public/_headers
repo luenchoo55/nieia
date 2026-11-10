@@ -1,0 +1,19 @@
+# 瀏覽器快取設定（Cloudflare 讀這個檔案，客人看不到）
+
+# 樣式、程式與圖片：10 分鐘內換頁不用再向網站確認；
+# 超過 10 分鐘先用手上的那份，同時在背景拿新的。改版後最慢 10 分鐘就會生效。
+/assets/*
+  Cache-Control: public, max-age=600, stale-while-revalidate=86400
+
+# 後台的程式不留存，改版後馬上生效。
+/assets/admin*
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+
+# 圖示與分享預覽圖幾乎不會換，留一個星期。
+/icons/*
+  Cache-Control: public, max-age=604800
+/favicon.ico
+  Cache-Control: public, max-age=604800
+/og.jpg
+  Cache-Control: public, max-age=604800

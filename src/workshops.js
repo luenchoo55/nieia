@@ -5,6 +5,8 @@ import { notifyWorkshopSignup } from "./notify.js";
 import { REGIONS, getPayment, publicPayment } from "./payment.js";
 import { cleanAmount } from "./ledger.js";
 
+const PHOTO_CACHE = "public, max-age=31536000, immutable";
+
 // 工作坊：場次、學員名單、出席、結業證書、大合照、線上簽到。
 // 學員資料直接存在工作坊文件裡（一場通常不超過幾十人）；
 // 證書另存一份快照，之後修改場次資料也不會改到已經發出的證書，除非重新產生。
@@ -652,19 +654,27 @@ export function mountWorkshops(app) {
     })
   );
 
-  app.get("/api/photos/:key", (c) =>
-    withDb(c.env, c.executionCtx, async (db) => {
-      const key = str(c.req.param("key"), 20);
-      const p = key ? await db.collection("photos").findOne({ _id: key }) : null;
+  // 照片（商品照、療癒項目照、收款碼、大合照）存在資料庫裡，每次去拿都要先連線 2～3 秒。
+  // 所以第一次拿到後在 Cloudflare 也存一份，之後的客人直接從 Cloudflare 拿，不用再連資料庫。
+  app.get("/api/photos/:key", async (c) => {
+    const key = str(c.req.param("key"), 20);
+    if (!key) return c.body(null, 404);
+    const cache = typeof caches !== "undefined" ? caches.default : null;
+    const cacheKey = new Request(new URL("/api/photos/" + encodeURIComponent(key), c.req.url).toString());
+    if (cache) {
+      const hit = await cache.match(cacheKey);
+      if (hit) return new Response(hit.body, { headers: { "Content-Type": hit.headers.get("Content-Type"), "Cache-Control": PHOTO_CACHE, "x-cache": "hit" } });
+    }
+    return withDb(c.env, c.executionCtx, async (db) => {
+      const p = await db.collection("photos").findOne({ _id: key });
       if (!p) return c.body(null, 404);
       const bytes = p.data?.buffer ? new Uint8Array(p.data.buffer) : p.data;
       // 換照片時代碼會跟著換，所以可以放心讓瀏覽器長期留存
-      return c.body(bytes, 200, {
-        "Content-Type": p.type,
-        "Cache-Control": "public, max-age=31536000, immutable",
-      });
-    })
-  );
+      const headers = { "Content-Type": p.type, "Cache-Control": PHOTO_CACHE };
+      if (cache) c.executionCtx.waitUntil(cache.put(cacheKey, new Response(bytes, { headers })).catch((err) => console.error(err)));
+      return c.body(bytes, 200, headers);
+    });
+  });
 
   // ---------- 線上簽到 ----------
   async function findSession(db, key) {

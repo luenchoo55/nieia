@@ -1,5 +1,5 @@
 # 產生 public/ 下的頁面：python3 tools/build_pages.py public
-import os, re, sys
+import json, os, re, sys
 out = sys.argv[1]
 
 def svg(body, vb="0 0 100 100", stroke="#fff", sw=2.4, fill="none"):
@@ -69,6 +69,41 @@ FOOT = '''  <footer class="foot">
     <p>療癒屬於身心靈探索與能量調理，旨在陪伴與引導，無法取代任何正統醫療、心理諮商或法律診斷。如有相關疾病，請尋求專業醫療協助。</p>
   </footer>'''
 
+# 每一頁的網址與介紹：搜尋結果的說明文字，以及貼到 LINE／IG／FB 時的分享預覽
+SITE = 'https://nieia.luenchoo55.workers.dev'
+SEO = {
+    'index.html': ('/', '阿綸涅亞 NIEIA 療癒工作室：擴大療癒、聖火靈氣、準提佛母火典、引渡之光與動物溝通。台灣與馬來西亞皆可預約，可透過 IG 視訊遠距或現場進行。'),
+    'services.html': ('/services', '阿綸涅亞的療癒服務：擴大療癒、聖火／卡魯那靈氣、準提佛母火典、引渡之光、動物溝通。可透過 IG 視訊遠距或現場進行，台灣與馬來西亞都能預約。'),
+    'oracle.html': ('/oracle', '靜下來，深呼吸一次，想著此刻心裡的問題，再輕觸卡片。會有一則來自光的訊息，剛好屬於你。'),
+    'workshops.html': ('/workshops', '臼井聖火靈氣、擴大療癒工作坊：兩天的完整教學，結束後就能為自己、家人、朋友與毛孩傳送能量。可線上報名。'),
+    'about.html': ('/about', '阿綸是在台灣當上班族的馬來西亞人，也是斜槓的身心靈工作者。帶著對生命的慈悲與熱愛，陪伴每一個靈魂找回內在的純淨與力量。'),
+    'shop.html': ('/shop', '阿綸親自挑選與加持的聖照卡：紫色火焰、聖哲曼、默基瑟德等。可在台灣的 7-11 取貨。'),
+    'booking.html': ('/booking', '線上預約阿綸涅亞的療癒：選擇療癒項目與時段，填寫資料後就會看到匯款資訊。台灣與馬來西亞皆可預約。'),
+    'market.html': ('/market', '阿綸擺攤時，在攤位現場用手機取號，不用站著排隊，輪到你時頁面會提醒你。'),
+}
+
+def seo(fname, title):
+    # 沒有列在 SEO 裡的頁面（簽到、找不到頁面）不給搜尋引擎收錄
+    if fname not in SEO:
+        return '<meta name="robots" content="noindex">'
+    url, desc = SEO[fname]
+    tags = f'''<meta name="description" content="{desc}">
+<link rel="canonical" href="{SITE}{url}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="阿綸涅亞 NIEIA">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:url" content="{SITE}{url}">
+<meta property="og:image" content="{SITE}/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">'''
+    if fname == 'index.html':
+        ld = {"@context": "https://schema.org", "@type": "ProfessionalService", "name": "阿綸涅亞 NIEIA", "alternateName": "NIEIA", "url": SITE + "/", "image": SITE + "/og.jpg", "description": desc, "areaServed": ["TW", "MY"], "sameAs": ["https://www.instagram.com/nieia4928/", "https://vocus.cc/salon/67e4f401fd897800019395cf", "https://linktr.ee/nieia4928"]}
+        tags += '\n<script type="application/ld+json">' + json.dumps(ld, ensure_ascii=False, separators=(',', ':')) + '</script>'
+    return tags
+
 def page(fname, title, cur, main, extra_js=()):
     js = ['/assets/holo.js', '/assets/site.js'] + list(extra_js)
     scripts = '\n'.join(f'<script src="{s}"></script>' for s in js)
@@ -78,6 +113,7 @@ def page(fname, title, cur, main, extra_js=()):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{title}</title>
+{seo(fname, title)}
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" href="/icons/favicon-32.png" type="image/png" sizes="32x32">
@@ -206,7 +242,7 @@ home = f'''  <a class="market-banner glass" id="marketBanner" href="/market" hid
       <a class="btn btn-ghost vocus-more" href="https://vocus.cc/salon/67e4f401fd897800019395cf" target="_blank" rel="noopener">看更多文章</a>
     </div>
   </section>'''
-page('index.html', '阿綸涅亞 NIEIA', 'home', home, ['/assets/cards.js', '/assets/home-draw.js', '/assets/market-banner.js', '/assets/vocus.js'])
+page('index.html', '阿綸涅亞 NIEIA 療癒工作室', 'home', home, ['/assets/cards.js', '/assets/home-draw.js', '/assets/market-banner.js', '/assets/vocus.js'])
 
 # ---------------- services ----------------
 svc = [
